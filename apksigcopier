@@ -33,7 +33,8 @@ __version__ = "0.0.2"
 name = "apksigcopier"
 
 ZipData = namedtuple("ZipData", "cd_offset eocd_offset cd_and_eocd".split())
-V1Only = click.Choice("no auto yes".split())
+NOAUTOYES = "no auto yes".split()
+V1Only = click.Choice(NOAUTOYES)
 
 
 # FIXME
@@ -55,6 +56,13 @@ class ZeroedZipInfo(zipfile.ZipInfo):
 def is_meta(filename):
     return filename.startswith("META-INF") and \
         any(filename.endswith(ext) for ext in ".SF .RSA .MF".split())
+
+
+def noautoyes(value):
+    if isinstance(value, str):
+        assert value in NOAUTOYES
+        return value
+    return {False: "no", None: "auto", True: "yes"}[value]
 
 
 def gen_dummy_key(keystore, size=4096):
@@ -192,6 +200,7 @@ def cli(ctx):
 @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
 def extract(signed_apk, output_dir, v1_only="no"):
+    v1_only = noautoyes(v1_only)
     extracted_meta = extract_meta(signed_apk)
     for info, data in extracted_meta:
         name = os.path.basename(info.filename)
@@ -224,6 +233,7 @@ def extract(signed_apk, output_dir, v1_only="no"):
 @click.argument("output_apk", type=click.Path(dir_okay=False))
 def patch(meta_dir, unsigned_apk, output_apk, v1_only="no",
           dummy_keystore=None):
+    v1_only = noautoyes(v1_only)
     extracted_meta = []
     for what in "SF RSA MF".split():
         filename, = glob.glob(os.path.join(meta_dir, f"*.{what}"))
@@ -265,6 +275,7 @@ def patch(meta_dir, unsigned_apk, output_apk, v1_only="no",
 @click.argument("output_apk", type=click.Path(dir_okay=False))
 def copy(signed_apk, unsigned_apk, output_apk, v1_only="no",
          dummy_keystore=None):
+    v1_only = noautoyes(v1_only)
     extracted_meta = extract_meta(signed_apk)
     if v1_only == "yes":
         extracted_v2_sig = None
