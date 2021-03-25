@@ -122,6 +122,9 @@ def replace_meta(extracted_meta, out):
 # FIXME: optimise?!
 def extract_v2_sig(apkfile, count=1024**2):
     """Extract APK Signing Block from APK."""
+    size = os.path.getsize(apkfile)
+    if count > size:
+        count = size
     with open(apkfile, "rb") as fh:
         fh.seek(-count, os.SEEK_END)
         data = fh.read()
