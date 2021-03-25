@@ -18,9 +18,33 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
+        sudo apt-get update || sudo apt-get update
+        sudo apt-get upgrade -y
+        sudo apt-get install -y apksigner zip
         python3 -m pip install --upgrade pip
         python3 -m pip install flake8
     - name: Install
       run: make install
     - name: Test
       run: make test
+    - name: Build & Test NewPipe
+      run: |
+        git clone -b v0.20.11 https://github.com/TeamNewPipe/NewPipe.git
+        cd NewPipe
+        printf '\nandroid.useNewApkCreator=false\n' >> gradle.properties
+        ./gradlew assembleRelease
+        cd app/build/outputs/apk/release
+        cp app-release-unsigned.apk signed.apk
+        apksigcopier gen-dummy ci-ks
+        apksigner sign -v --ks ci-ks --ks-key-alias dummy \
+          --ks-pass pass:dummy-password signed.apk
+        mkdir meta
+        apksigcopier extract signed.apk meta
+        ls -hlA meta
+        apksigcopier patch meta app-release-unsigned.apk patched.apk
+        apksigcopier copy signed.apk app-release-unsigned.apk copied.apk
+        shasum *.apk
+        cmp signed.apk patched.apk
+        cmp signed.apk copied.apk
+        apksigner verify -v --print-certs patched.apk
+        apksigner verify -v --print-certs copied.apk
