@@ -210,7 +210,7 @@ def extract(signed_apk, output_dir):
 @click.argument("meta_dir", type=click.Path(exists=True, file_okay=False))
 @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_apk", type=click.Path(dir_okay=False))
-def patch(meta_dir, unsigned_apk, output_apk, dummy_keystore):
+def patch(meta_dir, unsigned_apk, output_apk, dummy_keystore=None):
     extracted_meta = []
     for what in "SF RSA MF".split():
         filename, = glob.glob(os.path.join(meta_dir, f"*.{what}"))
@@ -241,7 +241,7 @@ def patch(meta_dir, unsigned_apk, output_apk, dummy_keystore):
 @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_apk", type=click.Path(dir_okay=False))
-def copy(signed_apk, unsigned_apk, output_apk, dummy_keystore):
+def copy(signed_apk, unsigned_apk, output_apk, dummy_keystore=None):
     extracted_meta = extract_meta(signed_apk)
     extracted_v2_sig = extract_v2_sig(signed_apk)
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
