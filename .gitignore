@@ -1,0 +1,8 @@
+__pycache__
+
+/build
+/dist
+/apksigcopier.egg-info
+
+.coverage
+/htmlcov
