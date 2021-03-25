@@ -259,18 +259,16 @@ def gen_dummy(dummy_keystore, keysize):
 
 def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk,
               output_apk, dummyks=None):
-    def f():
-        shutil.copy(unsigned_apk, output_apk)
-        sign_with_dummy_key(output_apk, dummyks)
-        replace_meta(extracted_meta, output_apk)
-        patch_v2_sig(extracted_v2_sig, output_apk)
+    shutil.copy(unsigned_apk, output_apk)
     if dummyks is None:
         with tempfile.TemporaryDirectory() as tmpdir:
             dummyks = os.path.join(tmpdir, "dummy-keystore")
             gen_dummy_key(dummyks)
-            f()
+            sign_with_dummy_key(output_apk, dummyks)
     else:
-        f()
+        sign_with_dummy_key(output_apk, dummyks)
+    replace_meta(extracted_meta, output_apk)
+    patch_v2_sig(extracted_v2_sig, output_apk)
 
 
 do_extract = extract.callback
