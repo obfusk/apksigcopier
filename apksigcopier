@@ -33,6 +33,7 @@ __version__ = "0.0.2"
 name = "apksigcopier"
 
 ZipData = namedtuple("ZipData", "cd_offset eocd_offset cd_and_eocd".split())
+V1Only = click.Choice("no auto yes".split())
 
 
 # FIXME
@@ -119,7 +120,7 @@ def replace_meta(extracted_meta, out):
 # =================================
 
 
-def extract_v2_sig(apkfile, count=4096):
+def extract_v2_sig(apkfile, expected=True, count=4096):
     """Extract APK Signing Block from APK."""
     with open(apkfile, "rb") as fh:
         fh.seek(0, os.SEEK_END)
@@ -127,7 +128,10 @@ def extract_v2_sig(apkfile, count=4096):
         sb_magic = -1
         while sb_magic < 0:
             if fh.tell() < count:
-                raise RuntimeError("No APK Sig Block")
+                if expected:
+                    raise RuntimeError("No APK Sig Block")
+                else:
+                    return None
             fh.seek(-count, os.SEEK_CUR)
             data = (fh.read(count) + data)[:count*2]
             fh.seek(-count, os.SEEK_CUR)
@@ -184,9 +188,10 @@ def cli(ctx):
 @cli.command(help="""
     Extract APK signatures from signed APK.
 """)
+@click.option("--v1-only", type=V1Only, default="no", show_default=True)
 @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
-def extract(signed_apk, output_dir):
+def extract(signed_apk, output_dir, v1_only="no"):
     extracted_meta = extract_meta(signed_apk)
     for info, data in extracted_meta:
         name = os.path.basename(info.filename)
@@ -196,7 +201,13 @@ def extract(signed_apk, output_dir):
             json.dump(info_, fh)
         with open(os.path.join(output_dir, name), "wb") as fh:
             fh.write(data)
-    signed_sb_offset, signed_sb = extract_v2_sig(signed_apk)
+    if v1_only == "yes":
+        return
+    expected = v1_only == "no"
+    extracted_v2_sig = extract_v2_sig(signed_apk, expected=expected)
+    if extracted_v2_sig is None:
+        return
+    signed_sb_offset, signed_sb = extracted_v2_sig
     with open(os.path.join(output_dir, "sigoffset"), "w") as fh:
         fh.write(f"{signed_sb_offset}\n")
     with open(os.path.join(output_dir, "sigblock"), "wb") as fh:
@@ -206,11 +217,13 @@ def extract(signed_apk, output_dir):
 @cli.command(help="""
     Patch extracted APK signatures into unsigned APK.
 """)
+@click.option("--v1-only", type=V1Only, default="no", show_default=True)
 @click.option("--dummy-keystore", type=click.Path(exists=True, dir_okay=False))
 @click.argument("meta_dir", type=click.Path(exists=True, file_okay=False))
 @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_apk", type=click.Path(dir_okay=False))
-def patch(meta_dir, unsigned_apk, output_apk, dummy_keystore=None):
+def patch(meta_dir, unsigned_apk, output_apk, v1_only="no",
+          dummy_keystore=None):
     extracted_meta = []
     for what in "SF RSA MF".split():
         filename, = glob.glob(os.path.join(meta_dir, f"*.{what}"))
@@ -225,11 +238,19 @@ def patch(meta_dir, unsigned_apk, output_apk, dummy_keystore=None):
         with open(filename, "rb") as fh:
             data = fh.read()
         extracted_meta.append((info, data))
-    with open(os.path.join(meta_dir, "sigoffset"), "r") as fh:
-        signed_sb_offset = int(fh.read())
-    with open(os.path.join(meta_dir, "sigblock"), "rb") as fh:
-        signed_sb = fh.read()
-    extracted_v2_sig = signed_sb_offset, signed_sb
+    if v1_only == "yes":
+        extracted_v2_sig = None
+    else:
+        sigoffset_file = os.path.join(meta_dir, "sigoffset")
+        sigblock_file = os.path.join(meta_dir, "sigblock")
+        if v1_only == "auto" and not os.path.exists(sigblock_file):
+            extracted_v2_sig = None
+        else:
+            with open(sigoffset_file, "r") as fh:
+                signed_sb_offset = int(fh.read())
+            with open(sigblock_file, "rb") as fh:
+                signed_sb = fh.read()
+            extracted_v2_sig = signed_sb_offset, signed_sb
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
               dummy_keystore)
 
@@ -237,13 +258,19 @@ def patch(meta_dir, unsigned_apk, output_apk, dummy_keystore=None):
 @cli.command(help="""
     Copy (extract & patch) signatures from signed to unsigned APK.
 """)
+@click.option("--v1-only", type=V1Only, default="no", show_default=True)
 @click.option("--dummy-keystore", type=click.Path(exists=True, dir_okay=False))
 @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_apk", type=click.Path(dir_okay=False))
-def copy(signed_apk, unsigned_apk, output_apk, dummy_keystore=None):
+def copy(signed_apk, unsigned_apk, output_apk, v1_only="no",
+         dummy_keystore=None):
     extracted_meta = extract_meta(signed_apk)
-    extracted_v2_sig = extract_v2_sig(signed_apk)
+    if v1_only == "yes":
+        extracted_v2_sig = None
+    else:
+        expected = v1_only == "no"
+        extracted_v2_sig = extract_v2_sig(signed_apk, expected=expected)
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
               dummy_keystore)
 
@@ -268,7 +295,8 @@ def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk,
     else:
         sign_with_dummy_key(output_apk, dummyks)
     replace_meta(extracted_meta, output_apk)
-    patch_v2_sig(extracted_v2_sig, output_apk)
+    if extracted_v2_sig is not None:
+        patch_v2_sig(extracted_v2_sig, output_apk)
 
 
 do_extract = extract.callback
