@@ -13,6 +13,10 @@
 #
 # --                                                            ; }}}1
 
+"""
+copy/extract/patch apk signatures
+"""
+
 import glob
 import json
 import os
@@ -28,10 +32,7 @@ import click
 __version__ = "0.0.1"
 name = "apksigcopier"
 
-DUMMYKS = "dummy-keystore"
-
-ZipData = namedtuple("ZipData", """contents cd_offset eocd_offset
-                                   cd_and_eocd""".split())
+ZipData = namedtuple("ZipData", "cd_offset eocd_offset cd_and_eocd".split())
 
 
 # FIXME
@@ -118,7 +119,7 @@ def replace_meta(extracted_meta, out):
 # =================================
 
 
-# FIXME: optimise!
+# FIXME: optimise?!
 def extract_v2_sig(apkfile, count=1024**2):
     """Extract APK Signing Block from APK."""
     with open(apkfile, "rb") as fh:
@@ -135,9 +136,8 @@ def extract_v2_sig(apkfile, count=1024**2):
     return sb_offset, sig_block
 
 
-# FIXME: optimise!
 def zip_data(apkfile, count=1024):
-    """Extract contents, central directory & EOCD from ZIP."""
+    """Extract central directory & EOCD from ZIP."""
     with open(apkfile, "rb") as fh:
         fh.seek(-count, os.SEEK_END)
         data = fh.read()
@@ -145,10 +145,9 @@ def zip_data(apkfile, count=1024):
         eocd_offset = fh.tell()
         fh.seek(16, os.SEEK_CUR)
         cd_offset = int.from_bytes(fh.read(4), "little")
-        fh.seek(0)
-        contents = fh.read(cd_offset)
+        fh.seek(cd_offset)
         cd_and_eocd = fh.read()
-    return ZipData(contents, cd_offset, eocd_offset, cd_and_eocd)
+    return ZipData(cd_offset, eocd_offset, cd_and_eocd)
 
 
 def patch_v2_sig(extracted_v2_sig, out):
@@ -157,8 +156,8 @@ def patch_v2_sig(extracted_v2_sig, out):
     data_out = zip_data(out)
     padding = b"\x00" * (signed_sb_offset - data_out.cd_offset)
     offset = len(signed_sb) + len(padding)
-    with open(out, "wb") as fh:
-        fh.write(data_out.contents)
+    with open(out, "r+b") as fh:
+        fh.seek(data_out.cd_offset)
         fh.write(padding)
         fh.write(signed_sb)
         fh.write(data_out.cd_and_eocd)
@@ -186,7 +185,7 @@ def extract(signed_apk, output_dir):
         name = os.path.basename(info.filename)
         with open(os.path.join(output_dir, f"{name}.json"), "w") as fh:
             info_ = {k: getattr(info, k) for k in info.__slots__}
-            info_["comment"] = info_["extra"] = None           # FIXME
+            del info_["comment"], info_["extra"]               # FIXME
             json.dump(info_, fh)
         with open(os.path.join(output_dir, name), "wb") as fh:
             fh.write(data)
@@ -200,10 +199,11 @@ def extract(signed_apk, output_dir):
 @cli.command(help="""
     Patch extracted APK signatures into unsigned APK.
 """)
+@click.option("--dummy-keystore", type=click.Path(exists=True, dir_okay=False))
 @click.argument("meta_dir", type=click.Path(exists=True, file_okay=False))
 @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_apk", type=click.Path(dir_okay=False))
-def patch(meta_dir, unsigned_apk, output_apk):
+def patch(meta_dir, unsigned_apk, output_apk, dummy_keystore):
     extracted_meta = []
     for what in "SF RSA MF".split():
         filename, = glob.glob(os.path.join(meta_dir, f"*.{what}"))
@@ -211,7 +211,8 @@ def patch(meta_dir, unsigned_apk, output_apk):
             info_ = json.load(fh)
             info = zipfile.ZipInfo()
             for k in info.__slots__:
-                setattr(info, k, info_[k])
+                if k in info_:
+                    setattr(info, k, info_[k])
             info.date_time = tuple(info.date_time)
             info.comment = info.extra = b""                    # FIXME
         with open(filename, "rb") as fh:
@@ -222,30 +223,52 @@ def patch(meta_dir, unsigned_apk, output_apk):
     with open(os.path.join(meta_dir, "sigblock"), "rb") as fh:
         signed_sb = fh.read()
     extracted_v2_sig = signed_sb_offset, signed_sb
-    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
+    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
+              dummy_keystore)
 
 
 @cli.command(help="""
     Copy (extract & patch) signatures from signed to unsigned APK.
 """)
+@click.option("--dummy-keystore", type=click.Path(exists=True, dir_okay=False))
 @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_apk", type=click.Path(dir_okay=False))
-def copy(signed_apk, unsigned_apk, output_apk):
+def copy(signed_apk, unsigned_apk, output_apk, dummy_keystore):
     extracted_meta = extract_meta(signed_apk)
     extracted_v2_sig = extract_v2_sig(signed_apk)
-    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
+    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
+              dummy_keystore)
 
 
-# FIXME: reuse dummy key!
-def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk):
-    with tempfile.TemporaryDirectory() as tmpdir:
-        dummy = os.path.join(tmpdir, DUMMYKS)
-        gen_dummy_key(dummy)
+@cli.command(help="""
+    Generate dummy key (store).
+""")
+@click.option("--keysize", type=int, default=4096, show_default=True)
+@click.argument("dummy_keystore", type=click.Path(dir_okay=False))
+def gen_dummy(dummy_keystore, keysize):
+    gen_dummy_key(dummy_keystore, keysize)
+
+
+def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk,
+              output_apk, dummyks=None):
+    def f():
         shutil.copy(unsigned_apk, output_apk)
-        sign_with_dummy_key(output_apk, dummy)
+        sign_with_dummy_key(output_apk, dummyks)
         replace_meta(extracted_meta, output_apk)
         patch_v2_sig(extracted_v2_sig, output_apk)
+    if dummyks is None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dummyks = os.path.join(tmpdir, "dummy-keystore")
+            gen_dummy_key(dummyks)
+            f()
+    else:
+        f()
+
+
+do_extract = extract.callback
+do_patch = patch.callback
+do_copy = copy.callback
 
 
 def main():

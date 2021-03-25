@@ -46,6 +46,14 @@ Copy (Extract & Patch):
 $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```
 
+## CAVEATS
+
+Recent versions of the Android gradle plugin will use *zipflinger* --
+which arranges the contents of the APK differently -- making
+apksigcopier fail to work.  You can tell the plugin not to use
+*zipflinger* by setting `android.useNewApkCreator=false` in
+`gradle.properties`.
+
 ## Help
 
 ```bash
