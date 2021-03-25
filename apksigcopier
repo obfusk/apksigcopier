@@ -35,6 +35,10 @@ name = "apksigcopier"
 ZipData = namedtuple("ZipData", "cd_offset eocd_offset cd_and_eocd".split())
 
 
+class NoApkSigBlock(Exception):
+    pass
+
+
 # FIXME
 class ZeroedZipInfo(zipfile.ZipInfo):
     def __init__(self, zinfo):
@@ -127,7 +131,7 @@ def extract_v2_sig(apkfile, count=4096):
         sb_magic = -1
         while sb_magic < 0:
             if fh.tell() < count:
-                raise RuntimeError("No APK Sig Block")
+                raise NoApkSigBlock
             fh.seek(-count, os.SEEK_CUR)
             data = (fh.read(count) + data)[:count*2]
             fh.seek(-count, os.SEEK_CUR)
@@ -196,7 +200,10 @@ def extract(signed_apk, output_dir):
             json.dump(info_, fh)
         with open(os.path.join(output_dir, name), "wb") as fh:
             fh.write(data)
-    signed_sb_offset, signed_sb = extract_v2_sig(signed_apk)
+    try:
+        signed_sb_offset, signed_sb = extract_v2_sig(signed_apk)
+    except NoApkSigBlock:
+        return
     with open(os.path.join(output_dir, "sigoffset"), "w") as fh:
         fh.write(f"{signed_sb_offset}\n")
     with open(os.path.join(output_dir, "sigblock"), "wb") as fh:
@@ -243,7 +250,10 @@ def patch(meta_dir, unsigned_apk, output_apk, dummy_keystore):
 @click.argument("output_apk", type=click.Path(dir_okay=False))
 def copy(signed_apk, unsigned_apk, output_apk, dummy_keystore):
     extracted_meta = extract_meta(signed_apk)
-    extracted_v2_sig = extract_v2_sig(signed_apk)
+    try:
+        extracted_v2_sig = extract_v2_sig(signed_apk)
+    except NoApkSigBlock:
+        extracted_v2_sig = None
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
               dummy_keystore)
 
@@ -263,7 +273,8 @@ def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk,
         shutil.copy(unsigned_apk, output_apk)
         sign_with_dummy_key(output_apk, dummyks)
         replace_meta(extracted_meta, output_apk)
-        patch_v2_sig(extracted_v2_sig, output_apk)
+        if extracted_v2_sig is not None:
+            patch_v2_sig(extracted_v2_sig, output_apk)
     if dummyks is None:
         with tempfile.TemporaryDirectory() as tmpdir:
             dummyks = os.path.join(tmpdir, "dummy-keystore")
