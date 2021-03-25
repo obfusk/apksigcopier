@@ -119,13 +119,20 @@ def replace_meta(extracted_meta, out):
 # =================================
 
 
-# FIXME: optimise?!
-def extract_v2_sig(apkfile, count=1024**2):
+def extract_v2_sig(apkfile, count=4096):
     """Extract APK Signing Block from APK."""
     with open(apkfile, "rb") as fh:
-        fh.seek(-count, os.SEEK_END)
-        data = fh.read()
-        fh.seek(data.rindex(b"APK Sig Block 4") - len(data) - 8, os.SEEK_CUR)
+        fh.seek(0, os.SEEK_END)
+        data = b""
+        sb_magic = -1
+        while sb_magic < 0:
+            if fh.tell() < count:
+                raise RuntimeError("No APK Sig Block")
+            fh.seek(-count, os.SEEK_CUR)
+            data = (fh.read(count) + data)[:count*2]
+            fh.seek(-count, os.SEEK_CUR)
+            sb_magic = data.rfind(b"APK Sig Block 4")
+        fh.seek(sb_magic - 8, os.SEEK_CUR)
         sb_size2 = int.from_bytes(fh.read(8), "little")
         fh.seek(-sb_size2 + 8, os.SEEK_CUR)
         sb_size1 = int.from_bytes(fh.read(8), "little")
