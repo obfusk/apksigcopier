@@ -175,17 +175,18 @@ def cli(ctx):
     pass
 
 
-@click.command(help="""
+@cli.command(help="""
     Extract APK signatures from signed APK.
 """)
 @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
-def extract(ctx, signed_apk, output_dir):
+def extract(signed_apk, output_dir):
     extracted_meta = extract_meta(signed_apk)
     for info, data in extracted_meta:
         name = os.path.basename(info.filename)
         with open(os.path.join(output_dir, f"{name}.json"), "w") as fh:
             info_ = {k: getattr(info, k) for k in info.__slots__}
+            info_["comment"] = info_["extra"] = None           # FIXME
             json.dump(info_, fh)
         with open(os.path.join(output_dir, name), "wb") as fh:
             fh.write(data)
@@ -196,13 +197,13 @@ def extract(ctx, signed_apk, output_dir):
         fh.write(signed_sb)
 
 
-@click.command(help="""
+@cli.command(help="""
     Patch extracted APK signatures into unsigned APK.
 """)
 @click.argument("meta_dir", type=click.Path(exists=True, file_okay=False))
 @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_apk", type=click.Path(dir_okay=False))
-def patch(ctx, meta_dir, unsigned_apk, output_apk):
+def patch(meta_dir, unsigned_apk, output_apk):
     extracted_meta = []
     for what in "SF RSA MF".split():
         filename, = glob.glob(os.path.join(meta_dir, f"*.{what}"))
@@ -211,9 +212,11 @@ def patch(ctx, meta_dir, unsigned_apk, output_apk):
             info = zipfile.ZipInfo()
             for k in info.__slots__:
                 setattr(info, k, info_[k])
+            info.date_time = tuple(info.date_time)
+            info.comment = info.extra = b""                    # FIXME
         with open(filename, "rb") as fh:
             data = fh.read()
-        extracted_meta.append(info, data)
+        extracted_meta.append((info, data))
     with open(os.path.join(meta_dir, "sigoffset"), "r") as fh:
         signed_sb_offset = int(fh.read())
     with open(os.path.join(meta_dir, "sigblock"), "rb") as fh:
@@ -222,18 +225,19 @@ def patch(ctx, meta_dir, unsigned_apk, output_apk):
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
 
 
-@click.command(help="""
-    Copy (i.e. extract & patch) signatures from signed to unsigned APK.
+@cli.command(help="""
+    Copy (extract & patch) signatures from signed to unsigned APK.
 """)
 @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
 @click.argument("output_apk", type=click.Path(dir_okay=False))
-def copy(ctx, signed_apk, unsigned_apk, output_apk):
+def copy(signed_apk, unsigned_apk, output_apk):
     extracted_meta = extract_meta(signed_apk)
     extracted_v2_sig = extract_v2_sig(signed_apk)
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
 
 
+# FIXME: reuse dummy key!
 def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk):
     with tempfile.TemporaryDirectory() as tmpdir:
         dummy = os.path.join(tmpdir, DUMMYKS)

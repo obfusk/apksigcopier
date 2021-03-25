@@ -21,7 +21,33 @@
 
 ## apksigcopier - copy/extract/patch apk signatures
 
-...
+Extract:
+
+```bash
+$ mkdir meta
+$ apksigcopier extract signed.apk meta
+$ ls -1 meta
+DUMMY.RSA
+DUMMY.RSA.json
+DUMMY.SF
+DUMMY.SF.json
+MANIFEST.MF
+MANIFEST.MF.json
+sigblock
+sigoffset
+```
+
+Patch:
+
+```bash
+$ apksigcopier patch meta unsigned.apk out.apk
+```
+
+Copy (Extract & Patch):
+
+```bash
+$ apksigcopier copy signed.apk unsigned.apk out.apk
+```
 
 ## Help
 
