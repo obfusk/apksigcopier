@@ -2,7 +2,7 @@ from pathlib import Path
 import setuptools
 
 # from apksigcopier import __version__                         # FIXME
-__version__ = "0.0.2"
+__version__ = "0.1.0"
 
 info = Path(__file__).with_name("README.md").read_text(encoding = "utf8")
 
@@ -23,6 +23,8 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
         "Operating System :: POSIX :: Linux",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -34,6 +36,6 @@ setuptools.setup(
     keywords          = "android apk reproducible signing",
     py_modules        = ["apksigcopier"],
     entry_points      = dict(console_scripts = ["apksigcopier = apksigcopier:main"]),
-    python_requires   = ">=3.7",
+    python_requires   = ">=3.5",
     install_requires  = ["click>=6.0"],
 )

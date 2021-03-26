@@ -5,7 +5,7 @@
     Date        : 2021-03-25
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
-    Version     : v0.0.2
+    Version     : v0.1.0
     License     : GPLv3+
 
 }}}1 -->
@@ -24,14 +24,11 @@ Extract:
 $ mkdir meta
 $ apksigcopier extract signed.apk meta
 $ ls -1 meta
-DUMMY.RSA
-DUMMY.RSA.json
-DUMMY.SF
-DUMMY.SF.json
+8BEA2A77.RSA
+8BEA2A77.SF
+APKSigningBlock
+APKSigningBlockOffset
 MANIFEST.MF
-MANIFEST.MF.json
-sigblock
-sigoffset
 ```
 
 Patch:
@@ -82,7 +79,7 @@ eval (env _SHTST_COMPLETE=source_fish apksigcopier)
 
 ## Requirements
 
-* Python >= 3.7 + click + `apksigner` + `zip`.
+* Python >= 3.5 + click + `apksigner` + `zip`.
 
 ### Debian/Ubuntu
 
