@@ -29,13 +29,22 @@ jobs:
       run: make install
     - name: Test
       run: make test
+    - name: Cache NewPipe Build
+      uses: actions/cache@v2
+      with:
+        path: NewPipe/app/build/outputs/apk/release/app-release-unsigned.apk
+        key: v0.20.11
     - name: Build & Test NewPipe
       run: |
-        git clone -b v0.20.11 https://github.com/TeamNewPipe/NewPipe.git
-        cd NewPipe
-        printf '\nandroid.useNewApkCreator=false\n' >> gradle.properties
-        ./gradlew assembleRelease
-        cd app/build/outputs/apk/release
+        if [ -e NewPipe/app/build/outputs/apk/release/app-release-unsigned.apk ]; then
+          cd NewPipe/app/build/outputs/apk/release
+        else
+          git clone -b v0.20.11 https://github.com/TeamNewPipe/NewPipe.git
+          cd NewPipe
+          printf '\nandroid.useNewApkCreator=false\n' >> gradle.properties
+          ./gradlew assembleRelease
+          cd app/build/outputs/apk/release
+        fi
         cp app-release-unsigned.apk signed.apk
         apksigcopier gen-dummy ci-ks
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
@@ -45,7 +54,7 @@ jobs:
         ls -hlA meta
         apksigcopier patch meta app-release-unsigned.apk patched.apk
         apksigcopier copy signed.apk app-release-unsigned.apk copied.apk
-        shasum *.apk
+        sha512sum *.apk
         cmp signed.apk patched.apk
         cmp signed.apk copied.apk
         apksigner verify -v --print-certs patched.apk
