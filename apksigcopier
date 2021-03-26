@@ -311,8 +311,7 @@ def main():
         apksigcopier - copy/extract/patch apk signatures
     """)
     @click.version_option(__version__)
-    @click.pass_context
-    def cli(ctx):
+    def cli():
         pass
 
     @cli.command(help="""
