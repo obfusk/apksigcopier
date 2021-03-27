@@ -39,6 +39,14 @@ APK_META = re.compile(r"^META-INF/[0-9A-Za-z_-]+\.(SF|RSA|MF)$")
 ZipData = namedtuple("ZipData", "cd_offset eocd_offset cd_and_eocd".split())
 
 
+class APKSigningBlockError(Exception):
+    pass
+
+
+class NoAPKSigningBlock(APKSigningBlockError):
+    pass
+
+
 # FIXME
 class ReproducibleZipInfo(zipfile.ZipInfo):
     """Reproducible ZipInfo hack."""
@@ -78,7 +86,8 @@ def is_meta(filename):
 
 def noautoyes(value):
     if isinstance(value, str):
-        assert value in NOAUTOYES
+        if value not in NOAUTOYES:
+            raise ValueError("expected NO, AUTO, or YES")
         return value
     return {False: NO, None: AUTO, True: YES}[value]
 
@@ -174,9 +183,8 @@ def extract_v2_sig(apkfile, expected=True, count=4096):
         while sb_magic < 0:
             if fh.tell() < count:
                 if expected:
-                    raise RuntimeError("No APK Sig Block")
-                else:
-                    return None
+                    raise NoAPKSigningBlock("No APK Sig Block")
+                return None
             fh.seek(-count, os.SEEK_CUR)
             data = (fh.read(count) + data)[:count * 2]
             fh.seek(-count, os.SEEK_CUR)
@@ -185,7 +193,8 @@ def extract_v2_sig(apkfile, expected=True, count=4096):
         sb_size2 = int.from_bytes(fh.read(8), "little")
         fh.seek(-sb_size2 + 8, os.SEEK_CUR)
         sb_size1 = int.from_bytes(fh.read(8), "little")
-        assert sb_size1 == sb_size2
+        if sb_size1 != sb_size2:
+            raise APKSigningBlockError("APK Sig Block sizes not equal")
         fh.seek(-8, os.SEEK_CUR)
         sb_offset = fh.tell()
         sig_block = fh.read(sb_size2 + 8)
