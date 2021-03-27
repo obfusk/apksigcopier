@@ -19,6 +19,7 @@ copy/extract/patch apk signatures
 
 import glob
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -33,6 +34,7 @@ name = "apksigcopier"
 SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
 APKSIGNER_CMD, KEYTOOL_CMD, ZIP_CMD = "apksigner keytool zip".split()
 NOAUTOYES = NO, AUTO, YES = "no auto yes".split()
+APK_META = re.compile(r"^META-INF/[0-9A-Za-z_-]+\.(SF|RSA|MF)$")
 
 ZipData = namedtuple("ZipData", "cd_offset eocd_offset cd_and_eocd".split())
 
@@ -71,8 +73,7 @@ class APKZipInfo(ReproducibleZipInfo):
 
 # FIXME: .DSA?
 def is_meta(filename):
-    return filename.startswith("META-INF") and \
-        any(filename.endswith(ext) for ext in ".SF .RSA .MF".split())
+    return APK_META.fullmatch(filename) is not None
 
 
 def noautoyes(value):
