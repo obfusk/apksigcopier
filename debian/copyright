@@ -1,0 +1,11 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: apksigcopier
+Upstream-Contact: flx@obfusk.net
+Source: <https://github.com/obfusk/apksigcopier>
+#
+# Please double check copyright with the licensecheck(1) command.
+
+Files:     *
+Copyright: 2021 Felix C. Stegerman
+License:   GPL-3.0-or-later
+ See /usr/share/common-licenses/GPL-3.

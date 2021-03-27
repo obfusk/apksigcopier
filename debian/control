@@ -1,0 +1,30 @@
+Source: apksigcopier
+Section: misc
+Priority: optional
+Maintainer: Felix C. Stegerman <flx@obfusk.net>
+Build-Depends: debhelper-compat (= 12),
+               dh-python,
+               python3-all,
+               python3-click,
+               python3-setuptools,
+               flake8,
+Standards-Version: 4.5.0
+Vcs-Git: https://salsa.debian.org/obfusk/apksigcopier.git
+Vcs-Browser: https://salsa.debian.org/obfusk/apksigcopier
+Homepage: https://github.com/obfusk/apksigcopier
+
+Package: apksigcopier
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends},
+         ${shlibs:Depends},
+         apksigner,
+         zip,
+Description: copy/extract/patch apk signatures
+ apksigcopier is a tool for copying APK signatures from a signed APK
+ to an unsigned one (in order to verify reproducible builds).  Its
+ command-line tool offers three operations:
+ .
+  * copy signatures directly from a signed to an unsigned APK
+  * extract signatures from a signed APK to a directory
+  * patch previously extracted signatures onto an unsigned APK
