@@ -18,7 +18,15 @@
 
 ## apksigcopier - copy/extract/patch apk signatures
 
-Extract:
+`apksigcopier` is a tool for copying APK signatures from a signed APK
+to an unsigned one (in order to verify reproducible builds).  Its
+command-line tool offers three operations:
+
+* copy signatures directly from a signed to an unsigned APK
+* extract signatures from a signed APK to a directory
+* patch previously extracted signatures onto an unsigned APK
+
+### Extract
 
 ```bash
 $ mkdir meta
@@ -31,16 +39,32 @@ APKSigningBlockOffset
 MANIFEST.MF
 ```
 
-Patch:
+### Patch
 
 ```bash
 $ apksigcopier patch meta unsigned.apk out.apk
 ```
 
-Copy (Extract & Patch):
+### Copy (Extract & Patch)
 
 ```bash
 $ apksigcopier copy signed.apk unsigned.apk out.apk
+```
+
+## Python API
+
+```python
+>>> from apksigcopier import do_extract, do_patch, do_copy, gen_dummy_key
+>>> config = dict(apksigner_cmd=..., ...)
+>>> do_extract(signed_apk, output_dir, v1_only=NO)
+>>> do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO,
+...          dummy_keystore=None, config=config)
+>>> do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO,
+...         dummy_keystore=None, config=config)
+>>> gen_dummy_key(keystore, alias="dummy", keyalg="RSA", keysize=4096,
+...               sigalg="SHA512withRSA", validity=10000,
+...               storepass="dummy-password", dname="CN=dummy",
+...               keytool_cmd=config["keytool_cmd"])
 ```
 
 ## CAVEATS
