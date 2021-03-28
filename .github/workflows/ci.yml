@@ -65,8 +65,8 @@ jobs:
         ls -hlA meta
         apksigcopier patch meta app-release-unsigned.apk patched.apk
         apksigcopier copy signed.apk app-release-unsigned.apk copied.apk
-        apksigcopier copy signed-v1.apk app-release-unsigned.apk copied-v1.apk
-        apksigcopier copy signed-jarsigner.apk app-release-unsigned.apk copied-jarsigner.apk
+        apksigcopier copy --v1-only auto signed-v1.apk app-release-unsigned.apk copied-v1.apk
+        apksigcopier copy --v1-only yes signed-jarsigner.apk app-release-unsigned.apk copied-jarsigner.apk
         # compare APKs
         sha512sum *.apk
         cmp signed.apk patched.apk
