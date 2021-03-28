@@ -36,6 +36,7 @@ jobs:
         key: v0.20.11
     - name: Build & Test NewPipe
       run: |
+        set -x
         # build APK
         if [ -e NewPipe/app/build/outputs/apk/release/app-release-unsigned.apk ]; then
           cd NewPipe/app/build/outputs/apk/release
@@ -56,7 +57,7 @@ jobs:
           --ks-pass pass:dummy-password signed.apk
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password \
-          --v2-signing-enabled=false signed-v1.apk
+          --v2-signing-enabled=false --v3-signing-enabled=false signed-v1.apk
         PASS=dummy-password jarsigner -keystore ci-ks -storepass:env PASS \
           -sigalg SHA256withRSA -digestalg SHA-256 signed-jarsigner.apk dummy
         # copy signatures
@@ -68,7 +69,7 @@ jobs:
         apksigcopier copy --v1-only auto signed-v1.apk app-release-unsigned.apk copied-v1.apk
         apksigcopier copy --v1-only yes signed-jarsigner.apk app-release-unsigned.apk copied-jarsigner.apk
         # compare APKs
-        sha512sum *.apk
+        sha512sum *.apk | sort
         cmp signed.apk patched.apk
         cmp signed.apk copied.apk
         cmp signed-v1.apk copied-v1.apk
