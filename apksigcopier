@@ -174,22 +174,16 @@ def replace_meta(extracted_meta, output_apk, zip_cmd=ZIP_CMD):
 # =================================
 
 
-def extract_v2_sig(apkfile, expected=True, count=4096):
+def extract_v2_sig(apkfile, expected=True):
     """Extract APK Signing Block from APK."""
+    cd_offset = zip_data(apkfile).cd_offset
     with open(apkfile, "rb") as fh:
-        fh.seek(0, os.SEEK_END)
-        data = b""
-        sb_magic = -1
-        while sb_magic < 0:
-            if fh.tell() < count:
-                if expected:
-                    raise NoAPKSigningBlock("No APK Sig Block")
-                return None
-            fh.seek(-count, os.SEEK_CUR)
-            data = (fh.read(count) + data)[:count * 2]
-            fh.seek(-count, os.SEEK_CUR)
-            sb_magic = data.rfind(b"APK Sig Block 4")
-        fh.seek(sb_magic - 8, os.SEEK_CUR)
+        fh.seek(cd_offset - 16)
+        if fh.read(16) != b"APK Sig Block 42":
+            if expected:
+                raise NoAPKSigningBlock("No APK Sig Block")
+            return None
+        fh.seek(-24, os.SEEK_CUR)
         sb_size2 = int.from_bytes(fh.read(8), "little")
         fh.seek(-sb_size2 + 8, os.SEEK_CUR)
         sb_size1 = int.from_bytes(fh.read(8), "little")
