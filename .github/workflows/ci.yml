@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update || sudo apt-get update
-        sudo apt-get upgrade -y
+        # sudo apt-get upgrade -y
         sudo apt-get install -y apksigner zip
         python3 -m pip install --upgrade pip
         python3 -m pip install flake8
@@ -29,24 +29,80 @@ jobs:
       run: make install
     - name: Test
       run: make test
+    - name: Cache NewPipe Build
+      uses: actions/cache@v2
+      with:
+        path: |
+          app-release-unsigned.apk
+          app-release-unsigned-zipflinger.apk
+        key: v0.21.0
     - name: Build & Test NewPipe
       run: |
-        git clone -b v0.20.11 https://github.com/TeamNewPipe/NewPipe.git
-        cd NewPipe
-        printf '\nandroid.useNewApkCreator=false\n' >> gradle.properties
-        ./gradlew assembleRelease
-        cd app/build/outputs/apk/release
+        set -x
+        # build APK
+        if [ ! -e app-release-unsigned.apk ]; then
+          git clone -b v0.21.0 https://github.com/TeamNewPipe/NewPipe.git
+          cd NewPipe
+          ./gradlew assembleRelease
+          mv app/build/outputs/apk/release/app-release-unsigned.apk \
+            ../app-release-unsigned-zipflinger.apk
+          printf '\nandroid.useNewApkCreator=false\n' >> gradle.properties
+          ./gradlew clean
+          ./gradlew assembleRelease
+          mv app/build/outputs/apk/release/app-release-unsigned.apk ../
+          cd ..
+        fi
+        # copy APK
         cp app-release-unsigned.apk signed.apk
+        cp app-release-unsigned.apk signed-v1.apk
+        cp app-release-unsigned.apk signed-jarsigner.apk
+        cp app-release-unsigned-zipflinger.apk signed-zipflinger.apk
+        cp app-release-unsigned-zipflinger.apk signed-zipflinger-v1.apk
+        # generate dummy keystore & sign APKs
         apksigcopier gen-dummy ci-ks
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password signed.apk
-        mkdir meta
+        apksigner sign -v --ks ci-ks --ks-key-alias dummy \
+          --ks-pass pass:dummy-password \
+          --v2-signing-enabled=false --v3-signing-enabled=false signed-v1.apk
+        PASS=dummy-password jarsigner -keystore ci-ks -storepass:env PASS \
+          -sigalg SHA256withRSA -digestalg SHA-256 signed-jarsigner.apk dummy
+        apksigner sign -v --ks ci-ks --ks-key-alias dummy \
+          --ks-pass pass:dummy-password signed-zipflinger.apk
+        apksigner sign -v --ks ci-ks --ks-key-alias dummy \
+          --ks-pass pass:dummy-password \
+          --v2-signing-enabled=false --v3-signing-enabled=false signed-zipflinger-v1.apk
+        # copy signatures
+        mkdir meta meta-zipflinger
         apksigcopier extract signed.apk meta
-        ls -hlA meta
-        apksigcopier patch meta app-release-unsigned.apk patched.apk
-        apksigcopier copy signed.apk app-release-unsigned.apk copied.apk
-        shasum *.apk
+        apksigcopier extract signed-zipflinger.apk meta-zipflinger
+        ls -hlA meta meta-zipflinger
+        apksigcopier patch --use-zip=yes meta app-release-unsigned.apk patched.apk
+        apksigcopier patch meta app-release-unsigned.apk patched-nozip.apk
+        apksigcopier copy --use-zip=yes signed.apk app-release-unsigned.apk copied.apk
+        apksigcopier copy signed.apk app-release-unsigned.apk copied-nozip.apk
+        apksigcopier copy --use-zip=yes --v1-only=auto signed-v1.apk \
+          app-release-unsigned.apk copied-v1.apk
+        apksigcopier copy --use-zip=yes --v1-only=yes signed-jarsigner.apk \
+          app-release-unsigned.apk copied-jarsigner.apk
+        apksigcopier patch meta-zipflinger \
+          app-release-unsigned-zipflinger.apk patched-zipflinger.apk
+        apksigcopier copy signed-zipflinger.apk \
+          app-release-unsigned-zipflinger.apk copied-zipflinger.apk
+        apksigcopier copy --v1-only=auto signed-zipflinger-v1.apk \
+          app-release-unsigned-zipflinger.apk copied-zipflinger-v1.apk
+        # compare APKs
+        sha512sum *.apk | sort
         cmp signed.apk patched.apk
+        cmp signed.apk patched-nozip.apk
         cmp signed.apk copied.apk
-        apksigner verify -v --print-certs patched.apk
-        apksigner verify -v --print-certs copied.apk
+        cmp signed.apk copied-nozip.apk
+        cmp signed-v1.apk copied-v1.apk
+        cmp signed-jarsigner.apk copied-jarsigner.apk || true
+        cmp signed-zipflinger.apk patched-zipflinger.apk
+        cmp signed-zipflinger.apk copied-zipflinger.apk
+        cmp signed-zipflinger-v1.apk copied-zipflinger-v1.apk
+        # verify APKs
+        for apk in signed*.apk patched*.apk copied*.apk; do
+          apksigner verify -v --print-certs "$apk" | grep -v ^WARNING:
+        done

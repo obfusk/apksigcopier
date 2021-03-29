@@ -2,10 +2,10 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-03-25
+    Date        : 2021-03-29
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
-    Version     : v0.1.0
+    Version     : v0.2.1
     License     : GPLv3+
 
 }}}1 -->
@@ -18,7 +18,15 @@
 
 ## apksigcopier - copy/extract/patch apk signatures
 
-Extract:
+`apksigcopier` is a tool for copying APK signatures from a signed APK
+to an unsigned one (in order to verify reproducible builds).  Its
+command-line tool offers three operations:
+
+* copy signatures directly from a signed to an unsigned APK
+* extract signatures from a signed APK to a directory
+* patch previously extracted signatures onto an unsigned APK
+
+### Extract
 
 ```bash
 $ mkdir meta
@@ -31,25 +39,41 @@ APKSigningBlockOffset
 MANIFEST.MF
 ```
 
-Patch:
+### Patch
 
 ```bash
 $ apksigcopier patch meta unsigned.apk out.apk
 ```
 
-Copy (Extract & Patch):
+### Copy (Extract & Patch)
 
 ```bash
 $ apksigcopier copy signed.apk unsigned.apk out.apk
+```
+
+## Python API
+
+```python
+>>> from apksigcopier import do_extract, do_patch, do_copy, gen_dummy_key
+>>> config = dict(apksigner_cmd=..., ...)
+>>> do_extract(signed_apk, output_dir, v1_only=NO)
+>>> do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO,
+...          dummy_keystore=None, config=config)
+>>> do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO,
+...         dummy_keystore=None, config=config)
+>>> gen_dummy_key(keystore, alias="dummy", keyalg="RSA", keysize=4096,
+...               sigalg="SHA512withRSA", validity=10000,
+...               storepass="dummy-password", dname="CN=dummy",
+...               keytool_cmd=config["keytool_cmd"])
 ```
 
 ## CAVEATS
 
 Recent versions of the Android gradle plugin will use *zipflinger* --
 which arranges the contents of the APK differently -- making
-apksigcopier fail to work.  You can tell the plugin not to use
-*zipflinger* by setting `android.useNewApkCreator=false` in
-`gradle.properties`.
+`apksigcopier` fail to work when using `--use-zip=yes` (the default is
+`no`).  You can tell the plugin not to use *zipflinger* by setting
+`android.useNewApkCreator=false` in `gradle.properties`.
 
 ## Help
 
@@ -79,12 +103,12 @@ eval (env _SHTST_COMPLETE=source_fish apksigcopier)
 
 ## Requirements
 
-* Python >= 3.5 + click + `apksigner` + `zip`.
+* Python >= 3.5 + click + `apksigner`.
 
 ### Debian/Ubuntu
 
 ```bash
-$ apt install python3-click apksigner zip
+$ apt install python3-click apksigner
 ```
 
 ## Installing
