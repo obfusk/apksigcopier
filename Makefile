@@ -5,7 +5,7 @@ export PYTHONWARNINGS := default
 
 .PHONY: all install test cleanup
 
-all:
+all: apksigcopier.1
 
 install:
 	$(PYTHON) -mpip install -e .
@@ -20,6 +20,10 @@ cleanup:
 	rm -fr __pycache__/
 	rm -fr build/ dist/ apksigcopier.egg-info/
 	rm -fr .coverage htmlcov/
+	rm -fr apksigcopier.1
+
+%.1: %.1.md
+	pandoc -s -t man -o $@ $<
 
 .PHONY: _package _publish
 
