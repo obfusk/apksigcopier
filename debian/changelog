@@ -1,6 +1,6 @@
-apksigcopier (0.1.0-1) UNRELEASED; urgency=medium
+apksigcopier (0.2.1-1) UNRELEASED; urgency=medium
 
   * Initial release. Closes: #nnnn
     <nnnn is the bug number of your ITP>
 
- -- Felix C. Stegerman <flx@obfusk.net>  Sat, 27 Mar 2021 01:28:37 +0100
+ -- Felix C. Stegerman <flx@obfusk.net>  Mon, 29 Mar 2021 20:24:12 +0200

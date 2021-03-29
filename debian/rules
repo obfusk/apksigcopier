@@ -1,3 +1,5 @@
 #!/usr/bin/make -f
+execute_after_dh_auto_build:
+	make apksigcopier.1
 %:
 	dh $@ --with python3 --buildsystem=pybuild
