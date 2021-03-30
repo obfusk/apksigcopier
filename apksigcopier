@@ -37,7 +37,7 @@ SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
 APKSIGNER_CMD, KEYTOOL_CMD, ZIP_CMD = "apksigner keytool zip".split()
 NOAUTOYES = NO, AUTO, YES = "no auto yes".split()
 APK_META = re.compile(r"^META-INF/[0-9A-Za-z_-]+\.(SF|RSA|MF)$")
-DATETIME0 = (1980, 0, 0, 0, 0, 0)
+DATETIMEZERO = (1980, 0, 0, 0, 0, 0)
 
 ZipData = namedtuple("ZipData", "cd_offset eocd_offset cd_and_eocd".split())
 
@@ -47,6 +47,10 @@ class APKSigningBlockError(Exception):
 
 
 class NoAPKSigningBlock(APKSigningBlockError):
+    pass
+
+
+class ZipError(Exception):
     pass
 
 
@@ -79,7 +83,7 @@ class APKZipInfo(ReproducibleZipInfo):
         compress_type=8,
         create_system=0,
         create_version=20,
-        date_time=DATETIME0,
+        date_time=DATETIMEZERO,
         external_attr=0,
         extract_version=20,
         flag_bits=0x800,
@@ -160,6 +164,76 @@ def copy_zipfile(unsigned_apk, output_apk, exclude=is_meta):
                     zfo.writestr(info, zfi.read(info.filename))
 
 
+# FIXME
+def copy_apk(unsigned_apk, output_apk):
+    """Copy APK (without MANIFEST.MF); returns max date_time."""
+    exclude = ["META-INF/MANIFEST.MF"]
+    with zipfile.ZipFile(unsigned_apk, "r") as zf:
+        infos = zf.infolist()
+    date_time = max(info.date_time for info in infos)
+    if not any(info.filename in exclude for info in infos):
+        shutil.copy(unsigned_apk, output_apk)
+        return date_time
+    zdata = zip_data(unsigned_apk)
+    offsets = {}
+    with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
+        for info in sorted(infos, key=lambda info: info.header_offset):
+            off_i = fhi.tell()
+            if info.header_offset > off_i:
+                fho.write(fhi.read(info.header_offset - off_i))
+            hdr = fhi.read(30)
+            if hdr[:4] != b"\x50\x4b\x03\x04":
+                raise ZipError("Expected local file header signature")
+            n, m = struct.unpack("<HH", hdr[26:30])
+            hdr += fhi.read(n + m)
+            if info.filename in exclude:
+                fhi.seek(info.compress_size, os.SEEK_CUR)
+            else:
+                off_o = fho.tell()
+                if info.compress_type == 0:
+                    old_off = info.header_offset + 30 + n + m
+                    new_off = off_o + 30 + n
+                    align = 4096 if info.filename.endswith(".so") else 4
+                    if len(info.extra) >= 6 and info.extra[:2] == b"\x35\xd9":
+                        dsize = int.from_bytes(info.extra[2:4], "little")
+                        if dsize > 1 and dsize <= len(info.extra) - 4:
+                            align = int.from_bytes(info.extra[4:6], "little")
+                    if old_off % align == 0 and new_off % align != 0:
+                        pad = (align - (new_off + 6) % align) % align
+                        xtr = struct.pack("<HHH", 0xd935, 2 + pad, align) + pad * b"\x00"
+                        m_b = int.to_bytes(len(xtr), 2, "little")
+                        hdr = hdr[:28] + m_b + hdr[30:30 + n] + xtr
+                offsets[id(info)] = off_o
+                fho.write(hdr)
+                size = info.compress_size
+                while size > 0:
+                    data = fhi.read(min(size, 4096))
+                    size -= len(data)
+                    fho.write(data)
+        size = zdata.cd_offset - fhi.tell()
+        while size > 0:
+            data = fhi.read(min(size, 4096))
+            size -= len(data)
+            fho.write(data)
+        cd_offset = fho.tell()
+        for info in infos:
+            hdr = fhi.read(46)
+            if hdr[:4] != b"\x50\x4b\x01\x02":
+                raise ZipError("Expected CD file header signature")
+            n, m, k = struct.unpack("<HHH", hdr[28:34])
+            hdr += fhi.read(n + m + k)
+            if info.filename not in exclude:
+                off = int.to_bytes(offsets[id(info)], 4, "little")
+                hdr = hdr[:42] + off + hdr[46:]
+                fho.write(hdr)
+        eocd_offset = fho.tell()
+        fho.write(zdata.cd_and_eocd[zdata.eocd_offset - zdata.cd_offset:])
+        fho.seek(eocd_offset + 8)
+        fho.write(struct.pack("<HHLL", len(offsets), len(offsets),
+                              eocd_offset - cd_offset, cd_offset))
+    return date_time
+
+
 def extract_meta(signed_apk):
     """Extract v1 signature metadata files from signed APK."""
     with zipfile.ZipFile(signed_apk, "r") as zf_sig:
@@ -168,12 +242,12 @@ def extract_meta(signed_apk):
                 yield info, zf_sig.read(info.filename)
 
 
-def replace_meta(extracted_meta, output_apk, zip_cmd=None):
+def replace_meta(extracted_meta, output_apk, zip_cmd=None, date_time=DATETIMEZERO):
     """Replace v1 signature metadata in signed APK; removes v2 sig block."""
     with zipfile.ZipFile(output_apk, "r") as zf_out:
         meta = [info for info in zf_out.infolist() if is_meta(info.filename)]
-        date_time = meta[0].date_time if meta else DATETIME0   # FIXME
         if meta:
+            date_time = meta[0].date_time                      # FIXME
             remove_from_zip(output_apk, meta, zip_cmd=zip_cmd)
     with zipfile.ZipFile(output_apk, "a") as zf_out:
         info_data = [(APKZipInfo(info, date_time=date_time), data)
@@ -278,11 +352,15 @@ def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk,
     apksigner_cmd = config.get("apksigner_cmd", APKSIGNER_CMD)
     keytool_cmd = config.get("keytool_cmd", KEYTOOL_CMD)
     zip_cmd = config.get("zip_cmd", None)
-    if extracted_v2_sig is None and not \
-            (apksigner_cmd and shutil.which(apksigner_cmd)):
+    date_time = DATETIMEZERO
+    if not (apksigner_cmd and shutil.which(apksigner_cmd)):
         logger = logging.getLogger(__name__)
-        logger.warning("Patching v1 signature without apksigner")
-        copy_zipfile(unsigned_apk, output_apk)
+        if extracted_v2_sig is None:
+            logger.warning("Patching without apksigner (v1)")
+            copy_zipfile(unsigned_apk, output_apk)
+        else:
+            logger.warning("Patching without apksigner (v2)")
+            date_time = copy_apk(unsigned_apk, output_apk)
     else:
         shutil.copy(unsigned_apk, output_apk)
         if dummyks is None:
@@ -292,7 +370,7 @@ def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk,
                 sign_with_dummy_key(output_apk, dummyks, apksigner_cmd=apksigner_cmd)
         else:
             sign_with_dummy_key(output_apk, dummyks, apksigner_cmd=apksigner_cmd)
-    replace_meta(extracted_meta, output_apk, zip_cmd=zip_cmd)
+    replace_meta(extracted_meta, output_apk, zip_cmd=zip_cmd, date_time=date_time)
     if extracted_v2_sig is not None:
         patch_v2_sig(extracted_v2_sig, output_apk)
 
