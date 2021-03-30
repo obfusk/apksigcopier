@@ -20,7 +20,7 @@ Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
          ${shlibs:Depends},
-         apksigner,
+Recommends: apksigner,
 Suggests: zip,
 Description: copy/extract/patch apk signatures
  apksigcopier is a tool for copying APK signatures from a signed APK
