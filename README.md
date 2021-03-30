@@ -86,19 +86,19 @@ $ apksigcopier --help
 For Bash, add this to `~/.bashrc`:
 
 ```bash
-eval "$(_SHTST_COMPLETE=source_bash apksigcopier)"
+eval "$(_APKSIGCOPIER_COMPLETE=source_bash apksigcopier)"
 ```
 
 For Zsh, add this to `~/.zshrc`:
 
 ```zsh
-eval "$(_SHTST_COMPLETE=source_zsh apksigcopier)"
+eval "$(_APKSIGCOPIER_COMPLETE=source_zsh apksigcopier)"
 ```
 
 For Fish, add this to `~/.config/fish/completions/apksigcopier.fish`:
 
 ```fish
-eval (env _SHTST_COMPLETE=source_fish apksigcopier)
+eval (env _APKSIGCOPIER_COMPLETE=source_fish apksigcopier)
 ```
 
 ## Requirements
