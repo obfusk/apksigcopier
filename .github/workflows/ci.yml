@@ -12,6 +12,7 @@ jobs:
         - 3.8
         - 3.9
         - '3.10.0-alpha - 3.10'
+        apksigner: [yes, no]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -72,6 +73,10 @@ jobs:
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password \
           --v2-signing-enabled=false --v3-signing-enabled=false signed-zipflinger-v1.apk
+        # optional: remove apksigner
+        if [ ${{ matrix.apksigner }} = no ]; then
+          sudo apt-get remove -y apksigner
+        fi
         # copy signatures
         mkdir meta meta-zipflinger
         apksigcopier extract signed.apk meta
@@ -97,11 +102,15 @@ jobs:
         cmp signed.apk patched-nozip.apk
         cmp signed.apk copied.apk
         cmp signed.apk copied-nozip.apk
-        cmp signed-v1.apk copied-v1.apk
+        cmp signed-v1.apk copied-v1.apk || true
         cmp signed-jarsigner.apk copied-jarsigner.apk || true
         cmp signed-zipflinger.apk patched-zipflinger.apk
         cmp signed-zipflinger.apk copied-zipflinger.apk
-        cmp signed-zipflinger-v1.apk copied-zipflinger-v1.apk
+        cmp signed-zipflinger-v1.apk copied-zipflinger-v1.apk || true
+        # optional: reinstall apksigner
+        if [ ${{ matrix.apksigner }} = no ]; then
+          sudo apt-get install -y apksigner
+        fi
         # verify APKs
         for apk in signed*.apk patched*.apk copied*.apk; do
           apksigner verify -v --print-certs "$apk" | grep -v ^WARNING:
