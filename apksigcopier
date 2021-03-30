@@ -5,7 +5,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-03-29
+# Date        : 2021-03-30
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.2.1
@@ -18,6 +18,7 @@ copy/extract/patch apk signatures
 """
 
 import glob
+import logging
 import os
 import re
 import shutil
@@ -36,6 +37,7 @@ SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
 APKSIGNER_CMD, KEYTOOL_CMD, ZIP_CMD = "apksigner keytool zip".split()
 NOAUTOYES = NO, AUTO, YES = "no auto yes".split()
 APK_META = re.compile(r"^META-INF/[0-9A-Za-z_-]+\.(SF|RSA|MF)$")
+DATETIME0 = (1980, 0, 0, 0, 0, 0)
 
 ZipData = namedtuple("ZipData", "cd_offset eocd_offset cd_and_eocd".split())
 
@@ -77,7 +79,7 @@ class APKZipInfo(ReproducibleZipInfo):
         compress_type=8,
         create_system=0,
         create_version=20,
-        date_time=(1980, 0, 0, 0, 0, 0),
+        date_time=DATETIME0,
         external_attr=0,
         extract_version=20,
         flag_bits=0x800,
@@ -86,10 +88,12 @@ class APKZipInfo(ReproducibleZipInfo):
 
 # FIXME: .DSA?
 def is_meta(filename):
+    """Returns whether filename is an APK signature file."""
     return APK_META.fullmatch(filename) is not None
 
 
 def noautoyes(value):
+    """Turns False into NO, None into AUTO, and True into YES."""
     if isinstance(value, str):
         if value not in NOAUTOYES:
             raise ValueError("expected NO, AUTO, or YES")
@@ -99,6 +103,7 @@ def noautoyes(value):
 
 # FIXME
 def remove_from_zip(zipfile, meta, zip_cmd=None):
+    """Remove signature files appended by apksigner from zip file."""
     if zip_cmd and shutil.which(zip_cmd):
         files = [info.filename for info in meta]
         subprocess.run([zip_cmd, "-q", "-d", zipfile] + list(files), check=True)
@@ -146,6 +151,15 @@ def sign_with_dummy_key(output_apk, keystore, alias="dummy",
     subprocess.run(args, check=True)
 
 
+def copy_zipfile(unsigned_apk, output_apk, exclude=is_meta):
+    """Copy zip file (without signature files)."""
+    with zipfile.ZipFile(unsigned_apk, "r") as zfi:
+        with zipfile.ZipFile(output_apk, "w") as zfo:
+            for info in zfi.infolist():
+                if not exclude(info.filename):
+                    zfo.writestr(info, zfi.read(info.filename))
+
+
 def extract_meta(signed_apk):
     """Extract v1 signature metadata files from signed APK."""
     with zipfile.ZipFile(signed_apk, "r") as zf_sig:
@@ -155,24 +169,31 @@ def extract_meta(signed_apk):
 
 
 def replace_meta(extracted_meta, output_apk, zip_cmd=None):
-    """Replace v1 signature metadata in signed APK (removes v2 sig block)."""
+    """Replace v1 signature metadata in signed APK; removes v2 sig block."""
     with zipfile.ZipFile(output_apk, "r") as zf_out:
         meta = [info for info in zf_out.infolist() if is_meta(info.filename)]
-        date_time = meta[0].date_time                          # FIXME
-        remove_from_zip(output_apk, meta, zip_cmd=zip_cmd)
+        date_time = meta[0].date_time if meta else DATETIME0   # FIXME
+        if meta:
+            remove_from_zip(output_apk, meta, zip_cmd=zip_cmd)
     with zipfile.ZipFile(output_apk, "a") as zf_out:
-        if "compresslevel" in zipfile.ZipFile.__doc__:         # FIXME
-            for info, data in extracted_meta:
-                zf_out.writestr(APKZipInfo(info, date_time=date_time),
-                                data, compresslevel=9)
-        else:
-            old = zipfile._get_compressor
-            zipfile._get_compressor = lambda _: zlib.compressobj(9, 8, -15)
-            try:
-                for info, data in extracted_meta:
-                    zf_out.writestr(APKZipInfo(info, date_time=date_time), data)
-            finally:
-                zipfile._get_compressor = old
+        info_data = [(APKZipInfo(info, date_time=date_time), data)
+                     for info, data in extracted_meta]
+        _write_to_zip(info_data, zf_out)
+
+
+if "compresslevel" in zipfile.ZipFile.__doc__:                 # FIXME
+    def _write_to_zip(info_data, zf_out):
+        for info, data in info_data:
+            zf_out.writestr(info, data, compresslevel=9)
+else:
+    def _write_to_zip(info_data, zf_out):
+        old = zipfile._get_compressor
+        zipfile._get_compressor = lambda _: zlib.compressobj(9, 8, -15)
+        try:
+            for info, data in info_data:
+                zf_out.writestr(info, data)
+        finally:
+            zipfile._get_compressor = old
 
 
 # https://source.android.com/security/apksigning/v2#apk-signing-block-format
@@ -257,14 +278,20 @@ def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk,
     apksigner_cmd = config.get("apksigner_cmd", APKSIGNER_CMD)
     keytool_cmd = config.get("keytool_cmd", KEYTOOL_CMD)
     zip_cmd = config.get("zip_cmd", None)
-    shutil.copy(unsigned_apk, output_apk)
-    if dummyks is None:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            dummyks = os.path.join(tmpdir, "dummy-keystore")
-            gen_dummy_key(dummyks, keytool_cmd=keytool_cmd)
-            sign_with_dummy_key(output_apk, dummyks, apksigner_cmd=apksigner_cmd)
+    if extracted_v2_sig is None and not \
+            (apksigner_cmd and shutil.which(apksigner_cmd)):
+        logger = logging.getLogger(__name__)
+        logger.warning("Patching v1 signature without apksigner")
+        copy_zipfile(unsigned_apk, output_apk)
     else:
-        sign_with_dummy_key(output_apk, dummyks, apksigner_cmd=apksigner_cmd)
+        shutil.copy(unsigned_apk, output_apk)
+        if dummyks is None:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                dummyks = os.path.join(tmpdir, "dummy-keystore")
+                gen_dummy_key(dummyks, keytool_cmd=keytool_cmd)
+                sign_with_dummy_key(output_apk, dummyks, apksigner_cmd=apksigner_cmd)
+        else:
+            sign_with_dummy_key(output_apk, dummyks, apksigner_cmd=apksigner_cmd)
     replace_meta(extracted_meta, output_apk, zip_cmd=zip_cmd)
     if extracted_v2_sig is not None:
         patch_v2_sig(extracted_v2_sig, output_apk)
