@@ -500,6 +500,20 @@ def main():
     def gen_dummy(dummy_keystore, keysize):
         gen_dummy_key(dummy_keystore, keysize=keysize)
 
+    # FIXME
+    if click.__version__.startswith("7."):
+        def autocomplete_path(ctx=None, args=(), incomplete=""):  # pylint: disable=W0613
+            head, tail = os.path.split(incomplete)
+            return sorted(
+                (e.path if head else e.path[2:]) + ("/" if e.is_dir() else "")
+                for e in os.scandir(head or ".") if e.name.startswith(tail)
+            )
+
+        for command in cli.commands.values():
+            for param in command.params:
+                if isinstance(param.type, click.Path):
+                    param.autocompletion = autocomplete_path
+
     cli(prog_name=name)
 
 
