@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-03-30
+    Date        : 2021-03-31
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v0.3.0
@@ -51,6 +51,13 @@ $ apksigcopier patch meta unsigned.apk out.apk
 $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```
 
+### Help
+
+```bash
+$ apksigcopier --help
+$ apksigcopier copy --help      # extract --help, patch --help, etc.
+```
+
 ## Python API
 
 ```python
@@ -67,19 +74,46 @@ $ apksigcopier copy signed.apk unsigned.apk out.apk
 ...               keytool_cmd=config["keytool_cmd"])
 ```
 
+## FAQ
+
+### What kind of signatures does apksigcopier support?
+
+It currently supports v1 + v2 (+ v3, which is a variant of v2).
+
+when using the `extract` command, the v2/v3 signature is saved as
+`APKSigningBlock` + `APKSigningBlockOffset`.
+
 ## CAVEATS
+
+### More Testing Needed
+
+So far, `apksigcopier` has been successfully tested with
+[`NewPipe`](https://github.com/TeamNewPipe/NewPipe),
+[`Jiten Japanese Dictionary`](https://github.com/obfusk/jiten),
+[`Jiten Japanese Dictionary [Offline]`](https://github.com/obfusk/jiten-webview),
+and [`Sokoban(g)`](https://github.com/obfusk/sokobang).
+
+However, more testing is needed.  Please report any bugs you may
+encounter via the
+[GitHub issue tracker](https://github.com/obfusk/apksigcopier/issues).
+
+### apksigner
+
+Normally, `apksigcopier` uses `apksigner` to create an APK (signed
+with a dummy key) before grafting the signature onto it.  This method
+seems to be fairly robust.
+
+When it cannot find `apksigner`, it will show a warning and use a
+pure-Python implementation (`copy_apk()`) instead, which is currently
+considered *experimental*.
+
+### zipflinger
 
 Recent versions of the Android gradle plugin will use *zipflinger* --
 which arranges the contents of the APK differently -- making
 `apksigcopier` fail to work when using `--use-zip=yes` (the default is
 `no`).  You can tell the plugin not to use *zipflinger* by setting
 `android.useNewApkCreator=false` in `gradle.properties`.
-
-## Help
-
-```bash
-$ apksigcopier --help
-```
 
 ## Tab Completion
 
@@ -112,6 +146,12 @@ $ apt install python3-click apksigner
 ```
 
 ## Installing
+
+### Debian
+
+An official Debian package will hopefully be available soon.  You can
+also manually build one using the `debian/sid` branch, or download a
+pre-built `.deb` via GitHub releases.
 
 ### Using pip
 
