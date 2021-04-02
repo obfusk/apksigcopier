@@ -2,7 +2,7 @@ Source: apksigcopier
 Section: misc
 Priority: optional
 Maintainer: Felix C. Stegerman <flx@obfusk.net>
-Build-Depends: debhelper-compat (= 13),
+Build-Depends: debhelper-compat (= 12),
                dh-python,
                python3-all,
                python3-click,
