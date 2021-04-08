@@ -37,7 +37,7 @@ name = "apksigcopier"
 SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
 APKSIGNER_CMD, KEYTOOL_CMD, ZIP_CMD = "apksigner keytool zip".split()
 NOAUTOYES = NO, AUTO, YES = "no auto yes".split()
-APK_META = re.compile(r"^META-INF/[0-9A-Za-z_-]+\.(SF|RSA|MF)$")
+APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA)|MANIFEST\.MF)$")
 DATETIMEZERO = (1980, 0, 0, 0, 0, 0)
 
 ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
