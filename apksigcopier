@@ -350,8 +350,8 @@ def patch_v2_sig(extracted_v2_sig, output_apk):
 def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk,
               output_apk, dummyks=None, config={}):
     """Patch extracted_meta + extracted_v2_sig onto unsigned_apk and save as output_apk."""
-    apksigner_cmd = config.get("apksigner_cmd", APKSIGNER_CMD)
-    keytool_cmd = config.get("keytool_cmd", KEYTOOL_CMD)
+    no_apksigner = os.environ.get("APKSIGCOPIER_WITHOUT_APKSIGNER") in ("1", "yes", "true")
+    apksigner_cmd = config.get("apksigner_cmd", None if no_apksigner else APKSIGNER_CMD)
     zip_cmd = config.get("zip_cmd", None)
     date_time = DATETIMEZERO
     if not (apksigner_cmd and shutil.which(apksigner_cmd)):
@@ -363,6 +363,7 @@ def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk,
             logger.warning("Patching without apksigner (v2)")
             date_time = copy_apk(unsigned_apk, output_apk)
     else:
+        keytool_cmd = config.get("keytool_cmd", KEYTOOL_CMD)
         shutil.copy(unsigned_apk, output_apk)
         if dummyks is None:
             with tempfile.TemporaryDirectory() as tmpdir:
