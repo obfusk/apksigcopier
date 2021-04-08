@@ -5,7 +5,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-03-30
+# Date        : 2021-04-08
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.3.0
@@ -190,16 +190,16 @@ def copy_apk(unsigned_apk, output_apk):
                 fhi.seek(info.compress_size, os.SEEK_CUR)
             else:
                 off_o = fho.tell()
-                if info.compress_type == 0:
+                if info.compress_type == 0 and off_o != info.header_offset:
                     old_off = info.header_offset + 30 + n + m
-                    new_off = off_o + 30 + n
+                    new_off = off_o + 30 + n + m
                     align = 4096 if info.filename.endswith(".so") else 4
                     if len(info.extra) >= 6 and info.extra[:2] == b"\x35\xd9":
                         dsize = int.from_bytes(info.extra[2:4], "little")
                         if dsize > 1 and dsize <= len(info.extra) - 4:
                             align = int.from_bytes(info.extra[4:6], "little")
                     if old_off % align == 0 and new_off % align != 0:
-                        pad = (align - (new_off + 6) % align) % align
+                        pad = (align - (new_off - m + 6) % align) % align
                         xtr = struct.pack("<HHH", 0xd935, 2 + pad, align) + pad * b"\x00"
                         m_b = int.to_bytes(len(xtr), 2, "little")
                         hdr = hdr[:28] + m_b + hdr[30:30 + n] + xtr
