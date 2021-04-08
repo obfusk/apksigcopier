@@ -25,11 +25,17 @@ jobs:
         # sudo apt-get upgrade -y
         sudo apt-get install -y apksigner zip
         python3 -m pip install --upgrade pip
-        python3 -m pip install flake8
+        python3 -m pip install flake8 pylint
+    - name: Install mypy
+      run: python3 -m pip install mypy
+      continue-on-error: ${{ contains(matrix.python-version, 'alpha') }}
     - name: Install
       run: make install
-    - name: Test
-      run: make test
+    - name: Test & Lint
+      run: make test-cli lint
+    - name: Extra Lint
+      run: make lint-extra
+      continue-on-error: ${{ contains(matrix.python-version, 'alpha') }}
     - name: Cache NewPipe Build
       uses: actions/cache@v2
       with:

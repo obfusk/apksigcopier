@@ -29,6 +29,7 @@ import zipfile
 import zlib
 
 from collections import namedtuple
+from typing import Any, Dict
 
 __version__ = "0.3.0"
 name = "apksigcopier"
@@ -39,7 +40,7 @@ NOAUTOYES = NO, AUTO, YES = "no auto yes".split()
 APK_META = re.compile(r"^META-INF/[0-9A-Za-z_-]+\.(SF|RSA|MF)$")
 DATETIMEZERO = (1980, 0, 0, 0, 0, 0)
 
-ZipData = namedtuple("ZipData", "cd_offset eocd_offset cd_and_eocd".split())
+ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
 
 class APKSigningBlockError(Exception):
@@ -58,7 +59,7 @@ class ZipError(Exception):
 class ReproducibleZipInfo(zipfile.ZipInfo):
     """Reproducible ZipInfo hack."""
 
-    _override = {}
+    _override = {}  # type: Dict[str, Any]
 
     def __init__(self, zinfo, **override):
         if override:
@@ -255,7 +256,7 @@ def replace_meta(extracted_meta, output_apk, zip_cmd=None, date_time=DATETIMEZER
         _write_to_zip(info_data, zf_out)
 
 
-if "compresslevel" in zipfile.ZipFile.__doc__:                 # FIXME
+if "compresslevel" in (zipfile.ZipFile.__doc__ or ""):         # FIXME
     def _write_to_zip(info_data, zf_out):
         for info, data in info_data:
             zf_out.writestr(info, data, compresslevel=9)
