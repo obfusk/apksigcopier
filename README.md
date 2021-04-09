@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-03-31
+    Date        : 2021-04-09
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v0.3.0
@@ -61,17 +61,10 @@ $ apksigcopier copy --help      # extract --help, patch --help, etc.
 ## Python API
 
 ```python
->>> from apksigcopier import do_extract, do_patch, do_copy, gen_dummy_key
->>> config = dict(apksigner_cmd=..., ...)
+>>> from apksigcopier import do_extract, do_patch, do_copy
 >>> do_extract(signed_apk, output_dir, v1_only=NO)
->>> do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO,
-...          dummy_keystore=None, config=config)
->>> do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO,
-...         dummy_keystore=None, config=config)
->>> gen_dummy_key(keystore, alias="dummy", keyalg="RSA", keysize=4096,
-...               sigalg="SHA512withRSA", validity=10000,
-...               storepass="dummy-password", dname="CN=dummy",
-...               keytool_cmd=config["keytool_cmd"])
+>>> do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO)
+>>> do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO)
 ```
 
 ## FAQ
@@ -82,38 +75,6 @@ It currently supports v1 + v2 (+ v3, which is a variant of v2).
 
 when using the `extract` command, the v2/v3 signature is saved as
 `APKSigningBlock` + `APKSigningBlockOffset`.
-
-## CAVEATS
-
-### More Testing Needed
-
-So far, `apksigcopier` has been successfully tested with
-[`NewPipe`](https://github.com/TeamNewPipe/NewPipe),
-[`Jiten Japanese Dictionary`](https://github.com/obfusk/jiten),
-[`Jiten Japanese Dictionary [Offline]`](https://github.com/obfusk/jiten-webview),
-and [`Sokoban(g)`](https://github.com/obfusk/sokobang).
-
-However, more testing is needed.  Please report any bugs you may
-encounter via the
-[GitHub issue tracker](https://github.com/obfusk/apksigcopier/issues).
-
-### apksigner
-
-Normally, `apksigcopier` uses `apksigner` to create an APK (signed
-with a dummy key) before grafting the signature onto it.  This method
-seems to be fairly robust.
-
-When it cannot find `apksigner`, it will show a warning and use a
-pure-Python implementation (`copy_apk()`) instead, which is currently
-considered *experimental*.
-
-### zipflinger
-
-Recent versions of the Android gradle plugin will use *zipflinger* --
-which arranges the contents of the APK differently -- making
-`apksigcopier` fail to work when using `--use-zip=yes` (the default is
-`no`).  You can tell the plugin not to use *zipflinger* by setting
-`android.useNewApkCreator=false` in `gradle.properties`.
 
 ## Tab Completion
 
@@ -137,12 +98,12 @@ eval (env _APKSIGCOPIER_COMPLETE=source_fish apksigcopier)
 
 ## Requirements
 
-* Python >= 3.5 + click + `apksigner`.
+* Python >= 3.5 + click.
 
 ### Debian/Ubuntu
 
 ```bash
-$ apt install python3-click apksigner
+$ apt install python3-click
 ```
 
 ## Installing

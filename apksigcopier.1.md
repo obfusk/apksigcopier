@@ -1,6 +1,6 @@
 % apksigcopier(1) v0.3.0 | General Commands Manual
 % Felix C. Stegerman <flx@obfusk.net>
-% 2021-03-30
+% 2021-04-09
 
 # NAME
 
@@ -13,8 +13,6 @@ apksigcopier - copy/extract/patch apk signatures
 **apksigcopier** extract \[*options*\] *signed_apk* *output_dir*
 
 **apksigcopier** patch \[*options*\] *metadata_dir* *unsigned_apk* *output_apk*
-
-**apksigcopier** gen-dummy \[*options*\] *dummy_keystore*
 
 **apksigcopier** \--version
 
@@ -41,13 +39,7 @@ Extract APK signatures from signed APK.
 
 Patch extracted APK signatures onto unsigned APK.
 
-## gen-dummy
-
-Generate dummy key(store).
-
 # OPTIONS
-
-## copy, extract, patch
 
 \--v1-only [no|auto|yes]
 
@@ -55,31 +47,6 @@ Whether to expect only a v1 signature: *no* means a v2 signature is
 expected as well, *auto* means the presence of a v2 signature is
 detected automatically, and *yes* means a v2 signature is not expected
 (and ignored if it does exist).  Default: *no*.
-
-## copy, extract
-
-\--dummy-keystore *file*
-
-To avoid the overhead of generating a new dummy keystore every time,
-you can generate it once using **gen-dummy** and re-use it by passing
-it to this option.
-
-\--use-zip [no|auto|yes]
-
-Whether to use the external zip(1) command to copy the metadata to the
-output APK (after signing it with the dummy key): *no* means the
-pure-Python implementation is used, *auto* means the external command
-is used when it is available, and *yes* means the external command is
-used (and its absence is considered an error).  Default: *no*.
-
-The pure-Python implementation is less tested, but is the only
-implementation that supports APKs generated using *zipflinger*.
-
-## gen-dummy
-
-\--keysize *integer*
-
-Size of the dummy signing key to generate.  Default: 4096.
 
 # EXAMPLES
 
