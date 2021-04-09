@@ -25,7 +25,7 @@ lint-extra:
 
 cleanup:
 	find -name '*~' -delete -print
-	rm -fr __pycache__/
+	rm -fr __pycache__/ .mypy_cache/
 	rm -fr build/ dist/ apksigcopier.egg-info/
 	rm -fr .coverage htmlcov/
 	rm -fr apksigcopier.1
