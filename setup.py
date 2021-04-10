@@ -1,8 +1,7 @@
 from pathlib import Path
 import setuptools
 
-# from apksigcopier import __version__                         # FIXME
-__version__ = "0.3.0"
+from apksigcopier import __version__
 
 info = Path(__file__).with_name("README.md").read_text(encoding = "utf8")
 

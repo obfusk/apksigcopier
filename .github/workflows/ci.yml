@@ -12,7 +12,6 @@ jobs:
         - 3.8
         - 3.9
         - '3.10.0-alpha - 3.10'
-        apksigner: [yes, no]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -23,13 +22,19 @@ jobs:
       run: |
         sudo apt-get update || sudo apt-get update
         # sudo apt-get upgrade -y
-        sudo apt-get install -y apksigner zip
+        sudo apt-get install -y apksigner
         python3 -m pip install --upgrade pip
-        python3 -m pip install flake8
+        python3 -m pip install flake8 pylint
+    - name: Install mypy
+      run: python3 -m pip install mypy
+      continue-on-error: ${{ contains(matrix.python-version, 'alpha') }}
     - name: Install
       run: make install
-    - name: Test
-      run: make test
+    - name: Test & Lint
+      run: make test-cli lint
+    - name: Extra Lint
+      run: make lint-extra
+      continue-on-error: ${{ contains(matrix.python-version, 'alpha') }}
     - name: Cache NewPipe Build
       uses: actions/cache@v2
       with:
@@ -60,7 +65,9 @@ jobs:
         cp app-release-unsigned-zipflinger.apk signed-zipflinger.apk
         cp app-release-unsigned-zipflinger.apk signed-zipflinger-v1.apk
         # generate dummy keystore & sign APKs
-        apksigcopier gen-dummy ci-ks
+        keytool -genkey -keystore ci-ks -alias dummy -keyalg RSA \
+          -keysize 4096 -sigalg SHA512withRSA -validity 10000 \
+          -storepass dummy-password -dname CN=dummy
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password signed.apk
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
@@ -73,22 +80,16 @@ jobs:
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password \
           --v2-signing-enabled=false --v3-signing-enabled=false signed-zipflinger-v1.apk
-        # optional: remove apksigner
-        if [ ${{ matrix.apksigner }} = no ]; then
-          sudo apt-get remove -y apksigner
-        fi
         # copy signatures
         mkdir meta meta-zipflinger
         apksigcopier extract signed.apk meta
         apksigcopier extract signed-zipflinger.apk meta-zipflinger
         ls -hlA meta meta-zipflinger
-        apksigcopier patch --use-zip=yes meta app-release-unsigned.apk patched.apk
-        apksigcopier patch meta app-release-unsigned.apk patched-nozip.apk
-        apksigcopier copy --use-zip=yes signed.apk app-release-unsigned.apk copied.apk
-        apksigcopier copy signed.apk app-release-unsigned.apk copied-nozip.apk
-        apksigcopier copy --use-zip=yes --v1-only=auto signed-v1.apk \
+        apksigcopier patch meta app-release-unsigned.apk patched.apk
+        apksigcopier copy signed.apk app-release-unsigned.apk copied.apk
+        apksigcopier copy --v1-only=auto signed-v1.apk \
           app-release-unsigned.apk copied-v1.apk
-        apksigcopier copy --use-zip=yes --v1-only=yes signed-jarsigner.apk \
+        apksigcopier copy --v1-only=yes signed-jarsigner.apk \
           app-release-unsigned.apk copied-jarsigner.apk
         apksigcopier patch meta-zipflinger \
           app-release-unsigned-zipflinger.apk patched-zipflinger.apk
@@ -99,18 +100,12 @@ jobs:
         # compare APKs
         sha512sum *.apk | sort
         cmp signed.apk patched.apk
-        cmp signed.apk patched-nozip.apk
         cmp signed.apk copied.apk
-        cmp signed.apk copied-nozip.apk
-        cmp signed-v1.apk copied-v1.apk || true
+        cmp signed-v1.apk copied-v1.apk
         cmp signed-jarsigner.apk copied-jarsigner.apk || true
         cmp signed-zipflinger.apk patched-zipflinger.apk
         cmp signed-zipflinger.apk copied-zipflinger.apk
-        cmp signed-zipflinger-v1.apk copied-zipflinger-v1.apk || true
-        # optional: reinstall apksigner
-        if [ ${{ matrix.apksigner }} = no ]; then
-          sudo apt-get install -y apksigner
-        fi
+        cmp signed-zipflinger-v1.apk copied-zipflinger-v1.apk
         # verify APKs
         for apk in signed*.apk patched*.apk copied*.apk; do
           apksigner verify -v --print-certs "$apk" | grep -v ^WARNING:
