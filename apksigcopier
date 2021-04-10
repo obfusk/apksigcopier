@@ -202,13 +202,22 @@ def _realign_zip_entry(info, hdr, n, m, off_o):
     align = 4096 if info.filename.endswith(".so") else 4
     old_off = 30 + n + m + info.header_offset
     new_off = 30 + n + m + off_o
-    if len(info.extra) >= 6 and info.extra[:2] == b"\x35\xd9":
-        dsize = int.from_bytes(info.extra[2:4], "little")
-        if dsize > 1 and dsize <= len(info.extra) - 4:
-            align = int.from_bytes(info.extra[4:6], "little")
+    old_xtr = info.extra
+    new_xtr = b""
+    while len(old_xtr) >= 4:
+        hdr_id, size = struct.unpack("<HH", old_xtr[:4])
+        if size > len(old_xtr) - 4:
+            break
+        if not (hdr_id == 0 and size == 0):
+            if hdr_id == 0xd935:
+                if size >= 2:
+                    align = int.from_bytes(old_xtr[4:6], "little")
+            else:
+                new_xtr += old_xtr[:size + 4]
+        old_xtr = old_xtr[size + 4:]
     if old_off % align == 0 and new_off % align != 0:
-        pad = (align - (new_off - m + 6) % align) % align
-        xtr = struct.pack("<HHH", 0xd935, 2 + pad, align) + pad * b"\x00"
+        pad = (align - (new_off - m + len(new_xtr) + 6) % align) % align
+        xtr = new_xtr + struct.pack("<HHH", 0xd935, 2 + pad, align) + pad * b"\x00"
         m_b = int.to_bytes(len(xtr), 2, "little")
         hdr = hdr[:28] + m_b + hdr[30:30 + n] + xtr
     return hdr
