@@ -2,10 +2,10 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-03-30
+    Date        : 2021-04-10
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
-    Version     : v0.3.0
+    Version     : v0.4.0
     License     : GPLv3+
 
 }}}1 -->
@@ -51,35 +51,30 @@ $ apksigcopier patch meta unsigned.apk out.apk
 $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```
 
-## Python API
-
-```python
->>> from apksigcopier import do_extract, do_patch, do_copy, gen_dummy_key
->>> config = dict(apksigner_cmd=..., ...)
->>> do_extract(signed_apk, output_dir, v1_only=NO)
->>> do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO,
-...          dummy_keystore=None, config=config)
->>> do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO,
-...         dummy_keystore=None, config=config)
->>> gen_dummy_key(keystore, alias="dummy", keyalg="RSA", keysize=4096,
-...               sigalg="SHA512withRSA", validity=10000,
-...               storepass="dummy-password", dname="CN=dummy",
-...               keytool_cmd=config["keytool_cmd"])
-```
-
-## CAVEATS
-
-Recent versions of the Android gradle plugin will use *zipflinger* --
-which arranges the contents of the APK differently -- making
-`apksigcopier` fail to work when using `--use-zip=yes` (the default is
-`no`).  You can tell the plugin not to use *zipflinger* by setting
-`android.useNewApkCreator=false` in `gradle.properties`.
-
-## Help
+### Help
 
 ```bash
 $ apksigcopier --help
+$ apksigcopier copy --help      # extract --help, patch --help, etc.
 ```
+
+## Python API
+
+```python
+>>> from apksigcopier import do_extract, do_patch, do_copy
+>>> do_extract(signed_apk, output_dir, v1_only=NO)
+>>> do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO)
+>>> do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO)
+```
+
+## FAQ
+
+### What kind of signatures does apksigcopier support?
+
+It currently supports v1 + v2 (+ v3, which is a variant of v2).
+
+when using the `extract` command, the v2/v3 signature is saved as
+`APKSigningBlock` + `APKSigningBlockOffset`.
 
 ## Tab Completion
 
@@ -103,15 +98,21 @@ eval (env _APKSIGCOPIER_COMPLETE=source_fish apksigcopier)
 
 ## Requirements
 
-* Python >= 3.5 + click + `apksigner`.
+* Python >= 3.5 + click.
 
 ### Debian/Ubuntu
 
 ```bash
-$ apt install python3-click apksigner
+$ apt install python3-click
 ```
 
 ## Installing
+
+### Debian
+
+An official Debian package will hopefully be available soon.  You can
+also manually build one using the `debian/sid` branch, or download a
+pre-built `.deb` via GitHub releases.
 
 ### Using pip
 

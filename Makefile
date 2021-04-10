@@ -3,21 +3,29 @@ PYTHON  ?= python3
 
 export PYTHONWARNINGS := default
 
-.PHONY: all install test cleanup
+.PHONY: all install test test-cli lint lint-extra cleanup
 
 all: apksigcopier.1
 
 install:
 	$(PYTHON) -mpip install -e .
 
-test:
+test: test-cli lint lint-extra
+
+test-cli:
 	# TODO
 	apksigcopier --version
+
+lint:
 	flake8 apksigcopier.py
+	pylint apksigcopier.py
+
+lint-extra:
+	mypy apksigcopier.py
 
 cleanup:
 	find -name '*~' -delete -print
-	rm -fr __pycache__/
+	rm -fr __pycache__/ .mypy_cache/
 	rm -fr build/ dist/ apksigcopier.egg-info/
 	rm -fr .coverage htmlcov/
 	rm -fr apksigcopier.1
