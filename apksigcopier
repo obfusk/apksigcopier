@@ -5,7 +5,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-04-09
+# Date        : 2021-04-10
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.3.0
@@ -43,19 +43,20 @@ DATETIMEZERO = (1980, 0, 0, 0, 0, 0)
 ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
 
-class APKSigningBlockError(Exception):
+class APKSigCopierError(Exception):
+    """Base class for errors."""
+
+
+class APKSigningBlockError(APKSigCopierError):
     """Something wrong with the APK Signing Block."""
-    pass
 
 
 class NoAPKSigningBlock(APKSigningBlockError):
     """APK Signing Block Missing."""
-    pass
 
 
-class ZipError(Exception):
+class ZipError(APKSigCopierError):
     """Something wrong with ZIP file."""
-    pass
 
 
 # FIXME: is there a better alternative?
@@ -315,6 +316,8 @@ def patch_v2_sig(extracted_v2_sig, output_apk):
     """Implant extracted v2/v3 signature into APK."""
     signed_sb_offset, signed_sb = extracted_v2_sig
     data_out = zip_data(output_apk)
+    if signed_sb_offset < data_out.cd_offset:
+        raise APKSigningBlockError("APK Sig Block offset < CD offset")
     padding = b"\x00" * (signed_sb_offset - data_out.cd_offset)
     offset = len(signed_sb) + len(padding)
     with open(output_apk, "r+b") as fh:
