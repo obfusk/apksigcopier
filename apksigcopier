@@ -351,7 +351,15 @@ def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk):
 
 
 def do_extract(signed_apk, output_dir, v1_only=NO):
-    """Extract signatures from signed_apk and save in output_dir."""
+    """
+    Extract signatures from signed_apk and save in output_dir.
+
+    The v1_only parameter controls whether the absence of a v1 signature is
+    considered an error or not:
+    * use v1_only=NO (or v1_only=False) to only accept (v1+)v2/v3 signatures;
+    * use v1_only=AUTO (or v1_only=None) to automatically detect v2/v3 signatures;
+    * use v1_only=YES (or v1_only=True) to ignore any v2/v3 signatures.
+    """
     v1_only = noautoyes(v1_only)
     extracted_meta = extract_meta(signed_apk)
     for info, data in extracted_meta:
@@ -372,7 +380,15 @@ def do_extract(signed_apk, output_dir, v1_only=NO):
 
 
 def do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO):
-    """Patch signatures from metadata_dir onto unsigned_apk and save as output_apk."""
+    """
+    Patch signatures from metadata_dir onto unsigned_apk and save as output_apk.
+
+    The v1_only parameter controls whether the absence of a v1 signature is
+    considered an error or not:
+    * use v1_only=NO (or v1_only=False) to only accept (v1+)v2/v3 signatures;
+    * use v1_only=AUTO (or v1_only=None) to automatically detect v2/v3 signatures;
+    * use v1_only=YES (or v1_only=True) to ignore any v2/v3 signatures.
+    """
     v1_only = noautoyes(v1_only)
     extracted_meta = []
     for pat in META_EXT:
@@ -400,7 +416,15 @@ def do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO):
 
 
 def do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO):
-    """Copy signatures from signed_apk onto unsigned_apk and save as output_apk."""
+    """
+    Copy signatures from signed_apk onto unsigned_apk and save as output_apk.
+
+    The v1_only parameter controls whether the absence of a v1 signature is
+    considered an error or not:
+    * use v1_only=NO (or v1_only=False) to only accept (v1+)v2/v3 signatures;
+    * use v1_only=AUTO (or v1_only=None) to automatically detect v2/v3 signatures;
+    * use v1_only=YES (or v1_only=True) to ignore any v2/v3 signatures.
+    """
     v1_only = noautoyes(v1_only)
     extracted_meta = extract_meta(signed_apk)
     if v1_only == YES:
