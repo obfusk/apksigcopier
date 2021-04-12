@@ -259,7 +259,7 @@ def patch_meta(extracted_meta, output_apk, date_time=DATETIMEZERO):
         _write_to_zip(info_data, zf_out)
 
 
-if "compresslevel" in (zipfile.ZipFile.__doc__ or ""):         # FIXME
+if sys.version_info >= (3, 7):
     def _write_to_zip(info_data, zf_out):
         for info, data in info_data:
             zf_out.writestr(info, data, compresslevel=9)
