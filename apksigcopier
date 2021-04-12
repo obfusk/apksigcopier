@@ -43,6 +43,8 @@ DATETIMEZERO = (1980, 0, 0, 0, 0, 0)
 
 ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
+exclude_all_meta = False
+
 
 class APKSigCopierError(Exception):
     """Base class for errors."""
@@ -118,6 +120,13 @@ def is_meta(filename):
     return APK_META.fullmatch(filename) is not None
 
 
+def exclude_from_copying(filename):
+    """Returns whether to exclude a file during copy_apk()."""
+    if exclude_all_meta:
+        return is_meta(filename)
+    return filename in COPY_EXCLUDE
+
+
 ################################################################################
 #
 # https://en.wikipedia.org/wiki/ZIP_(file_format)
@@ -170,7 +179,7 @@ def copy_apk(unsigned_apk, output_apk):
                 raise ZipError("Expected local file header signature")
             n, m = struct.unpack("<HH", hdr[26:30])
             hdr += fhi.read(n + m)
-            if info.filename in COPY_EXCLUDE:
+            if exclude_from_copying(info.filename):
                 fhi.seek(info.compress_size, os.SEEK_CUR)
             else:
                 offsets[id(info)] = off_o = fho.tell()
@@ -186,7 +195,7 @@ def copy_apk(unsigned_apk, output_apk):
                 raise ZipError("Expected CD file header signature")
             n, m, k = struct.unpack("<HHH", hdr[28:34])
             hdr += fhi.read(n + m + k)
-            if info.filename not in COPY_EXCLUDE:
+            if not exclude_from_copying(info.filename):
                 off = int.to_bytes(offsets[id(info)], 4, "little")
                 hdr = hdr[:42] + off + hdr[46:]
                 fho.write(hdr)
