@@ -5,7 +5,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-04-12
+# Date        : 2021-04-13
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.4.0
@@ -167,6 +167,8 @@ def copy_apk(unsigned_apk, output_apk):
     """
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
         infos = zf.infolist()
+    if len(infos) != len(set(info.filename for info in infos)):
+        raise ZipError("Duplicate ZIP entries")
     zdata = zip_data(unsigned_apk)
     offsets = {}
     with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
