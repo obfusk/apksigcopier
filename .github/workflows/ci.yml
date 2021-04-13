@@ -60,9 +60,11 @@ jobs:
         fi
         # copy APK
         cp app-release-unsigned.apk signed.apk
+        cp app-release-unsigned.apk signed-nov1.apk
         cp app-release-unsigned.apk signed-v1.apk
         cp app-release-unsigned.apk signed-jarsigner.apk
         cp app-release-unsigned-zipflinger.apk signed-zipflinger.apk
+        cp app-release-unsigned-zipflinger.apk signed-zipflinger-nov1.apk
         cp app-release-unsigned-zipflinger.apk signed-zipflinger-v1.apk
         # generate dummy keystore & sign APKs
         keytool -genkey -keystore ci-ks -alias dummy -keyalg RSA \
@@ -72,11 +74,17 @@ jobs:
           --ks-pass pass:dummy-password signed.apk
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password \
+          --v1-signing-enabled=false signed-nov1.apk
+        apksigner sign -v --ks ci-ks --ks-key-alias dummy \
+          --ks-pass pass:dummy-password \
           --v2-signing-enabled=false --v3-signing-enabled=false signed-v1.apk
         PASS=dummy-password jarsigner -keystore ci-ks -storepass:env PASS \
           -sigalg SHA256withRSA -digestalg SHA-256 signed-jarsigner.apk dummy
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password signed-zipflinger.apk
+        apksigner sign -v --ks ci-ks --ks-key-alias dummy \
+          --ks-pass pass:dummy-password \
+          --v1-signing-enabled=false signed-zipflinger-nov1.apk
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password \
           --v2-signing-enabled=false --v3-signing-enabled=false signed-zipflinger-v1.apk
@@ -87,6 +95,7 @@ jobs:
         ls -hlA meta meta-zipflinger
         apksigcopier patch meta app-release-unsigned.apk patched.apk
         apksigcopier copy signed.apk app-release-unsigned.apk copied.apk
+        apksigcopier copy signed-nov1.apk app-release-unsigned.apk copied-nov1.apk
         apksigcopier copy --v1-only=auto signed-v1.apk \
           app-release-unsigned.apk copied-v1.apk
         apksigcopier copy --v1-only=yes signed-jarsigner.apk \
@@ -95,16 +104,20 @@ jobs:
           app-release-unsigned-zipflinger.apk patched-zipflinger.apk
         apksigcopier copy signed-zipflinger.apk \
           app-release-unsigned-zipflinger.apk copied-zipflinger.apk
+        apksigcopier copy signed-zipflinger-nov1.apk \
+          app-release-unsigned-zipflinger.apk copied-zipflinger-nov1.apk
         apksigcopier copy --v1-only=auto signed-zipflinger-v1.apk \
           app-release-unsigned-zipflinger.apk copied-zipflinger-v1.apk
         # compare APKs
         sha512sum *.apk | sort
         cmp signed.apk patched.apk
         cmp signed.apk copied.apk
+        cmp signed-nov1.apk copied-nov1.apk
         cmp signed-v1.apk copied-v1.apk
         cmp signed-jarsigner.apk copied-jarsigner.apk || true
         cmp signed-zipflinger.apk patched-zipflinger.apk
         cmp signed-zipflinger.apk copied-zipflinger.apk
+        cmp signed-zipflinger-nov1.apk copied-zipflinger-nov1.apk
         cmp signed-zipflinger-v1.apk copied-zipflinger-v1.apk
         # verify APKs
         for apk in signed*.apk patched*.apk copied*.apk; do
