@@ -37,6 +37,7 @@ NAME = "apksigcopier"
 SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
 NOAUTOYES = NO, AUTO, YES = ("no", "auto", "yes")
 APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)$")
+APK_SIGNATURE_FILES = re.compile(r'META-INF/[0-9A-Za-z_\-]+\.(SF|RSA|DSA|EC)')
 META_EXT = ("SF", "RSA|DSA|EC", "MF")
 COPY_EXCLUDE = ("META-INF/MANIFEST.MF",)
 DATETIMEZERO = (1980, 0, 0, 0, 0, 0)
@@ -166,8 +167,11 @@ def copy_apk(unsigned_apk, output_apk):
 
     Returns max date_time.
     """
+    infos = []
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
-        infos = zf.infolist()
+        for info in zf.infolist():
+            if not APK_SIGNATURE_FILES.match(info.filename):
+                infos.append(info)
     if not allow_duplicates:
         if len(infos) != len(set(info.filename for info in infos)):
             raise ZipError("Duplicate ZIP entries")
