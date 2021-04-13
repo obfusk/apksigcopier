@@ -173,6 +173,8 @@ def copy_apk(unsigned_apk, output_apk):
     offsets = {}
     with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
         for info in sorted(infos, key=lambda info: info.header_offset):
+            if info.flag_bits & 0x08:
+                raise ZipError("Unexpected ZIP entry with data descriptor")
             off_i = fhi.tell()
             if info.header_offset > off_i:
                 # copy extra bytes
