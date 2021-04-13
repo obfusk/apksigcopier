@@ -173,8 +173,12 @@ def copy_apk(unsigned_apk, output_apk):
             if not APK_SIGNATURE_FILES.match(info.filename):
                 infos.append(info)
     if not allow_duplicates:
-        if len(infos) != len(set(info.filename for info in infos)):
-            raise ZipError("Duplicate ZIP entries")
+        filenames_set = set(info.filename for info in infos)
+        if len(infos) != len(filenames_set):
+            filenames = [info.filename for info in infos]
+            for f in filenames_set:
+                filenames.remove(f)
+            raise ZipError("Duplicate ZIP entries: " + ' '.join(filenames))
     zdata = zip_data(unsigned_apk)
     offsets = {}
     with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
