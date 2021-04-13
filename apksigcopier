@@ -43,7 +43,8 @@ DATETIMEZERO = (1980, 0, 0, 0, 0, 0)
 
 ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
-exclude_all_meta = False
+exclude_all_meta = False    # exclude all metadata files in copy_apk()
+copy_extra_bytes = False    # copy extra bytes after data in copy_apk()
 
 
 class APKSigCopierError(Exception):
@@ -187,12 +188,16 @@ def copy_apk(unsigned_apk, output_apk):
                     hdr = _realign_zip_entry(info, hdr, n, m, off_o)
                 fho.write(hdr)
                 _copy_bytes(fhi, fho, info.compress_size)
-        _copy_bytes(fhi, fho, zdata.cd_offset - fhi.tell())
+        extra_bytes = zdata.cd_offset - fhi.tell()
+        if copy_extra_bytes:
+            _copy_bytes(fhi, fho, extra_bytes)
+        else:
+            fhi.seek(extra_bytes, os.SEEK_CUR)
         cd_offset = fho.tell()
         for info in infos:
             hdr = fhi.read(46)
             if hdr[:4] != b"\x50\x4b\x01\x02":
-                raise ZipError("Expected CD file header signature")
+                raise ZipError("Expected central directory file header signature")
             n, m, k = struct.unpack("<HHH", hdr[28:34])
             hdr += fhi.read(n + m + k)
             if not exclude_from_copying(info.filename):
@@ -295,14 +300,14 @@ def extract_v2_sig(apkfile, expected=True):
         fh.seek(cd_offset - 16)
         if fh.read(16) != b"APK Sig Block 42":
             if expected:
-                raise NoAPKSigningBlock("No APK Sig Block")
+                raise NoAPKSigningBlock("No APK Signing Block")
             return None
         fh.seek(-24, os.SEEK_CUR)
         sb_size2 = int.from_bytes(fh.read(8), "little")
         fh.seek(-sb_size2 + 8, os.SEEK_CUR)
         sb_size1 = int.from_bytes(fh.read(8), "little")
         if sb_size1 != sb_size2:
-            raise APKSigningBlockError("APK Sig Block sizes not equal")
+            raise APKSigningBlockError("APK Signing Block sizes not equal")
         fh.seek(-8, os.SEEK_CUR)
         sb_offset = fh.tell()
         sig_block = fh.read(sb_size2 + 8)
@@ -320,7 +325,7 @@ def zip_data(apkfile, count=1024):
         data = fh.read()
         pos = data.rfind(b"\x50\x4b\x05\x06")
         if pos == -1:
-            raise ZipError("Expected EOCD")
+            raise ZipError("Expected end of central directory record (EOCD)")
         fh.seek(pos - len(data), os.SEEK_CUR)
         eocd_offset = fh.tell()
         fh.seek(16, os.SEEK_CUR)
@@ -336,7 +341,7 @@ def patch_v2_sig(extracted_v2_sig, output_apk):
     signed_sb_offset, signed_sb = extracted_v2_sig
     data_out = zip_data(output_apk)
     if signed_sb_offset < data_out.cd_offset:
-        raise APKSigningBlockError("APK Sig Block offset < CD offset")
+        raise APKSigningBlockError("APK Signing Block offset < central directory offset")
     padding = b"\x00" * (signed_sb_offset - data_out.cd_offset)
     offset = len(signed_sb) + len(padding)
     with open(output_apk, "r+b") as fh:
@@ -445,6 +450,11 @@ def do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO):
 
 def main():
     """CLI; requires click."""
+
+    global exclude_all_meta, copy_extra_bytes
+
+    exclude_all_meta = os.environ.get("APKSIGCOPIER_EXCLUDE_ALL_META") in ("1", "yes", "true")
+    copy_extra_bytes = os.environ.get("APKSIGCOPIER_COPY_EXTRA_BYTES") in ("1", "yes", "true")
 
     import click
 
