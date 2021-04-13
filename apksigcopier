@@ -173,8 +173,6 @@ def copy_apk(unsigned_apk, output_apk):
     offsets = {}
     with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
         for info in sorted(infos, key=lambda info: info.header_offset):
-            if info.flag_bits & 0x08:
-                raise ZipError("Unexpected ZIP entry with data descriptor")
             off_i = fhi.tell()
             if info.header_offset > off_i:
                 # copy extra bytes
@@ -184,7 +182,8 @@ def copy_apk(unsigned_apk, output_apk):
                 raise ZipError("Expected local file header signature")
             n, m = struct.unpack("<HH", hdr[26:30])
             hdr += fhi.read(n + m)
-            if exclude_from_copying(info.filename):
+            skip = exclude_from_copying(info.filename)
+            if skip:
                 fhi.seek(info.compress_size, os.SEEK_CUR)
             else:
                 offsets[id(info)] = off_o = fho.tell()
@@ -192,6 +191,12 @@ def copy_apk(unsigned_apk, output_apk):
                     hdr = _realign_zip_entry(info, hdr, n, m, off_o)
                 fho.write(hdr)
                 _copy_bytes(fhi, fho, info.compress_size)
+            if info.flag_bits & 0x08:
+                data_descriptor = fhi.read(12)
+                if data_descriptor[:4] == b"\x50\x4b\x07\x08":
+                    data_descriptor += fhi.read(4)
+                if not skip:
+                    fho.write(data_descriptor)
         extra_bytes = zdata.cd_offset - fhi.tell()
         if copy_extra_bytes:
             _copy_bytes(fhi, fho, extra_bytes)
