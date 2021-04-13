@@ -45,6 +45,7 @@ ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
 exclude_all_meta = False    # exclude all metadata files in copy_apk()
 copy_extra_bytes = False    # copy extra bytes after data in copy_apk()
+allow_duplicates = False    # allow duplicate ZIP entries in copy_apk()
 
 
 class APKSigCopierError(Exception):
@@ -167,8 +168,9 @@ def copy_apk(unsigned_apk, output_apk):
     """
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
         infos = zf.infolist()
-    if len(infos) != len(set(info.filename for info in infos)):
-        raise ZipError("Duplicate ZIP entries")
+    if not allow_duplicates:
+        if len(infos) != len(set(info.filename for info in infos)):
+            raise ZipError("Duplicate ZIP entries")
     zdata = zip_data(unsigned_apk)
     offsets = {}
     with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
@@ -460,10 +462,10 @@ def do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO):
 def main():
     """CLI; requires click."""
 
-    global exclude_all_meta, copy_extra_bytes
-
+    global exclude_all_meta, copy_extra_bytes, allow_duplicates
     exclude_all_meta = os.environ.get("APKSIGCOPIER_EXCLUDE_ALL_META") in ("1", "yes", "true")
     copy_extra_bytes = os.environ.get("APKSIGCOPIER_COPY_EXTRA_BYTES") in ("1", "yes", "true")
+    allow_duplicates = os.environ.get("APKSIGCOPIER_ALLOW_DUPLICATES") in ("1", "yes", "true")
 
     import click
 
