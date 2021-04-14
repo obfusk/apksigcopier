@@ -174,9 +174,7 @@ def exclude_from_copying(filename):
     exclude_all_meta is set to True instead, excludes all metadata files as
     matched by is_meta().
     """
-    if exclude_all_meta:
-        return is_meta(filename)
-    return filename in COPY_EXCLUDE
+    return is_meta(filename) if exclude_all_meta else filename in COPY_EXCLUDE
 
 
 ################################################################################
@@ -452,10 +450,14 @@ def do_extract(signed_apk, output_dir, v1_only=NO):
         with open(os.path.join(output_dir, name), "wb") as fh:
             fh.write(data)
     if v1_only == YES:
+        if not extracted_meta:
+            raise APKSigCopierError("Expected v1 signature")
         return
     expected = v1_only == NO
     extracted_v2_sig = extract_v2_sig(signed_apk, expected=expected)
     if extracted_v2_sig is None:
+        if not extracted_meta:
+            raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
         return
     signed_sb_offset, signed_sb = extracted_v2_sig
     with open(os.path.join(output_dir, SIGOFFSET), "w") as fh:
@@ -545,7 +547,8 @@ def main():
     @cli.command(help="""
         Extract APK signatures from signed APK.
     """)
-    @click.option("--v1-only", type=NAY, default=NO, show_default=True)
+    @click.option("--v1-only", type=NAY, default=NO, show_default=True,
+                  envvar="APKSIGCOPIER_V1_ONLY")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
     def extract(*args, **kwargs):
@@ -554,7 +557,8 @@ def main():
     @cli.command(help="""
         Patch extracted APK signatures onto unsigned APK.
     """)
-    @click.option("--v1-only", type=NAY, default=NO, show_default=True)
+    @click.option("--v1-only", type=NAY, default=NO, show_default=True,
+                  envvar="APKSIGCOPIER_V1_ONLY")
     @click.argument("metadata_dir", type=click.Path(exists=True, file_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
@@ -564,7 +568,8 @@ def main():
     @cli.command(help="""
         Copy (extract & patch) signatures from signed to unsigned APK.
     """)
-    @click.option("--v1-only", type=NAY, default=NO, show_default=True)
+    @click.option("--v1-only", type=NAY, default=NO, show_default=True,
+                  envvar="APKSIGCOPIER_V1_ONLY")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))

@@ -48,6 +48,9 @@ expected as well, *auto* means the presence of a v2 signature is
 detected automatically, and *yes* means a v2 signature is not expected
 (and ignored if it does exist).  Default: *no*.
 
+You can also set the environment variable **APKSIGCOPIER_V1_ONLY**
+instead.
+
 # ENVIRONMENT VARIABLES
 
 The following environment variables can be set to *1*, *yes*, or
