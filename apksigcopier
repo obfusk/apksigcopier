@@ -5,7 +5,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-04-13
+# Date        : 2021-04-14
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.4.0
@@ -18,6 +18,39 @@ copy/extract/patch apk signatures
 
 apksigcopier is a tool for copying APK signatures from a signed APK to an
 unsigned one (in order to verify reproducible builds).
+
+
+CLI
+===
+
+$ apksigcopier extract [OPTIONS] SIGNED_APK OUTPUT_DIR
+$ apksigcopier patch [OPTIONS] METADATA_DIR UNSIGNED_APK OUTPUT_APK
+$ apksigcopier copy [OPTIONS] SIGNED_APK UNSIGNED_APK OUTPUT_APK
+
+The following environment variables can be set to 1, yes, or true to
+overide the default behaviour:
+
+* set APKSIGCOPIER_EXCLUDE_ALL_META=1 to exclude all metadata files
+* set APKSIGCOPIER_COPY_EXTRA_BYTES=1 to copy extra bytes after data (e.g. a v2 sig)
+* set APKSIGCOPIER_ALLOW_DUPLICATES=1 to allow duplicate ZIP entries
+
+
+API
+===
+
+>> from apksigcopier import do_extract, do_patch, do_copy
+>> do_extract(signed_apk, output_dir, v1_only=NO)
+>> do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO)
+>> do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO)
+
+You can use False, None, and True instead of NO, AUTO, and YES respectively.
+
+The following global variables (which default to False), can be set to
+override the default behaviour:
+
+* set exclude_all_meta=True to exclude all metadata files
+* set copy_extra_bytes=True to copy extra bytes after data (e.g. a v2 sig)
+* set allow_duplicates=True to allow duplicate ZIP entries
 """
 
 import glob
@@ -101,7 +134,18 @@ class APKZipInfo(ReproducibleZipInfo):
 
 
 def noautoyes(value):
-    """Turns False into NO, None into AUTO, and True into YES."""
+    """
+    Turns False into NO, None into AUTO, and True into YES.
+
+    >>> from apksigcopier import noautoyes, NO, AUTO, YES
+    >>> noautoyes(False) == NO == noautoyes(NO)
+    True
+    >>> noautoyes(None) == AUTO == noautoyes(AUTO)
+    True
+    >>> noautoyes(True) == YES == noautoyes(YES)
+    True
+
+    """
     if isinstance(value, str):
         if value not in NOAUTOYES:
             raise ValueError("expected NO, AUTO, or YES")
@@ -123,7 +167,13 @@ def is_meta(filename):
 
 
 def exclude_from_copying(filename):
-    """Returns whether to exclude a file during copy_apk()."""
+    """
+    Returns whether to exclude a file during copy_apk().
+
+    Excludes filenames in COPY_EXCLUDE (i.e. MANIFEST.MF) by default; when
+    exclude_all_meta is set to True instead, excludes all metadata files as
+    matched by is_meta().
+    """
     if exclude_all_meta:
         return is_meta(filename)
     return filename in COPY_EXCLUDE
@@ -162,9 +212,17 @@ def exclude_from_copying(filename):
 # FIXME: makes certain assumptions and doesn't handle all valid ZIP files!
 def copy_apk(unsigned_apk, output_apk):
     """
-    Copy APK like apksigner would (without MANIFEST.MF).
+    Copy APK like apksigner would, excluding files matched by
+    exclude_from_copying().
 
     Returns max date_time.
+
+    The following global variables (which default to False), can be set to
+    override the default behaviour:
+
+    * set exclude_all_meta=True to exclude all metadata files
+    * set copy_extra_bytes=True to copy extra bytes after data (e.g. a v2 sig)
+    * set allow_duplicates=True to allow duplicate ZIP entries
     """
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
         infos = zf.infolist()
@@ -386,7 +444,9 @@ def do_extract(signed_apk, output_dir, v1_only=NO):
     * use v1_only=YES (or v1_only=True) to ignore any v2/v3 signatures.
     """
     v1_only = noautoyes(v1_only)
-    extracted_meta = extract_meta(signed_apk)
+    extracted_meta = tuple(extract_meta(signed_apk))
+    if len(extracted_meta) not in (len(META_EXT), 0):
+        raise APKSigCopierError("Unexpected or missing metadata files in signed_apk")
     for info, data in extracted_meta:
         name = os.path.basename(info.filename)
         with open(os.path.join(output_dir, name), "wb") as fh:
@@ -420,10 +480,12 @@ def do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO):
         files = [fn for ext in pat.split("|") for fn in
                  glob.glob(os.path.join(metadata_dir, "*." + ext))]
         if len(files) != 1:
-            raise APKSigCopierError("Unexpected or missing files in metadata_dir")
+            continue
         info = zipfile.ZipInfo("META-INF/" + os.path.basename(files[0]))
         with open(files[0], "rb") as fh:
             extracted_meta.append((info, fh.read()))
+    if len(extracted_meta) not in (len(META_EXT), 0):
+        raise APKSigCopierError("Unexpected or missing files in metadata_dir")
     if v1_only == YES:
         extracted_v2_sig = None
     else:
@@ -437,6 +499,8 @@ def do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO):
             with open(sigblock_file, "rb") as fh:
                 signed_sb = fh.read()
             extracted_v2_sig = signed_sb_offset, signed_sb
+    if not extracted_meta and extracted_v2_sig is None:
+        raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
 
 

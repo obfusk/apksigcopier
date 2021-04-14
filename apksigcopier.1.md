@@ -1,6 +1,6 @@
 % apksigcopier(1) v0.4.0 | General Commands Manual
 % Felix C. Stegerman <flx@obfusk.net>
-% 2021-04-10
+% 2021-04-14
 
 # NAME
 
@@ -47,6 +47,23 @@ Whether to expect only a v1 signature: *no* means a v2 signature is
 expected as well, *auto* means the presence of a v2 signature is
 detected automatically, and *yes* means a v2 signature is not expected
 (and ignored if it does exist).  Default: *no*.
+
+# ENVIRONMENT VARIABLES
+
+The following environment variables can be set to *1*, *yes*, or
+*true* to overide the default behaviour.
+
+## APKSIGCOPIER_EXCLUDE_ALL_META
+
+Exclude all metadata files, not just MANIFEST.MF.
+
+## APKSIGCOPIER_COPY_EXTRA_BYTES
+
+Copy extra bytes after data (e.g. an existing v2 signature).
+
+## APKSIGCOPIER_ALLOW_DUPLICATES
+
+Allow duplicate ZIP entries.
 
 # EXAMPLES
 
