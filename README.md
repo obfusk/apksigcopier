@@ -67,7 +67,6 @@ The following environment variables can be set to `1`, `yes`, or
 
 * set `APKSIGCOPIER_EXCLUDE_ALL_META=1` to exclude all metadata files
 * set `APKSIGCOPIER_COPY_EXTRA_BYTES=1` to copy extra bytes after data (e.g. a v2 sig)
-* set `APKSIGCOPIER_ALLOW_DUPLICATES=1` to allow duplicate ZIP entries
 
 ## Python API
 
@@ -86,7 +85,6 @@ to override the default behaviour:
 
 * set `exclude_all_meta=True` to exclude all metadata files
 * set `copy_extra_bytes=True` to copy extra bytes after data (e.g. a v2 sig)
-* set `allow_duplicates=True` to allow duplicate ZIP entries
 
 ## FAQ
 

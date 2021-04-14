@@ -64,10 +64,6 @@ Exclude all metadata files, not just MANIFEST.MF.
 
 Copy extra bytes after data (e.g. an existing v2 signature).
 
-## APKSIGCOPIER_ALLOW_DUPLICATES
-
-Allow duplicate ZIP entries.
-
 # EXAMPLES
 
 ## extract

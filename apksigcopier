@@ -32,7 +32,6 @@ overide the default behaviour:
 
 * set APKSIGCOPIER_EXCLUDE_ALL_META=1 to exclude all metadata files
 * set APKSIGCOPIER_COPY_EXTRA_BYTES=1 to copy extra bytes after data (e.g. a v2 sig)
-* set APKSIGCOPIER_ALLOW_DUPLICATES=1 to allow duplicate ZIP entries
 
 
 API
@@ -50,7 +49,6 @@ override the default behaviour:
 
 * set exclude_all_meta=True to exclude all metadata files
 * set copy_extra_bytes=True to copy extra bytes after data (e.g. a v2 sig)
-* set allow_duplicates=True to allow duplicate ZIP entries
 """
 
 import glob
@@ -78,7 +76,6 @@ ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
 exclude_all_meta = False    # exclude all metadata files in copy_apk()
 copy_extra_bytes = False    # copy extra bytes after data in copy_apk()
-allow_duplicates = False    # allow duplicate ZIP entries in copy_apk()
 
 
 class APKSigCopierError(Exception):
@@ -220,13 +217,9 @@ def copy_apk(unsigned_apk, output_apk):
 
     * set exclude_all_meta=True to exclude all metadata files
     * set copy_extra_bytes=True to copy extra bytes after data (e.g. a v2 sig)
-    * set allow_duplicates=True to allow duplicate ZIP entries
     """
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
         infos = zf.infolist()
-    if not allow_duplicates:
-        if len(infos) != len(set(info.filename for info in infos)):
-            raise ZipError("Duplicate ZIP entries")
     zdata = zip_data(unsigned_apk)
     offsets = {}
     with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
@@ -244,7 +237,9 @@ def copy_apk(unsigned_apk, output_apk):
             if skip:
                 fhi.seek(info.compress_size, os.SEEK_CUR)
             else:
-                offsets[id(info)] = off_o = fho.tell()
+                if info.filename in offsets:
+                    raise ZipError("Duplicate ZIP entry: " + info.filename)
+                offsets[info.filename] = off_o = fho.tell()
                 if info.compress_type == 0 and off_o != info.header_offset:
                     hdr = _realign_zip_entry(info, hdr, n, m, off_o)
                 fho.write(hdr)
@@ -268,7 +263,7 @@ def copy_apk(unsigned_apk, output_apk):
             n, m, k = struct.unpack("<HHH", hdr[28:34])
             hdr += fhi.read(n + m + k)
             if not exclude_from_copying(info.filename):
-                off = int.to_bytes(offsets[id(info)], 4, "little")
+                off = int.to_bytes(offsets[info.filename], 4, "little")
                 hdr = hdr[:42] + off + hdr[46:]
                 fho.write(hdr)
         eocd_offset = fho.tell()
@@ -528,10 +523,9 @@ def do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO):
 def main():
     """CLI; requires click."""
 
-    global exclude_all_meta, copy_extra_bytes, allow_duplicates
+    global exclude_all_meta, copy_extra_bytes
     exclude_all_meta = os.environ.get("APKSIGCOPIER_EXCLUDE_ALL_META") in ("1", "yes", "true")
     copy_extra_bytes = os.environ.get("APKSIGCOPIER_COPY_EXTRA_BYTES") in ("1", "yes", "true")
-    allow_duplicates = os.environ.get("APKSIGCOPIER_ALLOW_DUPLICATES") in ("1", "yes", "true")
 
     import click
 
