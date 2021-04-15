@@ -2,10 +2,10 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-04-10
+    Date        : 2021-04-15
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
-    Version     : v0.4.0
+    Version     : v0.5.0
     License     : GPLv3+
 
 }}}1 -->
@@ -56,7 +56,17 @@ $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```bash
 $ apksigcopier --help
 $ apksigcopier copy --help      # extract --help, patch --help, etc.
+
+$ man apksigcopier              # requires the man page to be installed
 ```
+
+### Environment Variables
+
+The following environment variables can be set to `1`, `yes`, or
+`true` to overide the default behaviour:
+
+* set `APKSIGCOPIER_EXCLUDE_ALL_META=1` to exclude all metadata files
+* set `APKSIGCOPIER_COPY_EXTRA_BYTES=1` to copy extra bytes after data (e.g. a v2 sig)
 
 ## Python API
 
@@ -66,6 +76,15 @@ $ apksigcopier copy --help      # extract --help, patch --help, etc.
 >>> do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO)
 >>> do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO)
 ```
+
+You can use `False`, `None`, and `True` instead of `NO`, `AUTO`, and
+`YES` respectively.
+
+The following global variables (which default to `False`), can be set
+to override the default behaviour:
+
+* set `exclude_all_meta=True` to exclude all metadata files
+* set `copy_extra_bytes=True` to copy extra bytes after data (e.g. a v2 sig)
 
 ## FAQ
 
