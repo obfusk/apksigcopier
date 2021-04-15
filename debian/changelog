@@ -1,6 +1,6 @@
-apksigcopier (0.4.0-1ppa.focal1) focal; urgency=medium
+apksigcopier (0.5.0-1ppa.focal1) focal; urgency=medium
 
   * Ubuntu focal requires debhelper-compat = 12.
-  * v0.4.0 for Ubuntu focal.
+  * v0.5.0 for Ubuntu focal.
 
- -- Felix C. Stegerman <flx@obfusk.net>  Sat, 10 Apr 2021 23:25:18 +0200
+ -- Felix C. Stegerman <flx@obfusk.net>  Thu, 15 Apr 2021 18:21:58 +0200

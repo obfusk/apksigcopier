@@ -15,6 +15,7 @@ test: test-cli lint lint-extra
 test-cli:
 	# TODO
 	apksigcopier --version
+	$(PYTHON) -m doctest apksigcopier
 
 lint:
 	flake8 apksigcopier.py
