@@ -5,7 +5,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-04-16
+# Date        : 2021-04-17
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.5.0
@@ -435,6 +435,8 @@ def verify_apk(apk):
         subprocess.run(VERIFY_CMD + (apk,), check=True, stdout=subprocess.PIPE)
     except subprocess.CalledProcessError:
         raise APKSigCopierError("failed to verify " + apk)
+    except FileNotFoundError:
+        raise APKSigCopierError("{} command not found".format(VERIFY_CMD[0]))
 
 
 def do_extract(signed_apk, output_dir, v1_only=NO):
