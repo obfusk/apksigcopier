@@ -45,10 +45,16 @@ jobs:
       uses: actions/cache@v2
       with:
         path: |
-          NewPipe_v0.21.0.apk
           app-release-unsigned-zipflinger.apk
           app-release-unsigned.apk
-        key: v0.21.0-1
+        key: v0.21.0
+    - name: Cache NewPipe Downloads
+      uses: actions/cache@v2
+      with:
+        path: |
+          NewPipe_v0.21.0.apk
+          org.schabi.newpipe_966.apk
+        key: v0.21.0
     - name: Build & Test NewPipe
       run: |
         set -x
@@ -64,7 +70,6 @@ jobs:
           ./gradlew assembleRelease
           mv app/build/outputs/apk/release/app-release-unsigned.apk ../
           cd ..
-          wget -O NewPipe_v0.21.0.apk -- "https://github.com/TeamNewPipe/NewPipe/releases/download/v0.21.0/NewPipe_v0.21.0.apk"
         fi
         # copy APK
         cp app-release-unsigned.apk signed.apk
@@ -114,11 +119,17 @@ jobs:
         cmp signed-zipflinger.apk patched-zipflinger.apk
         cmp signed-zipflinger.apk copied-zipflinger.apk
         cmp signed-zipflinger-v1.apk copied-zipflinger-v1.apk
-        # apksigcopier compare
-        apksigcopier compare NewPipe_v0.21.0.apk signed-zipflinger.apk
-        apksigcopier compare NewPipe_v0.21.0.apk \
-          --unsigned app-release-unsigned-zipflinger.apk
         # verify APKs
         for apk in signed*.apk patched*.apk copied*.apk; do
           apksigner verify -v --print-certs "$apk" | grep -v ^WARNING:
         done
+        # apksigcopier compare
+        [ -e NewPipe_v0.21.0.apk ] || wget -O NewPipe_v0.21.0.apk -- \
+          "https://github.com/TeamNewPipe/NewPipe/releases/download/v0.21.0/NewPipe_v0.21.0.apk"
+        [ -e org.schabi.newpipe_966.apk ] || wget -O org.schabi.newpipe_966.apk -- \
+          "https://f-droid.org/archive/org.schabi.newpipe_966.apk"
+        apksigcopier compare NewPipe_v0.21.0.apk org.schabi.newpipe_966.apk
+        # FIXME
+        # apksigcopier compare NewPipe_v0.21.0.apk signed-zipflinger.apk
+        # apksigcopier compare NewPipe_v0.21.0.apk \
+        #   --unsigned app-release-unsigned-zipflinger.apk
