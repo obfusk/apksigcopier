@@ -23,6 +23,8 @@ jobs:
       run: |
         sudo apt-get update || sudo apt-get update
         # sudo apt-get upgrade -y
+        sudo apt-get install -y openjdk-8-jdk-headless
+        sudo apt-get remove -y adoptopenjdk-8-hotspot adoptopenjdk-11-hotspot
         sudo apt-get install -y apksigner
         python3 -m pip install --upgrade pip
         python3 -m pip install flake8 pylint
@@ -33,33 +35,33 @@ jobs:
             contains(matrix.python-version, 'pypy') }}
     - name: Install
       run: make install
-    - name: Test & Lint
+    - name: Test & lint
       run: make test-cli lint
-    - name: Extra Lint
+    - name: Extra lint
       run: make lint-extra
       continue-on-error:
         ${{ contains(matrix.python-version, 'alpha') ||
             contains(matrix.python-version, 'pypy') ||
             matrix.python-version == '3.5' }}
-    - name: Cache NewPipe Build
+    - name: Cache NewPipe build
       uses: actions/cache@v2
       with:
         path: |
           app-release-unsigned-zipflinger.apk
           app-release-unsigned.apk
-        key: v0.21.0
-    - name: Cache NewPipe Downloads
+        key: v0.21.0-20210615
+    - name: Cache NewPipe downloads
       uses: actions/cache@v2
       with:
         path: |
           NewPipe_v0.21.0.apk
           org.schabi.newpipe_966.apk
-        key: v0.21.0
-    - name: Build & Test NewPipe
+        key: v0.21.0-20210615
+    - name: Build NewPipe
       run: |
         set -x
-        # build APK
         if [ ! -e app-release-unsigned.apk ]; then
+          unset JAVA_HOME
           git clone -b v0.21.0 https://github.com/TeamNewPipe/NewPipe.git
           cd NewPipe
           ./gradlew assembleRelease
@@ -71,13 +73,17 @@ jobs:
           mv app/build/outputs/apk/release/app-release-unsigned.apk ../
           cd ..
         fi
-        # copy APK
+    - name: Copy APK
+      run: |
+        set -x
         cp app-release-unsigned.apk signed.apk
         cp app-release-unsigned.apk signed-v1.apk
         cp app-release-unsigned.apk signed-jarsigner.apk
         cp app-release-unsigned-zipflinger.apk signed-zipflinger.apk
         cp app-release-unsigned-zipflinger.apk signed-zipflinger-v1.apk
-        # generate dummy keystore & sign APKs
+    - name: Generate dummy keystore & sign APKs
+      run: |
+        set -x
         keytool -genkey -keystore ci-ks -alias dummy -keyalg RSA \
           -keysize 4096 -sigalg SHA512withRSA -validity 10000 \
           -storepass dummy-password -dname CN=dummy
@@ -93,7 +99,9 @@ jobs:
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password \
           --v2-signing-enabled=false --v3-signing-enabled=false signed-zipflinger-v1.apk
-        # copy signatures
+    - name: Copy signatures
+      run: |
+        set -x
         mkdir meta meta-zipflinger
         apksigcopier extract signed.apk meta
         apksigcopier extract signed-zipflinger.apk meta-zipflinger
@@ -110,7 +118,9 @@ jobs:
           app-release-unsigned-zipflinger.apk copied-zipflinger.apk
         apksigcopier copy --v1-only=auto signed-zipflinger-v1.apk \
           app-release-unsigned-zipflinger.apk copied-zipflinger-v1.apk
-        # compare APKs
+    - name: Compare APKs
+      run: |
+        set -x
         sha512sum *.apk | sort
         cmp signed.apk patched.apk
         cmp signed.apk copied.apk
@@ -119,17 +129,27 @@ jobs:
         cmp signed-zipflinger.apk patched-zipflinger.apk
         cmp signed-zipflinger.apk copied-zipflinger.apk
         cmp signed-zipflinger-v1.apk copied-zipflinger-v1.apk
-        # verify APKs
+    - name: Verify APKs
+      run: |
+        set -x
         for apk in signed*.apk patched*.apk copied*.apk; do
           apksigner verify -v --print-certs "$apk" | grep -v ^WARNING:
         done
-        # apksigcopier compare
+    - name: Download & verify F-Droid & upstream APKs
+      run: |
+        set -x
         [ -e NewPipe_v0.21.0.apk ] || wget -O NewPipe_v0.21.0.apk -- \
-          "https://github.com/TeamNewPipe/NewPipe/releases/download/v0.21.0/NewPipe_v0.21.0.apk"
+          https://github.com/TeamNewPipe/NewPipe/releases/download/v0.21.0/NewPipe_v0.21.0.apk
         [ -e org.schabi.newpipe_966.apk ] || wget -O org.schabi.newpipe_966.apk -- \
-          "https://f-droid.org/archive/org.schabi.newpipe_966.apk"
+          https://f-droid.org/archive/org.schabi.newpipe_966.apk
+        for apk in NewPipe_v0.21.0.apk org.schabi.newpipe_966.apk; do
+          apksigner verify -v --print-certs "$apk" | grep -v ^WARNING:
+        done
+    # FIXME: not actually RB :(
+    - name: apksigcopier compare
+      run: |
+        set -x
         apksigcopier compare NewPipe_v0.21.0.apk org.schabi.newpipe_966.apk
-        # FIXME
-        # apksigcopier compare NewPipe_v0.21.0.apk signed-zipflinger.apk
-        # apksigcopier compare NewPipe_v0.21.0.apk \
-        #   --unsigned app-release-unsigned-zipflinger.apk
+        apksigcopier compare NewPipe_v0.21.0.apk signed-zipflinger.apk || true
+        apksigcopier compare NewPipe_v0.21.0.apk \
+          --unsigned app-release-unsigned-zipflinger.apk || true
