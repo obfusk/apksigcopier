@@ -1,6 +1,6 @@
 % apksigcopier(1) v0.5.0 | General Commands Manual
 % Felix C. Stegerman <flx@obfusk.net>
-% 2021-04-15
+% 2021-06-14
 
 # NAME
 
@@ -54,7 +54,7 @@ instead.
 # ENVIRONMENT VARIABLES
 
 The following environment variables can be set to *1*, *yes*, or
-*true* to overide the default behaviour.
+*true* to override the default behaviour.
 
 ## APKSIGCOPIER_EXCLUDE_ALL_META
 

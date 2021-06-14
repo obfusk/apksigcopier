@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-04-15
+    Date        : 2021-06-14
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v0.5.0
@@ -63,7 +63,7 @@ $ man apksigcopier              # requires the man page to be installed
 ### Environment Variables
 
 The following environment variables can be set to `1`, `yes`, or
-`true` to overide the default behaviour:
+`true` to override the default behaviour:
 
 * set `APKSIGCOPIER_EXCLUDE_ALL_META=1` to exclude all metadata files
 * set `APKSIGCOPIER_COPY_EXTRA_BYTES=1` to copy extra bytes after data (e.g. a v2 sig)
@@ -92,7 +92,7 @@ to override the default behaviour:
 
 It currently supports v1 + v2 (+ v3, which is a variant of v2).
 
-when using the `extract` command, the v2/v3 signature is saved as
+When using the `extract` command, the v2/v3 signature is saved as
 `APKSigningBlock` + `APKSigningBlockOffset`.
 
 ## Tab Completion

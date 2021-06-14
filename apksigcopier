@@ -5,7 +5,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-04-17
+# Date        : 2021-06-14
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
 # Version     : v0.5.0
@@ -28,7 +28,7 @@ $ apksigcopier patch [OPTIONS] METADATA_DIR UNSIGNED_APK OUTPUT_APK
 $ apksigcopier copy [OPTIONS] SIGNED_APK UNSIGNED_APK OUTPUT_APK
 
 The following environment variables can be set to 1, yes, or true to
-overide the default behaviour:
+override the default behaviour:
 
 * set APKSIGCOPIER_EXCLUDE_ALL_META=1 to exclude all metadata files
 * set APKSIGCOPIER_COPY_EXTRA_BYTES=1 to copy extra bytes after data (e.g. a v2 sig)
