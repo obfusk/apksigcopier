@@ -16,15 +16,17 @@
 [![CI](https://github.com/obfusk/apksigcopier/workflows/CI/badge.svg)](https://github.com/obfusk/apksigcopier/actions?query=workflow%3ACI)
 [![GPLv3+](https://img.shields.io/badge/license-GPLv3+-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 
-## apksigcopier - copy/extract/patch apk signatures
+## apksigcopier - copy/extract/patch apk signatures & compare apks
 
 `apksigcopier` is a tool for copying APK signatures from a signed APK
-to an unsigned one (in order to verify reproducible builds).  Its
-command-line tool offers three operations:
+to an unsigned one (in order to verify reproducible builds).  It can
+also be used to compare two APKs with different signatures.  Its
+command-line tool offers four operations:
 
 * copy signatures directly from a signed to an unsigned APK
 * extract signatures from a signed APK to a directory
 * patch previously extracted signatures onto an unsigned APK
+* compare two APKs with different signatures
 
 ### Extract
 
@@ -51,6 +53,15 @@ $ apksigcopier patch meta unsigned.apk out.apk
 $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```
 
+### Compare
+
+This command requires `apksigner`.
+
+```bash
+$ apksigcopier compare foo-from-fdroid.apk foo-built-locally.apk
+$ apksigcopier compare --unsigned foo.apk foo-unsigned.apk
+```
+
 ### Help
 
 ```bash
@@ -71,10 +82,11 @@ The following environment variables can be set to `1`, `yes`, or
 ## Python API
 
 ```python
->>> from apksigcopier import do_extract, do_patch, do_copy
+>>> from apksigcopier import do_extract, do_patch, do_copy, do_compare
 >>> do_extract(signed_apk, output_dir, v1_only=NO)
 >>> do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO)
 >>> do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO)
+>>> do_compare(first_apk, second_apk, unsigned=False)
 ```
 
 You can use `False`, `None`, and `True` instead of `NO`, `AUTO`, and
@@ -90,7 +102,10 @@ to override the default behaviour:
 
 ### What kind of signatures does apksigcopier support?
 
-It currently supports v1 + v2 (+ v3, which is a variant of v2).
+It currently supports v1 + v2 + v3 (which is a variant of v2).
+
+It should also support v4, since these are stored in a separate file
+(and require a complementary v2/v3 signature).
 
 When using the `extract` command, the v2/v3 signature is saved as
 `APKSigningBlock` + `APKSigningBlockOffset`.
@@ -118,19 +133,21 @@ eval (env _APKSIGCOPIER_COMPLETE=source_fish apksigcopier)
 ## Requirements
 
 * Python >= 3.5 + click.
+* The `compare` command also requires `apksigner`.
 
 ### Debian/Ubuntu
 
 ```bash
 $ apt install python3-click
+$ apt install apksigner         # only needed for the compare command
 ```
 
 ## Installing
 
 ### Debian
 
-An official Debian package will hopefully be available soon.  You can
-also manually build one using the `debian/sid` branch, or download a
+An official Debian package should be available soon.  You can also
+manually build one using the `debian/sid` branch, or download a
 pre-built `.deb` via GitHub releases.
 
 ### Using pip
