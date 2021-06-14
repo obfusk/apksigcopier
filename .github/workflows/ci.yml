@@ -28,14 +28,19 @@ jobs:
         python3 -m pip install flake8 pylint
     - name: Install mypy
       run: python3 -m pip install mypy
-      continue-on-error: ${{ contains(matrix.python-version, 'alpha') }}
+      continue-on-error:
+        ${{ contains(matrix.python-version, 'alpha') ||
+            contains(matrix.python-version, 'pypy') }}
     - name: Install
       run: make install
     - name: Test & Lint
       run: make test-cli lint
     - name: Extra Lint
       run: make lint-extra
-      continue-on-error: ${{ contains(matrix.python-version, 'alpha') }}
+      continue-on-error:
+        ${{ contains(matrix.python-version, 'alpha') ||
+            contains(matrix.python-version, 'pypy') ||
+            matrix.python-version == '3.5' }}
     - name: Cache NewPipe Build
       uses: actions/cache@v2
       with:
