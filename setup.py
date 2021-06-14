@@ -8,7 +8,7 @@ info = Path(__file__).with_name("README.md").read_text(encoding = "utf8")
 setuptools.setup(
     name              = "apksigcopier",
     url               = "https://github.com/obfusk/apksigcopier",
-    description       = "copy/extract/patch apk signatures",
+    description       = "copy/extract/patch apk signatures & compare apks",
     long_description  = info,
     long_description_content_type = "text/markdown",
     version           = __version__,
@@ -16,7 +16,7 @@ setuptools.setup(
     author_email      = "flx@obfusk.net",
     license           = "GPLv3+",
     classifiers       = [
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
@@ -32,7 +32,7 @@ setuptools.setup(
         "Topic :: Software Development",
         "Topic :: Utilities",
     ],
-    keywords          = "android apk reproducible signing",
+    keywords          = "android apk reproducible signing compare",
     py_modules        = ["apksigcopier"],
     entry_points      = dict(console_scripts = ["apksigcopier = apksigcopier:main"]),
     python_requires   = ">=3.5",
