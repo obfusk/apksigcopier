@@ -141,7 +141,7 @@ jobs:
         [ -e NewPipe_v0.21.0.apk ] || wget -O NewPipe_v0.21.0.apk -- \
           https://github.com/TeamNewPipe/NewPipe/releases/download/v0.21.0/NewPipe_v0.21.0.apk
         [ -e org.schabi.newpipe_966.apk ] || wget -O org.schabi.newpipe_966.apk -- \
-          https://f-droid.org/archive/org.schabi.newpipe_966.apk
+          https://web.archive.org/web/20210618174010/https://f-droid.org/archive/org.schabi.newpipe_966.apk
         for apk in NewPipe_v0.21.0.apk org.schabi.newpipe_966.apk; do
           apksigner verify -v --print-certs "$apk" | grep -v ^WARNING:
         done
