@@ -3,8 +3,9 @@ apksigcopier (1.0.0-1) UNRELEASED; urgency=medium
   * New upstream version 1.0.0
     - add compare command
   * debian/control: Suggests: apksigner
+  * debian/rules: override dh_auto_test to run make test
 
- -- Felix C. Stegerman <flx@obfusk.net>  Fri, 18 Jun 2021 18:26:57 +0200
+ -- Felix C. Stegerman <flx@obfusk.net>  Fri, 18 Jun 2021 19:04:51 +0200
 
 apksigcopier (0.5.0-1) unstable; urgency=medium
 
