@@ -1,10 +1,10 @@
-% apksigcopier(1) v0.5.0 | General Commands Manual
+% apksigcopier(1) v1.0.0 | General Commands Manual
 % Felix C. Stegerman <flx@obfusk.net>
-% 2021-04-15
+% 2021-06-18
 
 # NAME
 
-apksigcopier - copy/extract/patch apk signatures
+apksigcopier - copy/extract/patch apk signatures & compare apks
 
 # SYNOPSIS
 
@@ -13,6 +13,8 @@ apksigcopier - copy/extract/patch apk signatures
 **apksigcopier** extract \[*options*\] *signed_apk* *output_dir*
 
 **apksigcopier** patch \[*options*\] *metadata_dir* *unsigned_apk* *output_apk*
+
+**apksigcopier** compare \[*options*\] *first_apk* *second_apk*
 
 **apksigcopier** \--version
 
@@ -23,7 +25,8 @@ apksigcopier - copy/extract/patch apk signatures
 # DESCRIPTION
 
 A command line tool for copying APK signatures from a signed APK to an
-unsigned one (in order to verify reproducible builds).
+unsigned one (in order to verify reproducible builds).  It can also be
+used to compare two APKs with different signatures.
 
 # COMMANDS
 
@@ -39,7 +42,16 @@ Extract APK signatures from signed APK.
 
 Patch extracted APK signatures onto unsigned APK.
 
+## compare
+
+Compare two APKs by copying the signature from the first to a copy of
+the second and checking if the resulting APK verifies.
+
+This command requires apksigner.
+
 # OPTIONS
+
+## copy/extract/patch
 
 \--v1-only [no|auto|yes]
 
@@ -51,10 +63,16 @@ detected automatically, and *yes* means a v2 signature is not expected
 You can also set the environment variable **APKSIGCOPIER_V1_ONLY**
 instead.
 
+## compare
+
+\--unsigned
+
+Accept unsigned *second_apk*.
+
 # ENVIRONMENT VARIABLES
 
 The following environment variables can be set to *1*, *yes*, or
-*true* to overide the default behaviour.
+*true* to override the default behaviour.
 
 ## APKSIGCOPIER_EXCLUDE_ALL_META
 
@@ -89,6 +107,13 @@ $ apksigcopier patch meta unsigned.apk out.apk
 
 ```bash
 $ apksigcopier copy signed.apk unsigned.apk out.apk
+```
+
+# compare
+
+```bash
+$ apksigcopier compare foo-from-fdroid.apk foo-built-locally.apk
+$ apksigcopier compare foo.apk --unsigned foo-unsigned.apk
 ```
 
 # SEE ALSO
