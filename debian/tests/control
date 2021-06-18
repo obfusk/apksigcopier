@@ -1,0 +1,7 @@
+Tests: smoke
+Depends: apksigcopier
+Restrictions: superficial
+
+Tests: compare
+Depends: apksigcopier, apksigner
+Restrictions: needs-internet, skippable
