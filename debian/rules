@@ -1,7 +1,9 @@
 #!/usr/bin/make -f
 execute_after_dh_auto_build:
-	make apksigcopier.1
+	$(MAKE) apksigcopier.1
 execute_after_dh_auto_clean:
-	make cleanup
+	$(MAKE) clean
+override_dh_auto_test:
+	PATH=$$PWD:$$PATH $(MAKE) test
 %:
 	dh $@ --with python3 --buildsystem=pybuild

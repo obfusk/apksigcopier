@@ -1,0 +1,10 @@
+#!/bin/bash
+set -ex
+cd "$AUTOPKGTEST_TMP"
+wget -O NewPipe_v0.21.0.apk -- \
+  https://github.com/TeamNewPipe/NewPipe/releases/download/v0.21.0/NewPipe_v0.21.0.apk \
+  || exit 77
+wget -O org.schabi.newpipe_966.apk -- \
+  https://web.archive.org/web/20210618174010/https://f-droid.org/archive/org.schabi.newpipe_966.apk \
+  || exit 77
+apksigcopier compare NewPipe_v0.21.0.apk org.schabi.newpipe_966.apk
