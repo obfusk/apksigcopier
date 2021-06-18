@@ -1,7 +1,7 @@
 Tests: smoke
 Depends: apksigcopier
-Restrictions: superficial
+Restrictions: allow-stderr, superficial
 
 Tests: compare
-Depends: apksigcopier, apksigner
-Restrictions: needs-internet, skippable
+Depends: apksigcopier, apksigner, wget
+Restrictions: allow-stderr, needs-internet, skippable
