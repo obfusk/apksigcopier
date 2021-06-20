@@ -1,4 +1,4 @@
-apksigcopier (1.0.0-1) UNRELEASED; urgency=medium
+apksigcopier (1.0.0-1) unstable; urgency=medium
 
   * New upstream version 1.0.0
     - add compare command
