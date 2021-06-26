@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-06-18
+    Date        : 2021-06-25
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v1.0.0
@@ -146,9 +146,15 @@ $ apt install apksigner         # only needed for the compare command
 
 ### Debian
 
-An official Debian package should be available soon.  You can also
-manually build one using the `debian/sid` branch, or download a
-pre-built `.deb` via GitHub releases.
+An official package is
+[available in Debian unstable](https://packages.debian.org/unstable/apksigcopier):
+
+```bash
+$ apt install apksigcopier
+```
+
+You can also manually build a Debian package using the `debian/sid`
+branch, or download a pre-built `.deb` via GitHub releases.
 
 ### Using pip
 
