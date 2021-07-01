@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-06-25
+    Date        : 2021-07-01
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v1.0.0
@@ -15,6 +15,15 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/apksigcopier.svg)](https://pypi.python.org/pypi/apksigcopier)
 [![CI](https://github.com/obfusk/apksigcopier/workflows/CI/badge.svg)](https://github.com/obfusk/apksigcopier/actions?query=workflow%3ACI)
 [![GPLv3+](https://img.shields.io/badge/license-GPLv3+-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
+
+<a href="https://repology.org/project/apksigcopier/versions">
+  <img src="https://repology.org/badge/vertical-allrepos/apksigcopier.svg"
+    alt="Packaging status" />
+</a>
+<a href="https://repology.org/project/python:apksigcopier/versions">
+  <img src="https://repology.org/badge/vertical-allrepos/python:apksigcopier.svg"
+    alt="Packaging status" />
+</a>
 
 ## apksigcopier - copy/extract/patch apk signatures & compare apks
 
