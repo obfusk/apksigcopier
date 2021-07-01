@@ -17,11 +17,11 @@
 [![GPLv3+](https://img.shields.io/badge/license-GPLv3+-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 <a href="https://repology.org/project/apksigcopier/versions">
-  <img src="https://repology.org/badge/vertical-allrepos/apksigcopier.svg"
+  <img src="https://repology.org/badge/vertical-allrepos/apksigcopier.svg?header="
     alt="Packaging status" />
 </a>
 <a href="https://repology.org/project/python:apksigcopier/versions">
-  <img src="https://repology.org/badge/vertical-allrepos/python:apksigcopier.svg"
+  <img src="https://repology.org/badge/vertical-allrepos/python:apksigcopier.svg?header="
     alt="Packaging status" />
 </a>
 
