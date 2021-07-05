@@ -12,7 +12,7 @@ Build-Depends: debhelper-compat (= 12),
                mypy,
                pandoc,
 Standards-Version: 4.5.1
-Vcs-Git: https://salsa.debian.org/obfusk/apksigcopier.git
+Vcs-Git: https://salsa.debian.org/obfusk/apksigcopier.git -b ubuntu/focal
 Vcs-Browser: https://salsa.debian.org/obfusk/apksigcopier
 Homepage: https://github.com/obfusk/apksigcopier
 Rules-Requires-Root: no
