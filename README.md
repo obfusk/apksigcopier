@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-07-01
+    Date        : 2021-07-07
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v1.0.0
@@ -18,14 +18,17 @@
 
 <a href="https://repology.org/project/apksigcopier/versions">
   <img src="https://repology.org/badge/vertical-allrepos/apksigcopier.svg?header="
-    alt="Packaging status" />
-</a>
-<a href="https://repology.org/project/python:apksigcopier/versions">
-  <img src="https://repology.org/badge/vertical-allrepos/python:apksigcopier.svg?header="
-    alt="Packaging status" />
+    alt="Packaging status" align="right" />
 </a>
 
-## apksigcopier - copy/extract/patch apk signatures & compare apks
+<a href="https://repology.org/project/python:apksigcopier/versions">
+  <img src="https://repology.org/badge/vertical-allrepos/python:apksigcopier.svg?header="
+    alt="Packaging status" align="right" />
+</a>
+
+# apksigcopier
+
+## copy/extract/patch apk signatures & compare apks
 
 `apksigcopier` is a tool for copying APK signatures from a signed APK
 to an unsigned one (in order to verify reproducible builds).  It can
