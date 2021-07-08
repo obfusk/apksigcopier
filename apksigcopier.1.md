@@ -1,4 +1,4 @@
-% apksigcopier(1) v1.0.0 | General Commands Manual
+% apksigcopier(1) v1.0.1 | General Commands Manual
 % Felix C. Stegerman <flx@obfusk.net>
 % 2021-07-08
 

@@ -5,7 +5,7 @@
     Date        : 2021-07-08
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
-    Version     : v1.0.0
+    Version     : v1.0.1
     License     : GPLv3+
 
 }}}1 -->
