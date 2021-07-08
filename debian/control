@@ -23,11 +23,11 @@ Depends: ${misc:Depends},
          ${python3:Depends},
          ${shlibs:Depends},
 Suggests: apksigner
-Description: copy/extract/patch apk signatures & compare apks
- apksigcopier is a tool for copying APK signatures from a signed APK
- to an unsigned one (in order to verify reproducible builds).  It can
- also be used to compare two APKs with different signatures.  Its
- command-line tool offers four operations:
+Description: copy/extract/patch android apk signatures & compare apks
+ apksigcopier is a tool for copying android APK signatures from a signed APK to
+ an unsigned one (in order to verify reproducible builds).  It can also be used
+ to compare two APKs with different signatures.  Its command-line tool offers
+ four operations:
  .
   * copy signatures directly from a signed to an unsigned APK
   * extract signatures from a signed APK to a directory

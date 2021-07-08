@@ -1,3 +1,10 @@
+apksigcopier (1.0.1-1) unstable; urgency=medium
+
+  * New upstream version 1.0.1
+  * debian/control: update description
+
+ -- Felix C. Stegerman <flx@obfusk.net>  Thu, 08 Jul 2021 10:05:18 +0200
+
 apksigcopier (1.0.0-2) unstable; urgency=medium
 
   * Add debian/watch file and upstream signing key.
