@@ -573,7 +573,7 @@ def main():
     NAY = click.Choice(NOAUTOYES)
 
     @click.group(help="""
-        apksigcopier - copy/extract/patch apk signatures
+        apksigcopier - copy/extract/patch android apk signatures & compare apks
     """)
     @click.version_option(__version__)
     def cli():
