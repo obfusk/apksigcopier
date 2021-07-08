@@ -1,10 +1,10 @@
 % apksigcopier(1) v1.0.0 | General Commands Manual
 % Felix C. Stegerman <flx@obfusk.net>
-% 2021-06-18
+% 2021-07-08
 
 # NAME
 
-apksigcopier - copy/extract/patch apk signatures & compare apks
+apksigcopier - copy/extract/patch android apk signatures & compare apks
 
 # SYNOPSIS
 
@@ -24,9 +24,9 @@ apksigcopier - copy/extract/patch apk signatures & compare apks
 
 # DESCRIPTION
 
-A command line tool for copying APK signatures from a signed APK to an
-unsigned one (in order to verify reproducible builds).  It can also be
-used to compare two APKs with different signatures.
+A command line tool for copying android APK signatures from a signed
+APK to an unsigned one (in order to verify reproducible builds).  It
+can also be used to compare two APKs with different signatures.
 
 # COMMANDS
 
