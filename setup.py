@@ -8,7 +8,7 @@ info = Path(__file__).with_name("README.md").read_text(encoding = "utf8")
 setuptools.setup(
     name              = "apksigcopier",
     url               = "https://github.com/obfusk/apksigcopier",
-    description       = "copy/extract/patch apk signatures & compare apks",
+    description       = "copy/extract/patch android apk signatures & compare apks",
     long_description  = info,
     long_description_content_type = "text/markdown",
     version           = __version__,

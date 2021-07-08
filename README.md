@@ -2,10 +2,10 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-06-18
+    Date        : 2021-07-08
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
-    Version     : v1.0.0
+    Version     : v1.0.1
     License     : GPLv3+
 
 }}}1 -->
@@ -16,11 +16,24 @@
 [![CI](https://github.com/obfusk/apksigcopier/workflows/CI/badge.svg)](https://github.com/obfusk/apksigcopier/actions?query=workflow%3ACI)
 [![GPLv3+](https://img.shields.io/badge/license-GPLv3+-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 
-## apksigcopier - copy/extract/patch apk signatures & compare apks
+<a href="https://repology.org/project/apksigcopier/versions">
+  <img src="https://repology.org/badge/vertical-allrepos/apksigcopier.svg?header="
+    alt="Packaging status" align="right" />
+</a>
 
-`apksigcopier` is a tool for copying APK signatures from a signed APK
-to an unsigned one (in order to verify reproducible builds).  It can
-also be used to compare two APKs with different signatures.  Its
+<a href="https://repology.org/project/python:apksigcopier/versions">
+  <img src="https://repology.org/badge/vertical-allrepos/python:apksigcopier.svg?header="
+    alt="Packaging status" align="right" />
+</a>
+
+# apksigcopier
+
+## copy/extract/patch android apk signatures & compare apks
+
+`apksigcopier` is a tool for copying android APK signatures from a
+signed APK to an unsigned one (in order to verify [reproducible
+builds](https://f-droid.org/docs/Reproducible_Builds/)).  It can also
+be used to compare two APKs with different signatures.  Its
 command-line tool offers four operations:
 
 * copy signatures directly from a signed to an unsigned APK
@@ -146,9 +159,22 @@ $ apt install apksigner         # only needed for the compare command
 
 ### Debian
 
-An official Debian package should be available soon.  You can also
-manually build one using the `debian/sid` branch, or download a
-pre-built `.deb` via GitHub releases.
+An official package is
+[available in Debian unstable](https://packages.debian.org/unstable/apksigcopier):
+
+```bash
+$ apt install apksigcopier
+```
+
+You can also manually build a Debian package using the `debian/sid`
+branch, or download a pre-built `.deb` via GitHub releases.
+
+### NixOS & Arch Linux
+
+Official packages are also available in
+[nixpkgs unstable](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/apksigcopier/default.nix)
+and [Arch Linux](https://archlinux.org/packages/community/any/apksigcopier/)
+(and derivatives).
 
 ### Using pip
 

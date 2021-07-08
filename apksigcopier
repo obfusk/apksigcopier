@@ -1,23 +1,25 @@
 #!/usr/bin/python3
 # encoding: utf-8
+# SPDX-FileCopyrightText: 2021 Felix C. Stegerman <flx@obfusk.net>
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # --                                                            ; {{{1
 #
 # File        : apksigcopier
 # Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-# Date        : 2021-06-18
+# Date        : 2021-07-08
 #
 # Copyright   : Copyright (C) 2021  Felix C. Stegerman
-# Version     : v1.0.0
+# Version     : v1.0.1
 # License     : GPLv3+
 #
 # --                                                            ; }}}1
 
 """
-copy/extract/patch apk signatures & compare apks
+copy/extract/patch android apk signatures & compare apks
 
-apksigcopier is a tool for copying APK signatures from a signed APK to an
-unsigned one (in order to verify reproducible builds).
+apksigcopier is a tool for copying android APK signatures from a signed APK to
+an unsigned one (in order to verify reproducible builds).
 
 It can also be used to compare two APKs with different signatures; this requires
 apksigner.
@@ -69,7 +71,7 @@ import zlib
 from collections import namedtuple
 from typing import Any, Dict
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 NAME = "apksigcopier"
 
 SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
@@ -573,7 +575,7 @@ def main():
     NAY = click.Choice(NOAUTOYES)
 
     @click.group(help="""
-        apksigcopier - copy/extract/patch apk signatures
+        apksigcopier - copy/extract/patch android apk signatures & compare apks
     """)
     @click.version_option(__version__)
     def cli():
