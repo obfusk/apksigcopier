@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-07-08
+    Date        : 2021-07-25
 
     Copyright   : Copyright (C) 2021  Felix C. Stegerman
     Version     : v1.0.1
@@ -143,24 +143,14 @@ For Fish, add this to `~/.config/fish/completions/apksigcopier.fish`:
 eval (env _APKSIGCOPIER_COMPLETE=source_fish apksigcopier)
 ```
 
-## Requirements
-
-* Python >= 3.5 + click.
-* The `compare` command also requires `apksigner`.
-
-### Debian/Ubuntu
-
-```bash
-$ apt install python3-click
-$ apt install apksigner         # only needed for the compare command
-```
-
 ## Installing
 
 ### Debian
 
-An official package is
-[available in Debian unstable](https://packages.debian.org/unstable/apksigcopier):
+Official packages are available in
+[Debian unstable](https://packages.debian.org/unstable/apksigcopier)
+and
+[Ubuntu impish](https://packages.ubuntu.com/impish/apksigcopier).
 
 ```bash
 $ apt install apksigcopier
@@ -204,6 +194,18 @@ To update to the latest development version:
 ```bash
 $ cd apksigcopier
 $ git pull --rebase
+```
+
+## Dependencies
+
+* Python >= 3.5 + click.
+* The `compare` command also requires `apksigner`.
+
+### Debian/Ubuntu
+
+```bash
+$ apt install python3-click
+$ apt install apksigner         # only needed for the compare command
 ```
 
 ## License
