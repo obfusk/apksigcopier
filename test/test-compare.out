@@ -1,14 +1,14 @@
 apks/debuggable-boolean.apk
 apksigner: verified
 DOES NOT VERIFY
-ERROR: APK Signature Scheme v2 signer #1: APK integrity check failed. CHUNKED_SHA256 digest mismatch. Expected: <ac79b1f41fc49be9214686f7f81116b6525bf7074f834cacb6c5d7e71f3757f3>, actual: <3ad9b8befea1fb0a276ed7f463f63032bc7a22292da4f1fff3d6556c2bdcd15c>
+ERROR: APK Signature Scheme v2 signer #1: APK integrity check failed. CHUNKED_SHA256 digest mismatch. Expected: <...>, actual: <...>
 Error: failed to verify /tmp/.../output.apk.
 apksigcopier: failure
 
 apks/debuggable-resource.apk
 apksigner: verified
 DOES NOT VERIFY
-ERROR: APK Signature Scheme v2 signer #1: APK integrity check failed. CHUNKED_SHA256 digest mismatch. Expected: <ed89d8823420127437b0b6aca01ea3f40938771ac7406e1ffddb42660c2ded2e>, actual: <0c7ea8f74f7a52f36649037bd83a23b86f4c933fe27cb17dc5417c71cf8f25fd>
+ERROR: APK Signature Scheme v2 signer #1: APK integrity check failed. CHUNKED_SHA256 digest mismatch. Expected: <...>, actual: <...>
 Error: failed to verify /tmp/.../output.apk.
 apksigcopier: failure
 
@@ -234,7 +234,7 @@ apksigcopier: success
 apks/targetSandboxVersion-2.apk
 apksigner: verified
 DOES NOT VERIFY
-ERROR: APK Signature Scheme v2 signer #1: APK integrity check failed. CHUNKED_SHA256 digest mismatch. Expected: <94d2d94c7cb5f0d349b059b76a39592fd22231d8b51de0f9028c804cf0a95740>, actual: <c4bfaec61da921da3bc818327bc5142938ec7ac183f2047b7063286d93978a5b>
+ERROR: APK Signature Scheme v2 signer #1: APK integrity check failed. CHUNKED_SHA256 digest mismatch. Expected: <...>, actual: <...>
 Error: failed to verify /tmp/.../output.apk.
 apksigcopier: failure
 
@@ -244,8 +244,8 @@ apksigner: not verified
 apks/two-signers.apk
 apksigner: verified
 DOES NOT VERIFY
-ERROR: APK Signature Scheme v2 signer #1: APK integrity check failed. CHUNKED_SHA256 digest mismatch. Expected: <468f3848f56192f1cf09a5857956d612ba8fab800df928a06c48b9bafe1fb391>, actual: <c32cc5bfcb7759deba2b0247d650a1f5fc050eff869ff06b3aa974bb61b885a8>
-ERROR: APK Signature Scheme v2 signer #2: APK integrity check failed. CHUNKED_SHA512 digest mismatch. Expected: <3381c3e68c8ff44116c68a476e122b804acb70dba21ffb38812428750d1040be0a100e445f6e67f7d82e459dc0a1a4b5fe00ce7b698a672a898f6e2db4e95a49>, actual: <6999cc1f308a274c148697a7f4f53f887aca2e7619c16d0800718d6c257a043a8e94029c9ca14330d6f6b17959eee22269bdd3ed0673ab65e52f3b4213c04b4c>
+ERROR: APK Signature Scheme v2 signer #1: APK integrity check failed. CHUNKED_SHA256 digest mismatch. Expected: <...>, actual: <...>
+ERROR: APK Signature Scheme v2 signer #2: APK integrity check failed. CHUNKED_SHA512 digest mismatch. Expected: <...>, actual: <...>
 Error: failed to verify /tmp/.../output.apk.
 apksigcopier: failure
 
