@@ -80,7 +80,7 @@ APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)
 META_EXT = ("SF", "RSA|DSA|EC", "MF")
 COPY_EXCLUDE = ("META-INF/MANIFEST.MF",)
 DATETIMEZERO = (1980, 0, 0, 0, 0, 0)
-VERIFY_CMD = ("apksigner", "verify", "--")
+VERIFY_CMD = ("apksigner", "verify")
 
 ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
@@ -436,10 +436,14 @@ def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk):
         patch_v2_sig(extracted_v2_sig, output_apk)
 
 
-def verify_apk(apk):
+def verify_apk(apk, min_sdk_version=None):
     """Verifies APK using apksigner."""
+    args = VERIFY_CMD
+    if min_sdk_version is not None:
+        args += ("--min-sdk-version={}".format(min_sdk_version),)
+    args += ("--", apk)
     try:
-        subprocess.run(VERIFY_CMD + (apk,), check=True, stdout=subprocess.PIPE)
+        subprocess.run(args, check=True, stdout=subprocess.PIPE)
     except subprocess.CalledProcessError:
         raise APKSigCopierError("failed to verify " + apk)
     except FileNotFoundError:
@@ -540,7 +544,7 @@ def do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO):
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
 
 
-def do_compare(first_apk, second_apk, unsigned=False):
+def do_compare(first_apk, second_apk, unsigned=False, min_sdk_version=None):
     """
     Compare first_apk to second_apk by:
     * using apksigner to check if the first APK verifies
@@ -549,9 +553,9 @@ def do_compare(first_apk, second_apk, unsigned=False):
     * checking if the resulting APK verifies
     """
     global exclude_all_meta
-    verify_apk(first_apk)
+    verify_apk(first_apk, min_sdk_version=min_sdk_version)
     if not unsigned:
-        verify_apk(second_apk)
+        verify_apk(second_apk, min_sdk_version=min_sdk_version)
     with tempfile.TemporaryDirectory() as tmpdir:
         output_apk = os.path.join(tmpdir, "output.apk")        # FIXME
         old_exclude_all_meta = exclude_all_meta                # FIXME
@@ -560,7 +564,7 @@ def do_compare(first_apk, second_apk, unsigned=False):
             do_copy(first_apk, second_apk, output_apk, AUTO)
         finally:
             exclude_all_meta = old_exclude_all_meta
-        verify_apk(output_apk)
+        verify_apk(output_apk, min_sdk_version=min_sdk_version)
 
 
 def main():
@@ -620,6 +624,7 @@ def main():
         This command requires apksigner.
     """)
     @click.option("--unsigned", is_flag=True, help="Accept unsigned SECOND_APK.")
+    @click.option("--min-sdk-version", type=click.INT)
     @click.argument("first_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("second_apk", type=click.Path(exists=True, dir_okay=False))
     def compare(*args, **kwargs):
