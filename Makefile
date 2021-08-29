@@ -3,7 +3,7 @@ PYTHON  ?= python3
 
 export PYTHONWARNINGS := default
 
-.PHONY: all install test test-cli lint lint-extra clean cleanup
+.PHONY: all install test test-cli test-apks lint lint-extra clean cleanup
 
 all: apksigcopier.1
 
@@ -16,6 +16,10 @@ test-cli:
 	# TODO
 	apksigcopier --version
 	$(PYTHON) -m doctest apksigcopier
+
+test-apks:
+	cd test && diff -Naur test-compare.out <( ./test-compare.sh \
+	  | sed -r 's!/tmp/[^/]*/!/tmp/.../!' )
 
 lint:
 	flake8 apksigcopier.py

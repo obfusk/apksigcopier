@@ -153,3 +153,5 @@ jobs:
         apksigcopier compare NewPipe_v0.21.0.apk signed-zipflinger.apk || true
         apksigcopier compare NewPipe_v0.21.0.apk \
           --unsigned app-release-unsigned-zipflinger.apk || true
+    - name: test APKs
+      run: make test-apks
