@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 # encoding: utf-8
-# SPDX-FileCopyrightText: 2021 FC Stegerman <flx@obfusk.net>
+# SPDX-FileCopyrightText: 2022 FC Stegerman <flx@obfusk.net>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # --                                                            ; {{{1
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2021-07-08
+# Date        : 2022-07-29
 #
-# Copyright   : Copyright (C) 2021  FC Stegerman
+# Copyright   : Copyright (C) 2022  FC Stegerman
 # Version     : v1.0.1
 # License     : GPLv3+
 #
@@ -124,6 +124,13 @@ class ReproducibleZipInfo(zipfile.ZipInfo):
             except KeyError:
                 pass
         return object.__getattribute__(self, name)
+
+    def _encodeFilenameFlags(self):
+        # override python >= 3.11 explicitly unsetting the utf8 flag bits
+        try:
+            return self.filename.encode("ascii"), self.flag_bits
+        except UnicodeEncodeError:
+            return self.filename.encode("utf-8"), self.flag_bits | 0x800
 
 
 class APKZipInfo(ReproducibleZipInfo):
@@ -340,6 +347,7 @@ def patch_meta(extracted_meta, output_apk, date_time=DATETIMEZERO):
             if is_meta(info.filename):
                 raise ZipError("Unexpected metadata")
     with zipfile.ZipFile(output_apk, "a") as zf_out:
+        zf_out.filelist = list(map(ReproducibleZipInfo, zf_out.filelist))
         info_data = [(APKZipInfo(info, date_time=date_time), data)
                      for info, data in extracted_meta]
         _write_to_zip(info_data, zf_out)
