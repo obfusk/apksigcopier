@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 # encoding: utf-8
-# SPDX-FileCopyrightText: 2021 Felix C. Stegerman <flx@obfusk.net>
+# SPDX-FileCopyrightText: 2021 FC Stegerman <flx@obfusk.net>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # --                                                            ; {{{1
 #
 # File        : apksigcopier
-# Maintainer  : Felix C. Stegerman <flx@obfusk.net>
+# Maintainer  : FC Stegerman <flx@obfusk.net>
 # Date        : 2021-07-08
 #
-# Copyright   : Copyright (C) 2021  Felix C. Stegerman
+# Copyright   : Copyright (C) 2021  FC Stegerman
 # Version     : v1.0.1
 # License     : GPLv3+
 #

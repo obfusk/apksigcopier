@@ -1,5 +1,5 @@
 % apksigcopier(1) v1.0.1 | General Commands Manual
-% Felix C. Stegerman <flx@obfusk.net>
+% FC Stegerman <flx@obfusk.net>
 % 2021-07-08
 
 # NAME
@@ -122,7 +122,7 @@ apksigner(1)
 
 # COPYRIGHT
 
-Copyright © 2021 Felix C. Stegerman.  License GPLv3+: GNU GPL version
-3 or later <https://gnu.org/licenses/gpl.html>.  This is free software:
-you are free to change and redistribute it.   There  is NO WARRANTY,
-to the extent permitted by law.
+Copyright © 2021 FC Stegerman.  License GPLv3+: GNU GPL version 3 or
+later <https://gnu.org/licenses/gpl.html>.  This is free software: you
+are free to change and redistribute it.   There  is NO WARRANTY, to
+the extent permitted by law.
