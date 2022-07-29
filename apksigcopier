@@ -110,7 +110,7 @@ class ReproducibleZipInfo(zipfile.ZipInfo):
 
     _override = {}  # type: Dict[str, Any]
 
-    def __init__(self, zinfo, **override):
+    def __init__(self, zinfo, **override):  # pylint: disable=W0231
         if override:
             self._override = {**self._override, **override}
         for k in self.__slots__:
@@ -160,7 +160,7 @@ def noautoyes(value):
     try:
         return {False: NO, None: AUTO, True: YES}[value]
     except KeyError:
-        raise ValueError("expected False, None, or True")
+        raise ValueError("expected False, None, or True")  # pylint: disable=W0707
 
 
 def is_meta(filename):
@@ -445,9 +445,9 @@ def verify_apk(apk, min_sdk_version=None):
     try:
         subprocess.run(args, check=True, stdout=subprocess.PIPE)
     except subprocess.CalledProcessError:
-        raise APKSigCopierError("failed to verify " + apk)
+        raise APKSigCopierError("failed to verify " + apk)  # pylint: disable=W0707
     except FileNotFoundError:
-        raise APKSigCopierError("{} command not found".format(VERIFY_CMD[0]))
+        raise APKSigCopierError("{} command not found".format(VERIFY_CMD[0]))  # pylint: disable=W0707
 
 
 def do_extract(signed_apk, output_dir, v1_only=NO):
