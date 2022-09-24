@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2022-08-07
+    Date        : 2022-09-24
 
     Copyright   : Copyright (C) 2022  FC Stegerman
     Version     : v1.0.1
