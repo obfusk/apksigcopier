@@ -69,7 +69,7 @@ import zipfile
 import zlib
 
 from collections import namedtuple
-from typing import Any, BinaryIO, Dict, Iterable, Iterator, Optional, Tuple, Union
+from typing import Any, BinaryIO, Dict, Iterable, Iterator, Optional, Tuple, Type, Union
 
 __version__ = "1.0.2"
 NAME = "apksigcopier"
@@ -92,6 +92,11 @@ META_EXT: Tuple[str, ...] = ("SF", "RSA|DSA|EC", "MF")
 COPY_EXCLUDE: Tuple[str, ...] = ("META-INF/MANIFEST.MF",)
 DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
 VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
+
+GRADLE_GARBAGE = (
+    b"\x50\x4b\x03\x04\x00\x00\x00\x00\x00\x00\x21\x08\x21\x02\x00\x00"
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x66\x00" + b"\x00" * 102
+)
 
 ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
@@ -150,6 +155,22 @@ class APKZipInfo(ReproducibleZipInfo):
         external_attr=0,
         extract_version=20,
         flag_bits=0x800,
+    )
+
+
+class GradleZipInfo(ReproducibleZipInfo):
+    """Reproducible ZipInfo for APK files signed by Gradle."""
+
+    COMPRESSLEVEL = 1
+
+    _override = dict(
+        compress_type=8,
+        create_system=3,
+        create_version=0,
+        date_time=DATETIMEZERO,
+        external_attr=0o100666 << 16,
+        extract_version=0,
+        flag_bits=0,
     )
 
 
@@ -230,7 +251,7 @@ def exclude_from_copying(filename: str) -> bool:
 # FIXME: makes certain assumptions and doesn't handle all valid ZIP files!
 # https://android.googlesource.com/platform/tools/apksig
 #   src/main/java/com/android/apksig/ApkSigner.java
-def copy_apk(unsigned_apk: str, output_apk: str) -> DateTime:
+def copy_apk(unsigned_apk: str, output_apk: str, gradle: bool = False) -> DateTime:
     """
     Copy APK like apksigner would, excluding files matched by
     exclude_from_copying().
@@ -248,6 +269,10 @@ def copy_apk(unsigned_apk: str, output_apk: str) -> DateTime:
     zdata = zip_data(unsigned_apk)
     offsets = {}
     with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
+        if gradle:
+            if fhi.read(len(GRADLE_GARBAGE)) != GRADLE_GARBAGE:
+                fho.write(GRADLE_GARBAGE)
+            fhi.seek(0)
         for info in sorted(infos, key=lambda info: info.header_offset):
             off_i = fhi.tell()
             if info.header_offset > off_i:
@@ -349,26 +374,28 @@ def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
 
 
 def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
-               date_time: DateTime = DATETIMEZERO) -> None:
+               date_time: DateTime = DATETIMEZERO, gradle: bool = False) -> None:
     """Add v1 signature metadata to APK (removes v2 sig block, if any)."""
+    ZI: Union[Type[APKZipInfo], Type[GradleZipInfo]]
+    ZI = APKZipInfo if not gradle else GradleZipInfo
     with zipfile.ZipFile(output_apk, "r") as zf_out:
         for info in zf_out.infolist():
             if is_meta(info.filename):
                 raise ZipError("Unexpected metadata")
     with zipfile.ZipFile(output_apk, "a") as zf_out:
-        info_data = [(APKZipInfo(info, date_time=date_time), data)
+        info_data = [(ZI(info, date_time=date_time), data)
                      for info, data in extracted_meta]
-        _write_to_zip(info_data, zf_out)
+        _write_to_zip(info_data, zf_out, ZI.COMPRESSLEVEL)
 
 
 if sys.version_info >= (3, 7):
-    def _write_to_zip(info_data: ZipInfoDataPairs, zf_out: zipfile.ZipFile) -> None:
+    def _write_to_zip(info_data: ZipInfoDataPairs, zf_out: zipfile.ZipFile, level: int) -> None:
         for info, data in info_data:
-            zf_out.writestr(info, data, compresslevel=APKZipInfo.COMPRESSLEVEL)
+            zf_out.writestr(info, data, compresslevel=level)
 else:
-    def _write_to_zip(info_data: ZipInfoDataPairs, zf_out: zipfile.ZipFile) -> None:
+    def _write_to_zip(info_data: ZipInfoDataPairs, zf_out: zipfile.ZipFile, level: int) -> None:
         old = zipfile._get_compressor
-        zipfile._get_compressor = lambda _: zlib.compressobj(APKZipInfo.COMPRESSLEVEL, 8, -15)
+        zipfile._get_compressor = lambda _: zlib.compressobj(level, 8, -15)
         try:
             for info, data in info_data:
                 zf_out.writestr(info, data)
@@ -442,13 +469,13 @@ def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
 
 
 def patch_apk(extracted_meta: ZipInfoDataPairs, extracted_v2_sig: Optional[Tuple[int, bytes]],
-              unsigned_apk: str, output_apk: str) -> None:
+              unsigned_apk: str, output_apk: str, gradle: bool = False) -> None:
     """
     Patch extracted_meta + extracted_v2_sig (if not None) onto unsigned_apk and
     save as output_apk.
     """
-    date_time = copy_apk(unsigned_apk, output_apk)
-    patch_meta(extracted_meta, output_apk, date_time=date_time)
+    date_time = copy_apk(unsigned_apk, output_apk, gradle=gradle)
+    patch_meta(extracted_meta, output_apk, date_time=date_time, gradle=gradle)
     if extracted_v2_sig is not None:
         patch_v2_sig(extracted_v2_sig, output_apk)
 
@@ -503,7 +530,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
 
 
 def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
-             v1_only: NoAutoYesBoolNone = NO) -> None:
+             v1_only: NoAutoYesBoolNone = NO, gradle: bool = False) -> None:
     """
     Patch signatures from metadata_dir onto unsigned_apk and save as output_apk.
 
@@ -540,11 +567,11 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
             extracted_v2_sig = signed_sb_offset, signed_sb
     if not extracted_meta and extracted_v2_sig is None:
         raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
-    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
+    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk, gradle=gradle)
 
 
 def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
-            v1_only: NoAutoYesBoolNone = NO) -> None:
+            v1_only: NoAutoYesBoolNone = NO, gradle: bool = False) -> None:
     """
     Copy signatures from signed_apk onto unsigned_apk and save as output_apk.
 
@@ -560,11 +587,11 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
         extracted_v2_sig = None
     else:
         extracted_v2_sig = extract_v2_sig(signed_apk, expected=v1_only == NO)
-    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
+    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk, gradle=gradle)
 
 
 def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
-               min_sdk_version: Optional[int] = None) -> None:
+               min_sdk_version: Optional[int] = None, gradle: bool = False) -> None:
     """
     Compare first_apk to second_apk by:
     * using apksigner to check if the first APK verifies
@@ -581,7 +608,7 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
         old_exclude_all_meta = exclude_all_meta                # FIXME
         exclude_all_meta = not unsigned
         try:
-            do_copy(first_apk, second_apk, output_apk, AUTO)
+            do_copy(first_apk, second_apk, output_apk, AUTO, gradle=gradle)
         finally:
             exclude_all_meta = old_exclude_all_meta
         verify_apk(output_apk, min_sdk_version=min_sdk_version)
@@ -620,6 +647,7 @@ def main():
     """)
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
+    @click.option("--gradle", is_flag=True)
     @click.argument("metadata_dir", type=click.Path(exists=True, file_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
@@ -631,6 +659,7 @@ def main():
     """)
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
+    @click.option("--gradle", is_flag=True)
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
@@ -645,6 +674,7 @@ def main():
     """)
     @click.option("--unsigned", is_flag=True, help="Accept unsigned SECOND_APK.")
     @click.option("--min-sdk-version", type=click.INT, help="Passed to apksigner.")
+    @click.option("--gradle", is_flag=True)
     @click.argument("first_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("second_apk", type=click.Path(exists=True, dir_okay=False))
     def compare(*args, **kwargs):
