@@ -18,7 +18,7 @@ test-cli:
 	$(PYTHON) -m doctest apksigcopier
 
 test-apks:
-	cd test && diff -Naur test-compare.out <( ./test-compare.sh \
+	cd test/apks && diff -Naur ../test-compare.out <( ../test-compare.sh \
 	  | sed -r 's!/tmp/[^/]*/!/tmp/.../!' \
 	  | sed -r 's!Expected: <[0-9a-f]+>, actual: <[0-9a-f]+>!Expected: <...>, actual: <...>!' )
 
