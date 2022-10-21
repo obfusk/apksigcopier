@@ -28,8 +28,6 @@ setuptools.setup(
         "Operating System :: POSIX",
         "Operating System :: Unix",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
@@ -43,6 +41,6 @@ setuptools.setup(
     keywords          = "android apk reproducible signing compare",
     py_modules        = ["apksigcopier"],
     entry_points      = dict(console_scripts = ["apksigcopier = apksigcopier:main"]),
-    python_requires   = ">=3.5",
+    python_requires   = ">=3.7",
     install_requires  = ["click>=6.0"],
 )

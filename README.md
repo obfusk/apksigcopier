@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2022-09-24
+    Date        : 2022-10-21
 
     Copyright   : Copyright (C) 2022  FC Stegerman
     Version     : v1.0.1
@@ -201,7 +201,7 @@ $ git pull --rebase
 
 ## Dependencies
 
-* Python >= 3.5 + click.
+* Python >= 3.7 + click.
 * The `compare` command also requires `apksigner`.
 
 ### Debian/Ubuntu

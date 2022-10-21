@@ -6,8 +6,6 @@ jobs:
     strategy:
       matrix:
         python-version:
-        - '3.5'
-        - '3.6'
         - '3.7'
         - '3.8'
         - '3.9'
@@ -48,8 +46,7 @@ jobs:
       run: make lint-extra
       continue-on-error:
         ${{ contains(matrix.python-version, 'alpha') ||
-            contains(matrix.python-version, 'pypy') ||
-            matrix.python-version == '3.5' }}
+            contains(matrix.python-version, 'pypy') }}
     - name: Cache NewPipe build
       uses: actions/cache@v2
       with:
