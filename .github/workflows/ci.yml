@@ -28,8 +28,6 @@ jobs:
       run: |
         sudo apt-get update # || sudo apt-get update
         # sudo apt-get upgrade -y
-        sudo apt-get install -y openjdk-8-jdk-headless
-        sudo apt-get remove -y adoptopenjdk-8-hotspot adoptopenjdk-11-hotspot
         sudo apt-get install -y apksigner
         python3 -m pip install --upgrade pip
         python3 -m pip install flake8 pylint
@@ -65,7 +63,8 @@ jobs:
       run: |
         set -x
         if [ ! -e app-release-unsigned.apk ]; then
-          unset JAVA_HOME
+          sudo apt-get install -y openjdk-8-jdk-headless
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
           git clone -b v0.21.0 https://github.com/TeamNewPipe/NewPipe.git
           cd NewPipe
           ./gradlew assembleRelease
