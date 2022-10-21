@@ -253,8 +253,7 @@ apks/unsigned-targetSandboxVersion-2.apk
 apksigner: not verified
 
 apks/v1-ec-p256-targetSdk-30.apk
-apksigner: verified
-apksigcopier: success
+apksigner: not verified
 
 apks/v1-only-max-sized-eocd-comment.apk
 apksigner: verified
