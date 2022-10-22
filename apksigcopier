@@ -85,7 +85,7 @@ NoAutoYesBoolNone = Union[NoAutoYes, bool, None]
 ZipInfoDataPairs = Iterable[Tuple[zipfile.ZipInfo, bytes]]
 
 SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
-NOAUTOYES: Tuple[NoAutoYes, NoAutoYes, NoAutoYes] = "no", "auto", "yes"
+NOAUTOYES: Tuple[NoAutoYes, NoAutoYes, NoAutoYes] = ("no", "auto", "yes")
 NO, AUTO, YES = NOAUTOYES
 APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)$")
 META_EXT: Tuple[str, ...] = ("SF", "RSA|DSA|EC", "MF")
