@@ -7,7 +7,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2022-09-24
+# Date        : 2022-10-22
 #
 # Copyright   : Copyright (C) 2022  FC Stegerman
 # Version     : v1.0.1
@@ -69,18 +69,29 @@ import zipfile
 import zlib
 
 from collections import namedtuple
-from typing import Any, Dict
+from typing import Any, BinaryIO, Dict, Iterable, Iterator, Optional, Tuple, Union
 
 __version__ = "1.0.1"
 NAME = "apksigcopier"
 
+if sys.version_info >= (3, 8):
+    from typing import Literal
+    NoAutoYes = Literal["no", "auto", "yes"]
+else:
+    NoAutoYes = str
+
+DateTime = Tuple[int, int, int, int, int, int]
+NoAutoYesBoolNone = Union[NoAutoYes, bool, None]
+ZipInfoDataPairs = Iterable[Tuple[zipfile.ZipInfo, bytes]]
+
 SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
-NOAUTOYES = NO, AUTO, YES = ("no", "auto", "yes")
+NOAUTOYES: Tuple[NoAutoYes, NoAutoYes, NoAutoYes] = "no", "auto", "yes"
+NO, AUTO, YES = NOAUTOYES
 APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)$")
-META_EXT = ("SF", "RSA|DSA|EC", "MF")
-COPY_EXCLUDE = ("META-INF/MANIFEST.MF",)
-DATETIMEZERO = (1980, 0, 0, 0, 0, 0)
-VERIFY_CMD = ("apksigner", "verify")
+META_EXT: Tuple[str, ...] = ("SF", "RSA|DSA|EC", "MF")
+COPY_EXCLUDE: Tuple[str, ...] = ("META-INF/MANIFEST.MF",)
+DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
+VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 
 ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
@@ -108,7 +119,7 @@ class ZipError(APKSigCopierError):
 class ReproducibleZipInfo(zipfile.ZipInfo):
     """Reproducible ZipInfo hack."""
 
-    _override = {}  # type: Dict[str, Any]
+    _override: Dict[str, Any] = {}
 
     def __init__(self, zinfo, **override):  # pylint: disable=W0231
         if override:
@@ -129,6 +140,8 @@ class ReproducibleZipInfo(zipfile.ZipInfo):
 class APKZipInfo(ReproducibleZipInfo):
     """Reproducible ZipInfo for APK files."""
 
+    COMPRESSLEVEL = 9
+
     _override = dict(
         compress_type=8,
         create_system=0,
@@ -140,7 +153,7 @@ class APKZipInfo(ReproducibleZipInfo):
     )
 
 
-def noautoyes(value):
+def noautoyes(value: NoAutoYesBoolNone) -> NoAutoYes:
     """
     Turns False into NO, None into AUTO, and True into YES.
 
@@ -160,10 +173,10 @@ def noautoyes(value):
     try:
         return {False: NO, None: AUTO, True: YES}[value]
     except KeyError:
-        raise ValueError("expected False, None, or True")  # pylint: disable=W0707
+        raise ValueError("expected False, None, or True")   # pylint: disable=W0707
 
 
-def is_meta(filename):
+def is_meta(filename: str) -> bool:
     """
     Returns whether filename is a v1 (JAR) signature file (.SF), signature block
     file (.RSA, .DSA, or .EC), or manifest (MANIFEST.MF).
@@ -173,7 +186,7 @@ def is_meta(filename):
     return APK_META.fullmatch(filename) is not None
 
 
-def exclude_from_copying(filename):
+def exclude_from_copying(filename: str) -> bool:
     """
     Returns whether to exclude a file during copy_apk().
 
@@ -215,7 +228,7 @@ def exclude_from_copying(filename):
 
 
 # FIXME: makes certain assumptions and doesn't handle all valid ZIP files!
-def copy_apk(unsigned_apk, output_apk):
+def copy_apk(unsigned_apk: str, output_apk: str) -> DateTime:
     """
     Copy APK like apksigner would, excluding files matched by
     exclude_from_copying().
@@ -285,7 +298,7 @@ def copy_apk(unsigned_apk, output_apk):
 
 
 # NB: doesn't sync local & CD headers!
-def _realign_zip_entry(info, hdr, n, m, off_o):
+def _realign_zip_entry(info: zipfile.ZipInfo, hdr: bytes, n: int, m: int, off_o: int) -> bytes:
     align = 4096 if info.filename.endswith(".so") else 4
     old_off = 30 + n + m + info.header_offset
     new_off = 30 + n + m + off_o
@@ -310,7 +323,7 @@ def _realign_zip_entry(info, hdr, n, m, off_o):
     return hdr
 
 
-def _copy_bytes(fhi, fho, size, blocksize=4096):
+def _copy_bytes(fhi: BinaryIO, fho: BinaryIO, size: int, blocksize: int = 4096) -> None:
     while size > 0:
         data = fhi.read(min(size, blocksize))
         if not data:
@@ -321,7 +334,7 @@ def _copy_bytes(fhi, fho, size, blocksize=4096):
         raise ZipError("Unexpected EOF")
 
 
-def extract_meta(signed_apk):
+def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
     """
     Extract v1 signature metadata files from signed APK.
 
@@ -333,7 +346,8 @@ def extract_meta(signed_apk):
                 yield info, zf_sig.read(info.filename)
 
 
-def patch_meta(extracted_meta, output_apk, date_time=DATETIMEZERO):
+def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
+               date_time: DateTime = DATETIMEZERO) -> None:
     """Add v1 signature metadata to APK (removes v2 sig block, if any)."""
     with zipfile.ZipFile(output_apk, "r") as zf_out:
         for info in zf_out.infolist():
@@ -346,13 +360,13 @@ def patch_meta(extracted_meta, output_apk, date_time=DATETIMEZERO):
 
 
 if sys.version_info >= (3, 7):
-    def _write_to_zip(info_data, zf_out):
+    def _write_to_zip(info_data: ZipInfoDataPairs, zf_out: zipfile.ZipFile) -> None:
         for info, data in info_data:
-            zf_out.writestr(info, data, compresslevel=9)
+            zf_out.writestr(info, data, compresslevel=APKZipInfo.COMPRESSLEVEL)
 else:
-    def _write_to_zip(info_data, zf_out):
+    def _write_to_zip(info_data: ZipInfoDataPairs, zf_out: zipfile.ZipFile) -> None:
         old = zipfile._get_compressor
-        zipfile._get_compressor = lambda _: zlib.compressobj(9, 8, -15)
+        zipfile._get_compressor = lambda _: zlib.compressobj(APKZipInfo.COMPRESSLEVEL, 8, -15)
         try:
             for info, data in info_data:
                 zf_out.writestr(info, data)
@@ -360,7 +374,7 @@ else:
             zipfile._get_compressor = old
 
 
-def extract_v2_sig(apkfile, expected=True):
+def extract_v2_sig(apkfile: str, expected: bool = True) -> Optional[Tuple[int, bytes]]:
     """
     Extract APK Signing Block and offset from APK.
 
@@ -386,7 +400,7 @@ def extract_v2_sig(apkfile, expected=True):
     return sb_offset, sig_block
 
 
-def zip_data(apkfile, count=1024):
+def zip_data(apkfile: str, count: int = 1024) -> ZipData:
     """
     Extract central directory, EOCD, and offsets from ZIP.
 
@@ -408,7 +422,7 @@ def zip_data(apkfile, count=1024):
 
 
 # FIXME: can we determine signed_sb_offset?
-def patch_v2_sig(extracted_v2_sig, output_apk):
+def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
     """Implant extracted v2/v3 signature into APK."""
     signed_sb_offset, signed_sb = extracted_v2_sig
     data_out = zip_data(output_apk)
@@ -425,7 +439,8 @@ def patch_v2_sig(extracted_v2_sig, output_apk):
         fh.write(int.to_bytes(data_out.cd_offset + offset, 4, "little"))
 
 
-def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk):
+def patch_apk(extracted_meta: ZipInfoDataPairs, extracted_v2_sig: Optional[Tuple[int, bytes]],
+              unsigned_apk: str, output_apk: str) -> None:
     """
     Patch extracted_meta + extracted_v2_sig (if not None) onto unsigned_apk and
     save as output_apk.
@@ -436,7 +451,7 @@ def patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk):
         patch_v2_sig(extracted_v2_sig, output_apk)
 
 
-def verify_apk(apk, min_sdk_version=None):
+def verify_apk(apk: str, min_sdk_version: Optional[int] = None) -> None:
     """Verifies APK using apksigner."""
     args = VERIFY_CMD
     if min_sdk_version is not None:
@@ -447,10 +462,10 @@ def verify_apk(apk, min_sdk_version=None):
     except subprocess.CalledProcessError:
         raise APKSigCopierError("failed to verify " + apk)  # pylint: disable=W0707
     except FileNotFoundError:
-        raise APKSigCopierError("{} command not found".format(VERIFY_CMD[0]))  # pylint: disable=W0707
+        raise APKSigCopierError("{} command not found".format(VERIFY_CMD[0]))   # pylint: disable=W0707
 
 
-def do_extract(signed_apk, output_dir, v1_only=NO):
+def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO) -> None:
     """
     Extract signatures from signed_apk and save in output_dir.
 
@@ -485,7 +500,8 @@ def do_extract(signed_apk, output_dir, v1_only=NO):
         fh.write(signed_sb)
 
 
-def do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO):
+def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
+             v1_only: NoAutoYesBoolNone = NO) -> None:
     """
     Patch signatures from metadata_dir onto unsigned_apk and save as output_apk.
 
@@ -525,7 +541,8 @@ def do_patch(metadata_dir, unsigned_apk, output_apk, v1_only=NO):
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
 
 
-def do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO):
+def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
+            v1_only: NoAutoYesBoolNone = NO) -> None:
     """
     Copy signatures from signed_apk onto unsigned_apk and save as output_apk.
 
@@ -544,7 +561,8 @@ def do_copy(signed_apk, unsigned_apk, output_apk, v1_only=NO):
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk)
 
 
-def do_compare(first_apk, second_apk, unsigned=False, min_sdk_version=None):
+def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
+               min_sdk_version: Optional[int] = None) -> None:
     """
     Compare first_apk to second_apk by:
     * using apksigner to check if the first APK verifies
@@ -632,7 +650,7 @@ def main():
 
     # FIXME
     if click.__version__.startswith("7."):
-        def autocomplete_path(ctx=None, args=(), incomplete=""):  # pylint: disable=W0613
+        def autocomplete_path(ctx=None, args=(), incomplete=""):    # pylint: disable=W0613
             head, tail = os.path.split(os.path.expanduser(incomplete))
             return sorted(
                 (e.path if head else e.path[2:]) + ("/" if e.is_dir() else "")
