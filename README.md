@@ -1,11 +1,11 @@
 <!-- {{{1
 
     File        : README.md
-    Maintainer  : Felix C. Stegerman <flx@obfusk.net>
-    Date        : 2021-07-08
+    Maintainer  : FC Stegerman <flx@obfusk.net>
+    Date        : 2022-10-23
 
-    Copyright   : Copyright (C) 2021  Felix C. Stegerman
-    Version     : v1.0.1
+    Copyright   : Copyright (C) 2022  FC Stegerman
+    Version     : v1.0.2
     License     : GPLv3+
 
 }}}1 -->
@@ -125,42 +125,35 @@ When using the `extract` command, the v2/v3 signature is saved as
 
 ## Tab Completion
 
+NB: the syntax for the environment variable changed in click >= 8.0,
+use e.g. `source_bash` instead of `bash_source` for older versions.
+
 For Bash, add this to `~/.bashrc`:
 
 ```bash
-eval "$(_APKSIGCOPIER_COMPLETE=source_bash apksigcopier)"
+eval "$(_APKSIGCOPIER_COMPLETE=bash_source apksigcopier)"
 ```
 
 For Zsh, add this to `~/.zshrc`:
 
 ```zsh
-eval "$(_APKSIGCOPIER_COMPLETE=source_zsh apksigcopier)"
+eval "$(_APKSIGCOPIER_COMPLETE=zsh_source apksigcopier)"
 ```
 
 For Fish, add this to `~/.config/fish/completions/apksigcopier.fish`:
 
 ```fish
-eval (env _APKSIGCOPIER_COMPLETE=source_fish apksigcopier)
-```
-
-## Requirements
-
-* Python >= 3.5 + click.
-* The `compare` command also requires `apksigner`.
-
-### Debian/Ubuntu
-
-```bash
-$ apt install python3-click
-$ apt install apksigner         # only needed for the compare command
+eval (env _APKSIGCOPIER_COMPLETE=fish_source apksigcopier)
 ```
 
 ## Installing
 
 ### Debian
 
-An official package is
-[available in Debian unstable](https://packages.debian.org/unstable/apksigcopier):
+Official packages are available in
+[Debian unstable](https://packages.debian.org/unstable/apksigcopier)
+and
+[Ubuntu impish](https://packages.ubuntu.com/impish/apksigcopier).
 
 ```bash
 $ apt install apksigcopier
@@ -204,6 +197,18 @@ To update to the latest development version:
 ```bash
 $ cd apksigcopier
 $ git pull --rebase
+```
+
+## Dependencies
+
+* Python >= 3.7 + click.
+* The `compare` command also requires `apksigner`.
+
+### Debian/Ubuntu
+
+```bash
+$ apt install python3-click
+$ apt install apksigner         # only needed for the compare command
 ```
 
 ## License

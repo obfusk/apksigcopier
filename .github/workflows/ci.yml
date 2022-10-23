@@ -2,29 +2,32 @@ name: CI
 on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version:
-        - 3.5
-        - 3.6
-        - 3.7
-        - 3.8
-        - 3.9
-        - '3.10.0-alpha - 3.10'
-        - pypy3
+        - '3.7'
+        - '3.8'
+        - '3.9'
+        - '3.10'
+        - '3.11.0-alpha - 3.11'
+        - pypy3.7
+        - pypy3.8
+        - pypy3.9
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+        submodules: true
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get update || sudo apt-get update
+        sudo apt-get update # || sudo apt-get update
         # sudo apt-get upgrade -y
-        sudo apt-get install -y openjdk-8-jdk-headless
-        sudo apt-get remove -y adoptopenjdk-8-hotspot adoptopenjdk-11-hotspot
         sudo apt-get install -y apksigner
         python3 -m pip install --upgrade pip
         python3 -m pip install flake8 pylint
@@ -41,8 +44,7 @@ jobs:
       run: make lint-extra
       continue-on-error:
         ${{ contains(matrix.python-version, 'alpha') ||
-            contains(matrix.python-version, 'pypy') ||
-            matrix.python-version == '3.5' }}
+            contains(matrix.python-version, 'pypy') }}
     - name: Cache NewPipe build
       uses: actions/cache@v2
       with:
@@ -61,7 +63,8 @@ jobs:
       run: |
         set -x
         if [ ! -e app-release-unsigned.apk ]; then
-          unset JAVA_HOME
+          sudo apt-get install -y openjdk-8-jdk-headless
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
           git clone -b v0.21.0 https://github.com/TeamNewPipe/NewPipe.git
           cd NewPipe
           ./gradlew assembleRelease
@@ -153,3 +156,5 @@ jobs:
         apksigcopier compare NewPipe_v0.21.0.apk signed-zipflinger.apk || true
         apksigcopier compare NewPipe_v0.21.0.apk \
           --unsigned app-release-unsigned-zipflinger.apk || true
+    - name: test APKs
+      run: make test-apks

@@ -1,6 +1,6 @@
-% apksigcopier(1) v1.0.1 | General Commands Manual
-% Felix C. Stegerman <flx@obfusk.net>
-% 2021-07-08
+% apksigcopier(1) v1.0.2 | General Commands Manual
+% FC Stegerman <flx@obfusk.net>
+% 2022-10-23
 
 # NAME
 
@@ -47,7 +47,7 @@ Patch extracted APK signatures onto unsigned APK.
 Compare two APKs by copying the signature from the first to a copy of
 the second and checking if the resulting APK verifies.
 
-This command requires apksigner.
+This command requires apksigner(1).
 
 # OPTIONS
 
@@ -68,6 +68,10 @@ instead.
 \--unsigned
 
 Accept unsigned *second_apk*.
+
+\--min-sdk-version
+
+Passed to apksigner(1) when verifying.
 
 # ENVIRONMENT VARIABLES
 
@@ -109,7 +113,7 @@ $ apksigcopier patch meta unsigned.apk out.apk
 $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```
 
-# compare
+## compare
 
 ```bash
 $ apksigcopier compare foo-from-fdroid.apk foo-built-locally.apk
@@ -122,7 +126,7 @@ apksigner(1)
 
 # COPYRIGHT
 
-Copyright © 2021 Felix C. Stegerman.  License GPLv3+: GNU GPL version
-3 or later <https://gnu.org/licenses/gpl.html>.  This is free software:
-you are free to change and redistribute it.   There  is NO WARRANTY,
-to the extent permitted by law.
+Copyright © 2022 FC Stegerman.  License GPLv3+: GNU GPL version 3 or
+later <https://gnu.org/licenses/gpl.html>.  This is free software: you
+are free to change and redistribute it.   There  is NO WARRANTY, to
+the extent permitted by law.
