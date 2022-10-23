@@ -648,7 +648,7 @@ def main():
     def compare(*args, **kwargs):
         do_compare(*args, **kwargs)
 
-    # FIXME
+    # FIXME: click autocompletion is broken and this workaround fails w/ >= 8.0
     if click.__version__.startswith("7."):
         def autocomplete_path(ctx=None, args=(), incomplete=""):    # pylint: disable=W0613
             head, tail = os.path.split(os.path.expanduser(incomplete))
