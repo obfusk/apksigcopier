@@ -7,7 +7,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2022-10-22
+# Date        : 2022-10-23
 #
 # Copyright   : Copyright (C) 2022  FC Stegerman
 # Version     : v1.0.1
@@ -607,7 +607,7 @@ def main():
         Extract APK signatures from signed APK.
     """)
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
-                  envvar="APKSIGCOPIER_V1_ONLY")
+                  envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
     def extract(*args, **kwargs):
@@ -617,7 +617,7 @@ def main():
         Patch extracted APK signatures onto unsigned APK.
     """)
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
-                  envvar="APKSIGCOPIER_V1_ONLY")
+                  envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
     @click.argument("metadata_dir", type=click.Path(exists=True, file_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
@@ -628,7 +628,7 @@ def main():
         Copy (extract & patch) signatures from signed to unsigned APK.
     """)
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
-                  envvar="APKSIGCOPIER_V1_ONLY")
+                  envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
@@ -642,7 +642,7 @@ def main():
         This command requires apksigner.
     """)
     @click.option("--unsigned", is_flag=True, help="Accept unsigned SECOND_APK.")
-    @click.option("--min-sdk-version", type=click.INT)
+    @click.option("--min-sdk-version", type=click.INT, help="Passed to apksigner.")
     @click.argument("first_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("second_apk", type=click.Path(exists=True, dir_okay=False))
     def compare(*args, **kwargs):
