@@ -1,20 +1,27 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: https://github.com/obfusk/apksigcopier
 Upstream-Name: apksigcopier
-Upstream-Contact: flx@obfusk.net
-Source: <https://github.com/obfusk/apksigcopier>
+Upstream-Contact: FC Stegerman <flx@obfusk.net>
 
-Files:     *
-Copyright: 2021 Felix C. Stegerman
-License:   GPL-3.0-or-later
+Files:
+ *
+Copyright:
+ 2022 FC Stegerman <flx@obfusk.net>
+License: GPL-3.0-or-later
+
+License: GPL-3.0-or-later
  This program is free software: you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or (at
- your option) any later version.
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
  .
- This program is distributed in the hope that it will be useful, but
- WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- General Public License for more details.
+ This package is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
  .
- On Debian systems, the complete text of the GNU General Public
- License, version 3, can be found in /usr/share/common-licenses/GPL-3.
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.
+Comment:
+ On Debian systems, the complete text of the GNU General
+ Public License version 3 can be found in "/usr/share/common-licenses/GPL-3".
