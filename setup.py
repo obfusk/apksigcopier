@@ -39,8 +39,9 @@ setuptools.setup(
         "Topic :: Utilities",
     ],
     keywords          = "android apk reproducible signing compare",
-    py_modules        = ["apksigcopier"],
     entry_points      = dict(console_scripts = ["apksigcopier = apksigcopier:main"]),
+    packages          = ["apksigcopier"],
+    package_data      = dict(apksigcopier = ["py.typed"]),
     python_requires   = ">=3.7",
     install_requires  = ["click>=6.0"],
 )

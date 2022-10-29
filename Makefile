@@ -15,7 +15,7 @@ test: test-cli lint lint-extra
 test-cli:
 	# TODO
 	apksigcopier --version
-	$(PYTHON) -m doctest apksigcopier
+	$(PYTHON) -m doctest apksigcopier/__init__.py
 
 test-apks:
 	cd test/apks && diff -Naur ../test-compare.out <( ../test-compare.sh \
@@ -23,11 +23,11 @@ test-apks:
 	  | sed -r 's!Expected: <[0-9a-f]+>, actual: <[0-9a-f]+>!Expected: <...>, actual: <...>!' )
 
 lint:
-	flake8 apksigcopier.py
-	pylint apksigcopier.py
+	flake8 apksigcopier/__init__.py
+	pylint apksigcopier/__init__.py
 
 lint-extra:
-	mypy apksigcopier.py
+	mypy apksigcopier/__init__.py
 
 clean: cleanup
 	rm -fr apksigcopier.egg-info/
