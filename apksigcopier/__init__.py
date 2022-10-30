@@ -7,7 +7,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2022-10-29
+# Date        : 2022-10-30
 #
 # Copyright   : Copyright (C) 2022  FC Stegerman
 # Version     : v1.0.2
@@ -66,7 +66,6 @@ import subprocess
 import sys
 import tempfile
 import zipfile
-import zlib
 
 from collections import namedtuple
 from typing import Any, BinaryIO, Dict, Iterable, Iterator, Optional, Tuple, Union
@@ -356,24 +355,9 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
             if is_meta(info.filename):
                 raise ZipError("Unexpected metadata")
     with zipfile.ZipFile(output_apk, "a") as zf_out:
-        info_data = [(APKZipInfo(info, date_time=date_time), data)
-                     for info, data in extracted_meta]
-        _write_to_zip(info_data, zf_out)
-
-
-if sys.version_info >= (3, 7):
-    def _write_to_zip(info_data: ZipInfoDataPairs, zf_out: zipfile.ZipFile) -> None:
-        for info, data in info_data:
-            zf_out.writestr(info, data, compresslevel=APKZipInfo.COMPRESSLEVEL)
-else:
-    def _write_to_zip(info_data: ZipInfoDataPairs, zf_out: zipfile.ZipFile) -> None:
-        old = zipfile._get_compressor
-        zipfile._get_compressor = lambda _: zlib.compressobj(APKZipInfo.COMPRESSLEVEL, 8, -15)
-        try:
-            for info, data in info_data:
-                zf_out.writestr(info, data)
-        finally:
-            zipfile._get_compressor = old
+        for info, data in extracted_meta:
+            zinfo = APKZipInfo(info, date_time=date_time)
+            zf_out.writestr(zinfo, data, compresslevel=APKZipInfo.COMPRESSLEVEL)
 
 
 def extract_v2_sig(apkfile: str, expected: bool = True) -> Optional[Tuple[int, bytes]]:
