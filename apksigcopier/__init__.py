@@ -7,7 +7,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2022-10-23
+# Date        : 2022-10-29
 #
 # Copyright   : Copyright (C) 2022  FC Stegerman
 # Version     : v1.0.2
@@ -228,6 +228,8 @@ def exclude_from_copying(filename: str) -> bool:
 
 
 # FIXME: makes certain assumptions and doesn't handle all valid ZIP files!
+# https://android.googlesource.com/platform/tools/apksig
+#   src/main/java/com/android/apksig/ApkSigner.java
 def copy_apk(unsigned_apk: str, output_apk: str) -> DateTime:
     """
     Copy APK like apksigner would, excluding files matched by
