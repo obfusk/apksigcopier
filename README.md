@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2022-10-29
+    Date        : 2022-10-31
 
     Copyright   : Copyright (C) 2022  FC Stegerman
     Version     : v1.0.2
@@ -67,7 +67,7 @@ $ apksigcopier patch meta unsigned.apk out.apk
 $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```
 
-### Compare
+### Compare (Copy to temporary file & Verify)
 
 This command requires `apksigner`.
 
@@ -123,6 +123,18 @@ It should also support v4, since these are stored in a separate file
 
 When using the `extract` command, the v2/v3 signature is saved as
 `APKSigningBlock` + `APKSigningBlockOffset`.
+
+### How does patching work?
+
+First it copies the APK exactly like `apksigner` would when signing it,
+including re-aligning ZIP entries and skipping existing v1 signature files.
+
+Then it adds the extracted v1 signature files (`.SF`, `.RSA`/`.DSA`/`.EC`,
+`MANIFEST.MF`) to the APK, using the correct ZIP metadata (the same as
+`apksigner` would).
+
+And lastly it inserts the extracted APK Signing Block at the correct offset
+(adding zero padding if needed) and updates the CD offset in the EOCD.
 
 ## Tab Completion
 
