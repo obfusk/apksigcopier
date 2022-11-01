@@ -2,10 +2,10 @@
 
     File        : README.md
     Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2022-10-23
+    Date        : 2022-11-01
 
     Copyright   : Copyright (C) 2022  FC Stegerman
-    Version     : v1.0.2
+    Version     : v1.1.0
     License     : GPLv3+
 
 }}}1 -->
@@ -30,8 +30,9 @@
 
 ## copy/extract/patch android apk signatures & compare apks
 
-`apksigcopier` is a tool for copying android APK signatures from a
-signed APK to an unsigned one (in order to verify [reproducible
+`apksigcopier` is a tool for copying [android APK
+signatures](https://source.android.com/docs/security/features/apksigning)
+from a signed APK to an unsigned one (in order to verify [reproducible
 builds](https://f-droid.org/docs/Reproducible_Builds/)).  It can also
 be used to compare two APKs with different signatures.  Its
 command-line tool offers four operations:
@@ -66,7 +67,7 @@ $ apksigcopier patch meta unsigned.apk out.apk
 $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```
 
-### Compare
+### Compare (Copy to temporary file & Verify)
 
 This command requires `apksigner`.
 
@@ -123,6 +124,52 @@ It should also support v4, since these are stored in a separate file
 When using the `extract` command, the v2/v3 signature is saved as
 `APKSigningBlock` + `APKSigningBlockOffset`.
 
+### How does patching work?
+
+First it copies the APK exactly like `apksigner` would when signing it,
+including re-aligning ZIP entries and skipping existing v1 signature files.
+
+Then it adds the extracted v1 signature files (`.SF`, `.RSA`/`.DSA`/`.EC`,
+`MANIFEST.MF`) to the APK, using the correct ZIP metadata (either the same
+metadata as `apksigner` would, or from `differences.json`).
+
+And lastly it inserts the extracted APK Signing Block at the correct offset
+(adding zero padding if needed) and updates the CD offset in the EOCD.
+
+### What about APKs signed by gradle/zipflinger/signflinger instead of apksigner?
+
+Compared to APKs signed by `apksigner`, APKs signed with a v1 signature by
+`zipflinger`/`signflinger` (e.g. using `gradle`) have different ZIP metadata --
+`create_system`, `create_version`, `external_attr`, `extract_version`,
+`flag_bits` -- and `compresslevel` for the v1 signature files (`.SF`,
+`.RSA`/`.DSA`/`.EC`, `MANIFEST.MF`); they also usually have a 132-byte virtual
+entry at the start as well.
+
+Recent versions of `apksigcopier` will detect these ZIP metadata differences and
+the virtual entry (if any); `extract` will save them in a `differences.json`
+file (if they exist), which `patch` will read (if it exists); `copy` and
+`compare` simply pass the same information along internally.
+
+### What are these virtual entries?
+
+A virtual entry is a ZIP entry with an empty filename, an extra field filled
+with zero bytes, and no corresponding central directory entry (so it should be
+effectively invisible to most ZIP tools).
+
+When `zipflinger` deletes an entry it leaves a "hole" in the archive when there
+remain non-deleted entries after it.  It later fills these "holes" with virtual
+entries.
+
+There is usually a 132-byte virtual entry at the start of an APK signed with a
+v1 signature by `signflinger`/`zipflinger`; almost certainly this is a default
+manifest ZIP entry created at initialisation, deleted (from the central
+directory but not from the file) during v1 signing, and eventually replaced by a
+virtual entry.
+
+Depending on what value of `Created-By` and `Built-By` were used for the default
+manifest, this virtual entry may be a different size; `apksigcopier` supports
+any size between 30 and 4096 bytes.
+
 ## Tab Completion
 
 NB: the syntax for the environment variable changed in click >= 8.0,
@@ -151,9 +198,8 @@ eval (env _APKSIGCOPIER_COMPLETE=fish_source apksigcopier)
 ### Debian
 
 Official packages are available in
-[Debian unstable](https://packages.debian.org/unstable/apksigcopier)
-and
-[Ubuntu impish](https://packages.ubuntu.com/impish/apksigcopier).
+[Debian](https://packages.debian.org/apksigcopier) and
+[Ubuntu](https://packages.ubuntu.com/apksigcopier).
 
 ```bash
 $ apt install apksigcopier
@@ -165,8 +211,8 @@ branch, or download a pre-built `.deb` via GitHub releases.
 ### NixOS & Arch Linux
 
 Official packages are also available in
-[nixpkgs unstable](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/apksigcopier/default.nix)
-and [Arch Linux](https://archlinux.org/packages/community/any/apksigcopier/)
+[nixpkgs](https://search.nixos.org/packages?query=apksigcopier) and
+[Arch Linux](https://archlinux.org/packages/community/any/apksigcopier/)
 (and derivatives).
 
 ### Using pip
