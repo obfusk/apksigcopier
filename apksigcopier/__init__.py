@@ -338,7 +338,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *, zfe_size: Optional[int] = No
                 fhi.seek(info.compress_size, os.SEEK_CUR)
             else:
                 if info.filename in offsets:
-                    raise ZipError("Duplicate ZIP entry: " + info.filename)
+                    raise ZipError(f"Duplicate ZIP entry: {info.filename!r}")
                 offsets[info.filename] = off_o = fho.tell()
                 if info.compress_type == 0 and off_o != info.header_offset:
                     hdr = _realign_zip_entry(info, hdr, n, m, off_o)
@@ -599,14 +599,14 @@ def verify_apk(apk: str, min_sdk_version: Optional[int] = None) -> None:
     """Verifies APK using apksigner."""
     args = VERIFY_CMD
     if min_sdk_version is not None:
-        args += ("--min-sdk-version={}".format(min_sdk_version),)
+        args += (f"--min-sdk-version={min_sdk_version}",)
     args += ("--", apk)
     try:
         subprocess.run(args, check=True, stdout=subprocess.PIPE)
     except subprocess.CalledProcessError:
-        raise APKSigCopierError("failed to verify " + apk)  # pylint: disable=W0707
+        raise APKSigCopierError(f"failed to verify {apk}")              # pylint: disable=W0707
     except FileNotFoundError:
-        raise APKSigCopierError("{} command not found".format(VERIFY_CMD[0]))   # pylint: disable=W0707
+        raise APKSigCopierError(f"{VERIFY_CMD[0]} command not found")   # pylint: disable=W0707
 
 
 def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO,
@@ -838,7 +838,7 @@ def main():
     try:
         cli(prog_name=NAME)
     except APKSigCopierError as e:
-        click.echo("Error: {}.".format(e), err=True)
+        click.echo(f"Error: {e}.", err=True)
         sys.exit(1)
 
 
