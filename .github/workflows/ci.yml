@@ -10,7 +10,8 @@ jobs:
         - '3.8'
         - '3.9'
         - '3.10'
-        - '3.11.0-alpha - 3.11'
+        - '3.11'
+      # - '3.12.0-alpha - 3.12'
         - pypy3.7
         - pypy3.8
         - pypy3.9
@@ -156,5 +157,5 @@ jobs:
         apksigcopier compare NewPipe_v0.21.0.apk signed-zipflinger.apk || true
         apksigcopier compare NewPipe_v0.21.0.apk \
           --unsigned app-release-unsigned-zipflinger.apk || true
-    - name: test APKs
+    - name: Test APKs
       run: make test-apks

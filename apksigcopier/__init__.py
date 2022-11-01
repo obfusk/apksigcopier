@@ -295,6 +295,8 @@ def zipflinger_virtual_entry(size: int) -> bytes:
 
 
 # FIXME: makes certain assumptions and doesn't handle all valid ZIP files!
+# FIXME: support zip64?
+# FIXME: handle utf8 filenames w/o utf8 flag (as produced by zipflinger)?
 # https://android.googlesource.com/platform/tools/apksig
 #   src/main/java/com/android/apksig/ApkSigner.java
 def copy_apk(unsigned_apk: str, output_apk: str, *, zfe_size: Optional[int] = None) -> DateTime:
@@ -539,6 +541,7 @@ def extract_v2_sig(apkfile: str, expected: bool = True) -> Optional[Tuple[int, b
     return sb_offset, sig_block
 
 
+# FIXME: OSError for APKs < 1024 bytes [wontfix]
 def zip_data(apkfile: str, count: int = 1024) -> ZipData:
     """
     Extract central directory, EOCD, and offsets from ZIP.
@@ -609,6 +612,7 @@ def verify_apk(apk: str, min_sdk_version: Optional[int] = None) -> None:
         raise APKSigCopierError(f"{VERIFY_CMD[0]} command not found")   # pylint: disable=W0707
 
 
+# FIXME: support multiple signers?
 def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO,
                *, ignore_differences: bool = False) -> None:
     """
@@ -651,6 +655,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
                 fh.write("\n")
 
 
+# FIXME: support multiple signers?
 def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
              v1_only: NoAutoYesBoolNone = NO, *, ignore_differences: bool = False) -> None:
     """
