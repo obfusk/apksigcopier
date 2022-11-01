@@ -1,10 +1,15 @@
-apksigcopier (1.0.2-1) unstable; urgency=medium
+apksigcopier (1.1.0-1) unstable; urgency=medium
 
-  * New upstream version 1.0.2. Closes: #1022411
-  * d/control: bump Standards-Version to 4.6.1 (no changes required).
+  * New upstream version 1.1.0.
+  * d/rules:
+    - don't run linters. Closes: #1022411
+    - use ./bin in PATH now that apksigcopier is a package.
+  * d/control:
+    - drop no longer needed Build-Depends: for linters.
+    - bump Standards-Version to 4.6.1 (no changes required).
   * d/copyright: cleanup (minor).
 
- -- FC Stegerman <flx@obfusk.net>  Sun, 23 Oct 2022 20:04:52 +0200
+ -- FC Stegerman <flx@obfusk.net>  Wed, 02 Nov 2022 00:29:15 +0100
 
 apksigcopier (1.0.1-1) unstable; urgency=medium
 

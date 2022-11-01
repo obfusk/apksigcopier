@@ -7,9 +7,6 @@ Build-Depends: debhelper-compat (= 13),
                python3-all,
                python3-click,
                python3-setuptools,
-               flake8,
-               pylint,
-               mypy,
                pandoc,
 Standards-Version: 4.6.1
 Vcs-Git: https://salsa.debian.org/obfusk/apksigcopier.git
