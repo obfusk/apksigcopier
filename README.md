@@ -5,7 +5,7 @@
     Date        : 2022-11-01
 
     Copyright   : Copyright (C) 2022  FC Stegerman
-    Version     : v1.0.2
+    Version     : v1.1.0
     License     : GPLv3+
 
 }}}1 -->
