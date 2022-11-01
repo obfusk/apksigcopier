@@ -164,9 +164,8 @@ eval (env _APKSIGCOPIER_COMPLETE=fish_source apksigcopier)
 ### Debian
 
 Official packages are available in
-[Debian unstable](https://packages.debian.org/unstable/apksigcopier)
-and
-[Ubuntu impish](https://packages.ubuntu.com/impish/apksigcopier).
+[Debian](https://packages.debian.org/apksigcopier) and
+[Ubuntu](https://packages.ubuntu.com/apksigcopier).
 
 ```bash
 $ apt install apksigcopier
@@ -178,8 +177,8 @@ branch, or download a pre-built `.deb` via GitHub releases.
 ### NixOS & Arch Linux
 
 Official packages are also available in
-[nixpkgs unstable](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/apksigcopier/default.nix)
-and [Arch Linux](https://archlinux.org/packages/community/any/apksigcopier/)
+[nixpkgs](https://search.nixos.org/packages?query=apksigcopier) and
+[Arch Linux](https://archlinux.org/packages/community/any/apksigcopier/)
 (and derivatives).
 
 ### Using pip
