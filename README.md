@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2022-10-31
+    Date        : 2022-11-01
 
     Copyright   : Copyright (C) 2022  FC Stegerman
     Version     : v1.0.2
@@ -130,11 +130,45 @@ First it copies the APK exactly like `apksigner` would when signing it,
 including re-aligning ZIP entries and skipping existing v1 signature files.
 
 Then it adds the extracted v1 signature files (`.SF`, `.RSA`/`.DSA`/`.EC`,
-`MANIFEST.MF`) to the APK, using the correct ZIP metadata (the same as
-`apksigner` would).
+`MANIFEST.MF`) to the APK, using the correct ZIP metadata (either the same
+metadata as `apksigner` would, or from `differences.json`).
 
 And lastly it inserts the extracted APK Signing Block at the correct offset
 (adding zero padding if needed) and updates the CD offset in the EOCD.
+
+### What about APKs signed by gradle/zipflinger/signflinger instead of apksigner?
+
+Compared to APKs signed by `apksigner`, APKs signed with a v1 signature by
+`zipflinger`/`signflinger` (e.g. using `gradle`) have different ZIP metadata --
+`create_system`, `create_version`, `external_attr`, `extract_version`,
+`flag_bits` -- and `compresslevel` for the v1 signature files (`.SF`,
+`.RSA`/`.DSA`/`.EC`, `MANIFEST.MF`); they also usually have a 132-byte virtual
+entry at the start as well.
+
+Recent versions of `apksigcopier` will detect these ZIP metadata differences and
+the virtual entry (if any); `extract` will save them in a `differences.json`
+file (if they exist), which `patch` will read (if it exists); `copy` and
+`compare` simply pass the same information along internally.
+
+### What are these virtual entries?
+
+A virtual entry is a ZIP entry with an empty filename, an extra field filled
+with zero bytes, and no corresponding central directory entry (so it should be
+effectively invisible to most ZIP tools).
+
+When `zipflinger` deletes an entry it leaves a "hole" in the archive when there
+remain non-deleted entries after it.  It later fills these "holes" with virtual
+entries.
+
+There is usually a 132-byte virtual entry at the start of an APK signed with a
+v1 signature by `signflinger`/`zipflinger`; almost certainly this is a default
+manifest ZIP entry created at initialisation, deleted (from the central
+directory but not from the file) during v1 signing, and eventually replaced by a
+virtual entry.
+
+Depending on what value of `Created-By` and `Built-By` were used for the default
+manifest, this virtual entry may be a different size; `apksigcopier` supports
+any size between 30 and 4096 bytes.
 
 ## Tab Completion
 
