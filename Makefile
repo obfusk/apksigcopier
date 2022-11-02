@@ -45,7 +45,8 @@ cleanup:
 .PHONY: _package _publish
 
 _package:
-	$(PYTHON) setup.py sdist bdist_wheel
+	SOURCE_DATE_EPOCH="$$( git log -1 --pretty=%ct )" \
+	  $(PYTHON) setup.py sdist bdist_wheel
 	twine check dist/*
 
 _publish: cleanup _package
