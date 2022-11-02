@@ -1,0 +1,13 @@
+v1.1.0
+
+• uses differences.json to support gradle/zipflinger/signflinger signing (#52).
+• adds py.typed file for mypy type checking.
+• adds more FAQs to the README.
+• supports python 3.11.
+
+v1.0.2
+
+• provides type annotations (for mypy type checking).
+• adds a --min-sdk-version option to the compare command.
+• drops support for python 3.5 and 3.6.
+• fixes some pylint errors.
