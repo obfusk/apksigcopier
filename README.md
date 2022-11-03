@@ -67,7 +67,10 @@ $ apksigcopier patch meta unsigned.apk out.apk
 $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```
 
-### Compare (Copy to temporary file & Verify)
+### Compare (Copy & Verify)
+
+Compare two APKs by copying the signature from the first to a copy of the second
+and checking if the resulting APK verifies.
 
 This command requires `apksigner`.
 
@@ -75,6 +78,9 @@ This command requires `apksigner`.
 $ apksigcopier compare foo-from-fdroid.apk foo-built-locally.apk
 $ apksigcopier compare --unsigned foo.apk foo-unsigned.apk
 ```
+
+NB: copying from an APK signed with `signflinger` to an APK signed with
+`apksigner` works, whereas the reverse fails; see the [FAQ](#faq).
 
 ### Help
 
@@ -149,6 +155,19 @@ Recent versions of `apksigcopier` will detect these ZIP metadata differences and
 the virtual entry (if any); `extract` will save them in a `differences.json`
 file (if they exist), which `patch` will read (if it exists); `copy` and
 `compare` simply pass the same information along internally.
+
+#### CAVEAT for compare
+
+NB: because `compare` copies from the first APK to the second, it will fail when
+only the second APK is signed with `zipflinger`/`signflinger`; e.g.
+
+```bash
+$ compare signed-with-signflinger.apk signed-with-apksigner.apk   # works
+$ compare signed-with-apksigner.apk signed-with-signflinger.apk   # fails
+DOES NOT VERIFY
+[...]
+Error: failed to verify /tmp/.../output.apk.
+```
 
 ### What are these virtual entries?
 
