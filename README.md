@@ -79,7 +79,7 @@ $ apksigcopier compare foo-from-fdroid.apk foo-built-locally.apk
 $ apksigcopier compare --unsigned foo.apk foo-unsigned.apk
 ```
 
-NB: copying from an APK signed with `signflinger` to an APK signed with
+NB: copying from an APK v1-signed with `signflinger` to an APK signed with
 `apksigner` works, whereas the reverse fails; see the [FAQ](#faq).
 
 ### Help
@@ -159,11 +159,11 @@ file (if they exist), which `patch` will read (if it exists); `copy` and
 #### CAVEAT for compare
 
 NB: because `compare` copies from the first APK to the second, it will fail when
-only the second APK is signed with `zipflinger`/`signflinger`; e.g.
+only the second APK is v1-signed with `zipflinger`/`signflinger`; e.g.
 
 ```bash
-$ compare signed-with-signflinger.apk signed-with-apksigner.apk   # works
-$ compare signed-with-apksigner.apk signed-with-signflinger.apk   # fails
+$ compare foo-signflinger.apk foo-apksigner.apk   # copies virtual entry; works
+$ compare foo-apksigner.apk foo-signflinger.apk   # only 2nd APK has virtual entry
 DOES NOT VERIFY
 [...]
 Error: failed to verify /tmp/.../output.apk.

@@ -49,7 +49,7 @@ the second and checking if the resulting APK verifies.
 
 This command requires apksigner(1).
 
-NB: copying from an APK signed with signflinger to an APK signed with
+NB: copying from an APK v1-signed with signflinger to an APK signed with
 apksigner works, whereas the reverse fails; see the FAQ in the README.
 
 # OPTIONS
