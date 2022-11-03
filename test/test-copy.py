@@ -16,7 +16,10 @@ apksigcopier.exclude_from_copying = lambda _: False
 def shasum(filename):
     m = hashlib.sha256()
     with open(filename, "rb") as fh:
-        while data := fh.read(4096):
+        while True:
+            data = fh.read(4096)
+            if not data:
+                break
             m.update(data)
     return m.hexdigest()
 
