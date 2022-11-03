@@ -3,7 +3,8 @@ PYTHON  ?= python3
 
 export PYTHONWARNINGS := default
 
-.PHONY: all install test test-cli test-apks lint lint-extra clean cleanup
+.PHONY: all install test test-cli lint lint-extra clean cleanup
+.PHONY: test-apks test-apks-compare test-apks-copy
 
 all: apksigcopier.1
 
@@ -17,10 +18,15 @@ test-cli:
 	apksigcopier --version
 	$(PYTHON) -m doctest apksigcopier/__init__.py
 
-test-apks:
+test-apks: test-apks-compare test-apks-copy
+
+test-apks-compare:
 	cd test/apks && diff -Naur ../test-compare.out <( ../test-compare.sh \
 	  | sed -r 's!/tmp/[^/]*/!/tmp/.../!' \
 	  | sed -r 's!Expected: <[0-9a-f]+>, actual: <[0-9a-f]+>!Expected: <...>, actual: <...>!' )
+
+test-apks-copy:
+	cd test/apks && diff -Naur ../test-copy.out <( $(PYTHON) ../test-copy.py )
 
 lint:
 	flake8 apksigcopier/__init__.py
