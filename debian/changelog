@@ -1,3 +1,9 @@
+apksigcopier (1.1.0-1~bpo11+1) bullseye-backports; urgency=medium
+
+  * Rebuild for bullseye-backports.
+
+ -- FC Stegerman <flx@obfusk.net>  Sat, 05 Nov 2022 18:37:27 +0100
+
 apksigcopier (1.1.0-1) unstable; urgency=medium
 
   * New upstream version 1.1.0.
