@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2022-11-01
+    Date        : 2022-11-15
 
     Copyright   : Copyright (C) 2022  FC Stegerman
     Version     : v1.1.0
@@ -140,7 +140,21 @@ Then it adds the extracted v1 signature files (`.SF`, `.RSA`/`.DSA`/`.EC`,
 metadata as `apksigner` would, or from `differences.json`).
 
 And lastly it inserts the extracted APK Signing Block at the correct offset
-(adding zero padding if needed) and updates the CD offset in the EOCD.
+(adding zero padding if needed) and updates the central directory (CD) offset in
+the end of central directory (EOCD) record.
+
+For more information about the ZIP file format, see e.g. [the Wikipedia
+article](https://en.wikipedia.org/wiki/ZIP_%28file_format%29).
+
+### What does the "APK Signing Block offset < central directory offset" error mean?
+
+It means that `apksigcopier` can't insert the APK Signing Block at the required
+location, since that offset is in the middle of the ZIP data (instead of right
+after the data, before the central directory).
+
+In other words: the APK you are trying to copy the signature to is larger than
+the one the signature was copied from.  Thus the signature cannot be copied (and
+could never have been valid for the APK you are trying to copy it to).
 
 ### What about APKs signed by gradle/zipflinger/signflinger instead of apksigner?
 
