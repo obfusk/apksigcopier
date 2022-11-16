@@ -156,6 +156,9 @@ In other words: the APK you are trying to copy the signature to is larger than
 the one the signature was copied from.  Thus the signature cannot be copied (and
 could never have been valid for the APK you are trying to copy it to).
 
+In the context of verifying [reproducible builds](https://reproducible-builds.org),
+getting this error almost certainly means the build was not reproducible.
+
 ### What about APKs signed by gradle/zipflinger/signflinger instead of apksigner?
 
 Compared to APKs signed by `apksigner`, APKs signed with a v1 signature by
