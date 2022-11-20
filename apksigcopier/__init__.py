@@ -223,7 +223,11 @@ def exclude_from_copying(filename: str) -> bool:
     Excludes filenames in COPY_EXCLUDE (i.e. MANIFEST.MF) by default; when
     exclude_all_meta is set to True instead, excludes all metadata files as
     matched by is_meta().
+
+    Directories are always excluded.
     """
+    if filename.endswith("/"):
+        return True
     return is_meta(filename) if exclude_all_meta else filename in COPY_EXCLUDE
 
 
@@ -373,7 +377,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *, zfe_size: Optional[int] = No
         fho.seek(eocd_offset + 8)
         fho.write(struct.pack("<HHLL", len(offsets), len(offsets),
                               eocd_offset - cd_offset, cd_offset))
-    return max(info.date_time for info in infos)
+    return max(info.date_time for info in infos if info.filename in offsets)
 
 
 # NB: doesn't sync local & CD headers!
