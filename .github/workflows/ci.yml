@@ -142,7 +142,7 @@ jobs:
             apksigner verify --verbose --print-certs "$apk" | grep -v ^WARNING:
           fi
         done
-    - name: apksigcopier compare (mastodon)
+    - name: apksigcopier compare
       run: |
         set -x
         apksigcopier compare mastodon-release.apk patched-upstream.apk
@@ -154,12 +154,5 @@ jobs:
         # signed with apksigner works, whereas the reverse fails
         ! apksigcopier compare signed-dummy.apk mastodon-release.apk
         ! apksigcopier compare copied-dummy.apk mastodon-release.apk
-    - name: apksigcopier compare (test APKs)
-      run: |
-        set -x
-        for apk in test/apks/apks/golden-aligned-*out.apk; do
-          if unzip -l "$apk" | grep -F META-INF/MANIFEST.MF; then min=; else min=--min-sdk-version=28; fi
-          apksigcopier compare $min "$apk" --unsigned test/apks/apks/golden-aligned-in.apk
-        done
     - name: Test APKs
       run: make test-apks

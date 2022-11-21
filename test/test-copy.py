@@ -26,7 +26,7 @@ def shasum(filename):
 
 with tempfile.TemporaryDirectory() as tmpdir:
     output_apk = os.path.join(tmpdir, "output.apk")
-    for apk in sorted(glob.glob("apks/*.apk")):
+    for apk in sorted(glob.glob("apks/apks/*.apk")):
         if "empty" in apk:
             continue
         print(f"{apk}:")

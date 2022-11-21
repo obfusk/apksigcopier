@@ -7,7 +7,7 @@ PYCOVCLI  := $(PYCOV) -a apksigcopier/__init__.py
 export PYTHONWARNINGS := default
 
 .PHONY: all install test test-cli doctest coverage lint lint-extra clean cleanup
-.PHONY: test-apks test-apks-compare test-apks-copy
+.PHONY: test-apks test-apks-compare-in test-apks-compare-self test-apks-copy
 
 all: apksigcopier.1
 
@@ -39,15 +39,18 @@ coverage:
 	$(PYTHON) -mcoverage html
 	$(PYTHON) -mcoverage report
 
-test-apks: test-apks-compare test-apks-copy
+test-apks: test-apks-compare-in test-apks-compare-self test-apks-copy
 
-test-apks-compare:
-	cd test/apks && diff -Naur ../test-compare.out <( ../test-compare.sh \
+test-apks-compare-in:
+	cd test && ./test-compare-in.sh
+
+test-apks-compare-self:
+	cd test && diff -Naur test-compare-self.out <( ./test-compare-self.sh \
 	  | sed -r 's!/tmp/[^/]*/!/tmp/.../!' \
 	  | sed -r 's!Expected: <[0-9a-f]+>, actual: <[0-9a-f]+>!Expected: <...>, actual: <...>!' )
 
 test-apks-copy:
-	cd test/apks && diff -Naur ../test-copy.out <( $(PYTHON) ../test-copy.py )
+	cd test && diff -Naur test-copy.out <( $(PYTHON) ./test-copy.py )
 
 lint:
 	flake8 apksigcopier/__init__.py
