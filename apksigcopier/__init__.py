@@ -602,18 +602,19 @@ def patch_apk(extracted_meta: ZipInfoDataPairs, extracted_v2_sig: Optional[Tuple
         patch_v2_sig(extracted_v2_sig, output_apk)
 
 
-def verify_apk(apk: str, min_sdk_version: Optional[int] = None) -> None:
+def verify_apk(apk: str, min_sdk_version: Optional[int] = None,
+               verify_cmd: Optional[Tuple[str, ...]] = None) -> None:
     """Verifies APK using apksigner."""
-    args = VERIFY_CMD
+    args = tuple(verify_cmd or VERIFY_CMD)
     if min_sdk_version is not None:
         args += (f"--min-sdk-version={min_sdk_version}",)
     args += ("--", apk)
     try:
         subprocess.run(args, check=True, stdout=subprocess.PIPE)
     except subprocess.CalledProcessError:
-        raise APKSigCopierError(f"failed to verify {apk}")              # pylint: disable=W0707
+        raise APKSigCopierError(f"failed to verify {apk}")          # pylint: disable=W0707
     except FileNotFoundError:
-        raise APKSigCopierError(f"{VERIFY_CMD[0]} command not found")   # pylint: disable=W0707
+        raise APKSigCopierError(f"{args[0]} command not found")     # pylint: disable=W0707
 
 
 # FIXME: support multiple signers?
@@ -739,7 +740,8 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
 
 def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
                min_sdk_version: Optional[int] = None, *,
-               ignore_differences: bool = False) -> None:
+               ignore_differences: bool = False,
+               verify_cmd: Optional[Tuple[str, ...]] = None) -> None:
     """
     Compare first_apk to second_apk by:
     * using apksigner to check if the first APK verifies
@@ -748,9 +750,9 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
     * checking if the resulting APK verifies
     """
     global exclude_all_meta
-    verify_apk(first_apk, min_sdk_version=min_sdk_version)
+    verify_apk(first_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
     if not unsigned:
-        verify_apk(second_apk, min_sdk_version=min_sdk_version)
+        verify_apk(second_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
     with tempfile.TemporaryDirectory() as tmpdir:
         output_apk = os.path.join(tmpdir, "output.apk")        # FIXME
         old_exclude_all_meta = exclude_all_meta                # FIXME
@@ -760,7 +762,7 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
                     ignore_differences=ignore_differences)
         finally:
             exclude_all_meta = old_exclude_all_meta
-        verify_apk(output_apk, min_sdk_version=min_sdk_version)
+        verify_apk(output_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
 
 
 def main():
@@ -825,9 +827,13 @@ def main():
     @click.option("--unsigned", is_flag=True, help="Accept unsigned SECOND_APK.")
     @click.option("--min-sdk-version", type=click.INT, help="Passed to apksigner.")
     @click.option("--ignore-differences", is_flag=True, help="Don't copy metadata differences.")
+    @click.option("--verify-cmd", metavar="COMMAND", help="Command (with arguments) used to "
+                  f"verify APKs.  [default: {' '.join(VERIFY_CMD)!r}]")
     @click.argument("first_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("second_apk", type=click.Path(exists=True, dir_okay=False))
     def compare(*args, **kwargs):
+        if kwargs["verify_cmd"] is not None:
+            kwargs["verify_cmd"] = tuple(kwargs["verify_cmd"].split())
         do_compare(*args, **kwargs)
 
     # FIXME: click autocompletion is broken and this workaround fails w/ >= 8.0
