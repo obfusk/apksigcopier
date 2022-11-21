@@ -1,9 +1,12 @@
-SHELL   := /bin/bash
-PYTHON  ?= python3
+SHELL     := /bin/bash
+PYTHON    ?= python3
+
+PYCOV     := $(PYTHON) -mcoverage run --source apksigcopier
+PYCOVCLI  := $(PYCOV) -a apksigcopier/__init__.py
 
 export PYTHONWARNINGS := default
 
-.PHONY: all install test test-cli lint lint-extra clean cleanup
+.PHONY: all install test test-cli doctest coverage lint lint-extra clean cleanup
 .PHONY: test-apks test-apks-compare test-apks-copy
 
 all: apksigcopier.1
@@ -11,12 +14,30 @@ all: apksigcopier.1
 install:
 	$(PYTHON) -mpip install -e .
 
-test: test-cli lint lint-extra
+test: test-cli doctest lint lint-extra
 
 test-cli:
 	# TODO
 	apksigcopier --version
+
+doctest:
+	# NB: uses test/apks/apks/*.apk
 	$(PYTHON) -m doctest apksigcopier/__init__.py
+
+coverage:
+	# NB: uses test/apks/apks/*.apk & modifies .tmp
+	mkdir -p .tmp/meta
+	$(PYCOV) -m doctest apksigcopier/__init__.py
+	$(PYCOVCLI) extract test/apks/apks/golden-aligned-v1v2v3-out.apk .tmp/meta
+	$(PYCOVCLI) patch .tmp/meta test/apks/apks/golden-aligned-in.apk .tmp/patched.apk
+	$(PYCOVCLI) copy test/apks/apks/golden-aligned-v1v2v3-out.apk \
+	                 test/apks/apks/golden-aligned-in.apk .tmp/copied.apk
+	$(PYCOVCLI) compare test/apks/apks/golden-aligned-v1v2v3-out.apk \
+	         --unsigned test/apks/apks/golden-aligned-in.apk
+	apksigner verify --verbose .tmp/patched.apk
+	apksigner verify --verbose .tmp/copied.apk
+	$(PYTHON) -mcoverage html
+	$(PYTHON) -mcoverage report
 
 test-apks: test-apks-compare test-apks-copy
 
@@ -44,6 +65,7 @@ cleanup:
 	rm -fr build/ dist/
 	rm -fr .coverage htmlcov/
 	rm -fr apksigcopier.1
+	rm -fr .tmp/
 
 %.1: %.1.md
 	pandoc -s -t man -o $@ $<

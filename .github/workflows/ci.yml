@@ -31,7 +31,7 @@ jobs:
         # sudo apt-get upgrade -y
         sudo apt-get install -y apksigner
         python3 -m pip install --upgrade pip
-        python3 -m pip install flake8 pylint
+        python3 -m pip install flake8 pylint coverage
     - name: Install mypy
       run: python3 -m pip install mypy
       continue-on-error:
@@ -40,12 +40,14 @@ jobs:
     - name: Install
       run: make install
     - name: Test & lint
-      run: make test-cli lint
+      run: make test-cli doctest lint
     - name: Extra lint
       run: make lint-extra
       continue-on-error:
         ${{ contains(matrix.python-version, 'alpha') ||
             contains(matrix.python-version, 'pypy') }}
+    - name: Test coverage
+      run: make coverage
     - name: Cache NewPipe build
       uses: actions/cache@v2
       with:
