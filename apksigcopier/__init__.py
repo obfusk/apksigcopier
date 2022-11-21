@@ -7,7 +7,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2022-11-01
+# Date        : 2022-11-21
 #
 # Copyright   : Copyright (C) 2022  FC Stegerman
 # Version     : v1.1.0
@@ -852,7 +852,7 @@ def main():
 
     try:
         cli(prog_name=NAME)
-    except APKSigCopierError as e:
+    except (APKSigCopierError, zipfile.BadZipFile) as e:
         click.echo(f"Error: {e}.", err=True)
         sys.exit(1)
 
