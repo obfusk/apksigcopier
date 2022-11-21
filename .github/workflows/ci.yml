@@ -49,14 +49,14 @@ jobs:
     - name: Test coverage
       run: make coverage
     - name: Cache NewPipe build
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           app-release-unsigned-zipflinger.apk
           app-release-unsigned.apk
         key: v0.21.0-20210615
     - name: Cache NewPipe downloads
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: |
           NewPipe_v0.21.0.apk
