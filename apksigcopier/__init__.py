@@ -7,7 +7,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2022-11-21
+# Date        : 2022-11-22
 #
 # Copyright   : Copyright (C) 2022  FC Stegerman
 # Version     : v1.1.0
@@ -979,7 +979,7 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
         verify_apk(output_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
 
 
-def main():
+def main() -> None:
     """CLI; requires click."""
 
     global exclude_all_meta, copy_extra_bytes, skip_realignment
@@ -1050,20 +1050,6 @@ def main():
         if kwargs["verify_cmd"] is not None:
             kwargs["verify_cmd"] = tuple(kwargs["verify_cmd"].split())
         do_compare(*args, **kwargs)
-
-    # FIXME: click autocompletion is broken and this workaround fails w/ >= 8.0
-    if click.__version__.startswith("7."):
-        def autocomplete_path(ctx=None, args=(), incomplete=""):    # pylint: disable=W0613
-            head, tail = os.path.split(os.path.expanduser(incomplete))
-            return sorted(
-                (e.path if head else e.path[2:]) + ("/" if e.is_dir() else "")
-                for e in os.scandir(head or ".") if e.name.startswith(tail)
-            )
-
-        for command in cli.commands.values():
-            for param in command.params:
-                if isinstance(param.type, click.Path):
-                    param.autocompletion = autocomplete_path
 
     try:
         cli(prog_name=NAME)

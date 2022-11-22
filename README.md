@@ -208,6 +208,7 @@ Depending on what value of `Created-By` and `Built-By` were used for the default
 manifest, this virtual entry may be a different size; `apksigcopier` supports
 any size between 30 and 4096 bytes.
 
+<!--
 ## Tab Completion
 
 NB: the syntax for the environment variable changed in click >= 8.0,
@@ -230,6 +231,7 @@ For Fish, add this to `~/.config/fish/completions/apksigcopier.fish`:
 ```fish
 eval (env _APKSIGCOPIER_COMPLETE=fish_source apksigcopier)
 ```
+-->
 
 ## Installing
 
