@@ -1,6 +1,6 @@
 % apksigcopier(1) v1.1.0 | General Commands Manual
 % FC Stegerman <flx@obfusk.net>
-% 2022-11-01
+% 2022-11-21
 
 # NAME
 
@@ -88,6 +88,10 @@ Exclude all metadata files, not just MANIFEST.MF.
 ## APKSIGCOPIER_COPY_EXTRA_BYTES
 
 Copy extra bytes after data (e.g. an existing v2 signature).
+
+## APKSIGCOPIER_SKIP_REALIGNMENT
+
+Skip realignment of ZIP entries.
 
 # EXAMPLES
 

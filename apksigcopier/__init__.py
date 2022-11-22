@@ -38,6 +38,7 @@ override the default behaviour:
 
 * set APKSIGCOPIER_EXCLUDE_ALL_META=1 to exclude all metadata files
 * set APKSIGCOPIER_COPY_EXTRA_BYTES=1 to copy extra bytes after data (e.g. a v2 sig)
+* set APKSIGCOPIER_SKIP_REALIGNMENT=1 to skip realignment of ZIP entries
 
 
 API
@@ -56,6 +57,7 @@ override the default behaviour:
 
 * set exclude_all_meta=True to exclude all metadata files
 * set copy_extra_bytes=True to copy extra bytes after data (e.g. a v2 sig)
+* set skip_realignment=True to skip realignment of ZIP entries
 """
 
 import glob
@@ -126,6 +128,7 @@ ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 
 exclude_all_meta = False    # exclude all metadata files in copy_apk()
 copy_extra_bytes = False    # copy extra bytes after data in copy_apk()
+skip_realignment = False    # skip realignment of ZIP entries in copy_apk()
 
 
 class APKSigCopierError(Exception):
@@ -423,7 +426,8 @@ def copy_apk(unsigned_apk: str, output_apk: str, *, zfe_size: Optional[int] = No
                 if info.filename in offsets:
                     raise ZipError(f"Duplicate ZIP entry: {info.filename!r}")
                 offsets[info.filename] = off_o = fho.tell()
-                if info.compress_type == 0 and off_o != info.header_offset:
+                if not skip_realignment and info.compress_type == 0 \
+                        and off_o != info.header_offset:
                     hdr = _realign_zip_entry(info, hdr, n, m, off_o)
                 fho.write(hdr)
                 _copy_bytes(fhi, fho, info.compress_size)
@@ -978,9 +982,10 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
 def main():
     """CLI; requires click."""
 
-    global exclude_all_meta, copy_extra_bytes
+    global exclude_all_meta, copy_extra_bytes, skip_realignment
     exclude_all_meta = os.environ.get("APKSIGCOPIER_EXCLUDE_ALL_META") in ("1", "yes", "true")
     copy_extra_bytes = os.environ.get("APKSIGCOPIER_COPY_EXTRA_BYTES") in ("1", "yes", "true")
+    skip_realignment = os.environ.get("APKSIGCOPIER_SKIP_REALIGNMENT") in ("1", "yes", "true")
 
     import click
 

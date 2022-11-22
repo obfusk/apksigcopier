@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2022-11-15
+    Date        : 2022-11-21
 
     Copyright   : Copyright (C) 2022  FC Stegerman
     Version     : v1.1.0
@@ -98,6 +98,7 @@ The following environment variables can be set to `1`, `yes`, or
 
 * set `APKSIGCOPIER_EXCLUDE_ALL_META=1` to exclude all metadata files
 * set `APKSIGCOPIER_COPY_EXTRA_BYTES=1` to copy extra bytes after data (e.g. a v2 sig)
+* set `APKSIGCOPIER_SKIP_REALIGNMENT=1` to skip realignment of ZIP entries
 
 ## Python API
 
@@ -117,6 +118,7 @@ to override the default behaviour:
 
 * set `exclude_all_meta=True` to exclude all metadata files
 * set `copy_extra_bytes=True` to copy extra bytes after data (e.g. a v2 sig)
+* set `skip_realignment=True` to skip realignment of ZIP entries
 
 ## FAQ
 
