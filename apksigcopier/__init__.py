@@ -995,7 +995,7 @@ def main() -> None:
         apksigcopier - copy/extract/patch android apk signatures & compare apks
     """)
     @click.version_option(__version__)
-    def cli():
+    def cli() -> None:
         pass
 
     @cli.command(help="""
@@ -1006,7 +1006,7 @@ def main() -> None:
     @click.option("--ignore-differences", is_flag=True, help="Don't write differences.json.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
-    def extract(*args, **kwargs):
+    def extract(*args, **kwargs) -> None:
         do_extract(*args, **kwargs)
 
     @cli.command(help="""
@@ -1018,7 +1018,7 @@ def main() -> None:
     @click.argument("metadata_dir", type=click.Path(exists=True, file_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
-    def patch(*args, **kwargs):
+    def patch(*args, **kwargs) -> None:
         do_patch(*args, **kwargs)
 
     @cli.command(help="""
@@ -1030,7 +1030,7 @@ def main() -> None:
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
-    def copy(*args, **kwargs):
+    def copy(*args, **kwargs) -> None:
         do_copy(*args, **kwargs)
 
     @cli.command(help="""
@@ -1046,7 +1046,7 @@ def main() -> None:
                   f"verify APKs.  [default: {' '.join(VERIFY_CMD)!r}]")
     @click.argument("first_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("second_apk", type=click.Path(exists=True, dir_okay=False))
-    def compare(*args, **kwargs):
+    def compare(*args, **kwargs) -> None:
         if kwargs["verify_cmd"] is not None:
             kwargs["verify_cmd"] = tuple(kwargs["verify_cmd"].split())
         do_compare(*args, **kwargs)
