@@ -57,7 +57,7 @@ lint:
 	pylint apksigcopier/__init__.py
 
 lint-extra:
-	mypy apksigcopier/__init__.py
+	mypy --strict apksigcopier/__init__.py
 
 clean: cleanup
 	rm -fr apksigcopier.egg-info/

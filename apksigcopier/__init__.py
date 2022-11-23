@@ -153,14 +153,15 @@ class ReproducibleZipInfo(zipfile.ZipInfo):
 
     _override: Dict[str, Any] = {}
 
-    def __init__(self, zinfo, **override):  # pylint: disable=W0231
+    def __init__(self, zinfo: zipfile.ZipInfo, **override: Any) -> None:
+        # pylint: disable=W0231
         if override:
             self._override = {**self._override, **override}
         for k in self.__slots__:
             if hasattr(zinfo, k):
                 setattr(self, k, getattr(zinfo, k))
 
-    def __getattribute__(self, name):
+    def __getattribute__(self, name: str) -> Any:
         if name != "_override":
             try:
                 return self._override[name]
@@ -1006,7 +1007,7 @@ def main() -> None:
     @click.option("--ignore-differences", is_flag=True, help="Don't write differences.json.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
-    def extract(*args, **kwargs) -> None:
+    def extract(*args: Any, **kwargs: Any) -> None:
         do_extract(*args, **kwargs)
 
     @cli.command(help="""
@@ -1018,7 +1019,7 @@ def main() -> None:
     @click.argument("metadata_dir", type=click.Path(exists=True, file_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
-    def patch(*args, **kwargs) -> None:
+    def patch(*args: Any, **kwargs: Any) -> None:
         do_patch(*args, **kwargs)
 
     @cli.command(help="""
@@ -1030,7 +1031,7 @@ def main() -> None:
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
-    def copy(*args, **kwargs) -> None:
+    def copy(*args: Any, **kwargs: Any) -> None:
         do_copy(*args, **kwargs)
 
     @cli.command(help="""
@@ -1046,7 +1047,7 @@ def main() -> None:
                   f"verify APKs.  [default: {' '.join(VERIFY_CMD)!r}]")
     @click.argument("first_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("second_apk", type=click.Path(exists=True, dir_okay=False))
-    def compare(*args, **kwargs) -> None:
+    def compare(*args: Any, **kwargs: Any) -> None:
         if kwargs["verify_cmd"] is not None:
             kwargs["verify_cmd"] = tuple(kwargs["verify_cmd"].split())
         do_compare(*args, **kwargs)
