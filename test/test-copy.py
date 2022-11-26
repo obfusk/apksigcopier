@@ -9,11 +9,8 @@ import zipfile
 
 import apksigcopier
 
-# NB: we want to test whether copying a signed APK is idempotent, so keep v1 signatures
-apksigcopier.exclude_from_copying = lambda _: False
 
-
-def shasum(filename):
+def shasum(filename: str) -> str:
     m = hashlib.sha256()
     with open(filename, "rb") as fh:
         while True:
@@ -31,7 +28,9 @@ with tempfile.TemporaryDirectory() as tmpdir:
             continue
         print(f"{apk}:")
         try:
-            apksigcopier.copy_apk(apk, output_apk)
+            # NB: we're testing whether copying a signed APK is idempotent, so
+            # don't exclude anything
+            apksigcopier.copy_apk(apk, output_apk, exclude=lambda _: False)
             extracted_v2_sig = apksigcopier.extract_v2_sig(apk, expected=False)
             if extracted_v2_sig is not None:
                 apksigcopier.patch_v2_sig(extracted_v2_sig, output_apk)
