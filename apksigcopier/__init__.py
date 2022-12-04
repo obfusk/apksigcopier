@@ -7,7 +7,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2022-11-25
+# Date        : 2022-12-04
 #
 # Copyright   : Copyright (C) 2022  FC Stegerman
 # Version     : v1.1.0
@@ -577,6 +577,10 @@ def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
 
     >>> asc.validate_differences(diff) is None
     True
+    >>> diff["files"]["META-INF/OOPS"] = {}
+    >>> asc.validate_differences(diff)
+    ".files key 'META-INF/OOPS' is not a metadata file"
+    >>> del diff["files"]["META-INF/OOPS"]
     >>> diff["files"]["META-INF/CERT.RSA"]["compresslevel"] = 42
     >>> asc.validate_differences(diff)
     ".files['META-INF/CERT.RSA'].compresslevel has an unexpected value"
@@ -632,6 +636,8 @@ def validate_differences(differences: Dict[str, Any]) -> Optional[str]:
         if not isinstance(differences["files"], dict):
             return ".files is not a dict"
         for name, info in differences["files"].items():
+            if not is_meta(name):
+                return f".files key {name!r} is not a metadata file"
             if not isinstance(info, dict):
                 return f".files[{name!r}] is not a dict"
             if set(info.keys()) - set(VALID_ZIP_META.keys()):
