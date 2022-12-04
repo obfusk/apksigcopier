@@ -323,6 +323,27 @@ def zipflinger_virtual_entry(size: int) -> bytes:
     ) + int.to_bytes(size - 30, 2, "little") + b"\x00" * (size - 30)
 
 
+def detect_zfe(apkfile: str) -> Optional[int]:
+    """
+    Detect zipflinger virtual entry.
+
+    Returns the size of the virtual entry if found, None otherwise.
+
+    Raises ZipError if the size is less than 30 or greater than 4096, or the
+    data isn't all zeroes.
+    """
+    with open(apkfile, "rb") as fh:
+        zfe_start = zipflinger_virtual_entry(30)[:28]   # w/o len(extra)
+        if fh.read(28) == zfe_start:
+            zfe_size = 30 + int.from_bytes(fh.read(2), "little")
+            if not (30 <= zfe_size <= 4096):
+                raise ZipError("Unsupported virtual entry size")
+            if not fh.read(zfe_size - 30) == b"\x00" * (zfe_size - 30):
+                raise ZipError("Unsupported virtual entry data")
+            return zfe_size
+    return None
+
+
 ################################################################################
 #
 # https://en.wikipedia.org/wiki/ZIP_(file_format)
@@ -607,15 +628,9 @@ def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
             files[info.filename] = diffs
     if files:
         differences["files"] = files
-    with open(signed_apk, "rb") as fh:
-        zfe_start = zipflinger_virtual_entry(30)[:28]   # w/o len(extra)
-        if fh.read(28) == zfe_start:
-            zfe_size = 30 + int.from_bytes(fh.read(2), "little")
-            if not (30 <= zfe_size <= 4096):
-                raise ZipError("Unsupported virtual entry size")
-            if not fh.read(zfe_size - 30) == b"\x00" * (zfe_size - 30):
-                raise ZipError("Unsupported virtual entry data")
-            differences["zipflinger_virtual_entry"] = zfe_size
+    zfe_size = detect_zfe(signed_apk)
+    if zfe_size:
+        differences["zipflinger_virtual_entry"] = zfe_size
     return differences or None
 
 
