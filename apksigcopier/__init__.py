@@ -113,7 +113,7 @@ VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 VALID_ZIP_META = dict(
     compresslevel=(9, 1),               # best compression, best speed
     create_system=(0, 3),               # fat, unx
-    create_version=(20, 0),             # 2.0, 0.0
+    create_version=(24, 20, 0),         # 2.4, 2.0, 0.0
     external_attr=(0,                   # N/A
                    0o100644 << 16,      # regular file rw-r--r--
                    0o100664 << 16,      # regular file rw-rw-r--
