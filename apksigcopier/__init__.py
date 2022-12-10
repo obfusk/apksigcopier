@@ -437,7 +437,7 @@ def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
                 v = getattr(info, k)
                 if v != APKZipInfo._override[k]:
                     if v not in VALID_ZIP_META[k]:
-                        raise ZipError(f"Unsupported {k}")
+                        raise ZipError(f"Unsupported {k}: {v}")
                     diffs[k] = v
         level = _get_compresslevel(info, data)
         if level != APKZipInfo.COMPRESSLEVEL:
@@ -451,7 +451,7 @@ def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
         if fh.read(28) == zfe_start:
             zfe_size = 30 + int.from_bytes(fh.read(2), "little")
             if not (30 <= zfe_size <= 4096):
-                raise ZipError("Unsupported virtual entry size")
+                raise ZipError("fUnsupported virtual entry size: {zfe_size}")
             if not fh.read(zfe_size - 30) == b"\x00" * (zfe_size - 30):
                 raise ZipError("Unsupported virtual entry data")
             differences["zipflinger_virtual_entry"] = zfe_size
@@ -488,12 +488,12 @@ def validate_differences(differences: Dict[str, Any]) -> Optional[str]:
 # FIXME: false positives on same compressed size? compare actual data?
 def _get_compresslevel(info: zipfile.ZipInfo, data: bytes) -> int:
     if info.compress_type != 8:
-        raise ZipError("Unsupported compress_type")
+        raise ZipError(f"Unsupported compress_type: {info.compress_type}")
     for level in VALID_ZIP_META["compresslevel"]:
         comp = zlib.compressobj(level, 8, -15)
         if len(comp.compress(data) + comp.flush()) == info.compress_size:
             return level
-    raise ZipError("Unsupported compresslevel")
+    raise ZipError(f"Unsupported compresslevel: {level}")
 
 
 def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
