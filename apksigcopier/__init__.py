@@ -378,27 +378,35 @@ def copy_apk(unsigned_apk: str, output_apk: str, *, zfe_size: Optional[int] = No
 
 # NB: doesn't sync local & CD headers!
 def _realign_zip_entry(info: zipfile.ZipInfo, hdr: bytes, n: int, m: int, off_o: int) -> bytes:
+    assert len(hdr) == 30 + n + m, f"{len(header)=}  !=  ({n=} + {m=})"
+    # TODO page-alignment can be disabled by -p flag in zipalign or JniLibsPackagingOptions.useLegacyPackaging in AGP.
     align = 4096 if info.filename.endswith(".so") else 4
     old_off = 30 + n + m + info.header_offset
-    new_off = 30 + n + m + off_o
-    old_xtr = hdr[30 + n:]
-    new_xtr = b""
-    while len(old_xtr) >= 4:
-        hdr_id, size = struct.unpack("<HH", old_xtr[:4])
-        if size > len(old_xtr) - 4:
+    # Iterate the extra data (starts at hdr[30+n])
+    offset = 30 + n
+    end = offset
+    while len(hdr) - offset >= 4:
+        hdr_id, size = struct.unpack("<HH", hdr[offset:offset + 4])
+        if size > len(hdr) - offset - 4:
             break
         if not (hdr_id == 0 and size == 0):
             if hdr_id == 0xd935:
+                # Obselete header kept for compatibility. Normally, we should get the same values anyway.
+                # https://cs.android.com/android-studio/platform/tools/base/+/09aa3141370bca699ee14655b2a4e40ecb7c52cb
                 if size >= 2:
-                    align = int.from_bytes(old_xtr[4:6], "little")
-            else:
-                new_xtr += old_xtr[:size + 4]
-        old_xtr = old_xtr[size + 4:]
+                    align = struct.unpack("<H", hdr[offset + 4:offset + 6])
+            # We will include this field (and all before it) in the new header because it is non-empty
+            # If the extra data doesn't follow the expected format, then size may be very large.
+            # Therefore this is a maximum value, and it must always take into account the actual length of data.
+            # Python does this automatically when using slicing.
+            end = offset + 4 + size
+        offset += size + 4
+    # Where will the content start, taking into account the maybe-trimmed header?
+    hdr_len = min(len(hdr), end)
+    new_off = hdr_len + off_o
     if old_off % align == 0 and new_off % align != 0:
-        pad = (align - (new_off - m + len(new_xtr) + 6) % align) % align
-        xtr = new_xtr + struct.pack("<HHH", 0xd935, 2 + pad, align) + pad * b"\x00"
-        m_b = int.to_bytes(len(xtr), 2, "little")
-        hdr = hdr[:28] + m_b + hdr[30:30 + n] + xtr
+        pad = align - new_off % align
+        hdr = hdr[:28] + struct.pack("<H", hdr_len - 30 - n + pad) + hdr[30:end] + b"\0" * pad
     return hdr
 
 
