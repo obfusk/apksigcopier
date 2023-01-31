@@ -381,7 +381,7 @@ def _realign_zip_entry(info: zipfile.ZipInfo, hdr: bytes, n: int, m: int, off_o:
     align = 4096 if info.filename.endswith(".so") else 4
     old_off = 30 + n + m + info.header_offset
     new_off = 30 + n + m + off_o
-    old_xtr = info.extra
+    old_xtr = hdr[30 + n:]
     new_xtr = b""
     while len(old_xtr) >= 4:
         hdr_id, size = struct.unpack("<HH", old_xtr[:4])
