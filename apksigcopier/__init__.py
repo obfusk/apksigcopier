@@ -382,6 +382,7 @@ def _realign_zip_entry(info: zipfile.ZipInfo, hdr: bytes, n: int, m: int, off_o:
     # TODO page-alignment can be disabled by -p flag in zipalign or JniLibsPackagingOptions.useLegacyPackaging in AGP.
     align = 4096 if info.filename.endswith(".so") else 4
     old_off = 30 + n + m + info.header_offset
+    old_off_o = 30 + n + m + off_o
     # Iterate the extra data (starts at hdr[30+n])
     offset = 30 + n
     end = offset
@@ -401,11 +402,13 @@ def _realign_zip_entry(info: zipfile.ZipInfo, hdr: bytes, n: int, m: int, off_o:
             # Python does this automatically when using slicing.
             end = offset + 4 + size
         offset += size + 4
-    # Where will the content start, taking into account the maybe-trimmed header?
-    hdr_len = min(len(hdr), end)
-    new_off = hdr_len + off_o
-    if old_off % align == 0 and new_off % align != 0:
-        pad = align - new_off % align
+    # We will modify the header if the input file was aligned and the output file is not already aligned with the untrimmed header.
+    if old_off % align == 0 and old_off_o % align != 0:
+        # Where will the content start, taking into account the maybe-trimmed header?
+        hdr_len = min(len(hdr), end)
+        new_off = hdr_len + off_o
+        # new_off may already be aligned so we must handle pad == 0
+        pad = (align - new_off % align) % align
         hdr = hdr[:28] + struct.pack("<H", hdr_len - 30 - n + pad) + hdr[30:end] + b"\0" * pad
     return hdr
 
