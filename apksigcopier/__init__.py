@@ -1,15 +1,15 @@
 #!/usr/bin/python3
 # encoding: utf-8
-# SPDX-FileCopyrightText: 2022 FC Stegerman <flx@obfusk.net>
+# SPDX-FileCopyrightText: 2023 FC Stegerman <flx@obfusk.net>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # --                                                            ; {{{1
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2022-12-04
+# Date        : 2023-02-01
 #
-# Copyright   : Copyright (C) 2022  FC Stegerman
+# Copyright   : Copyright (C) 2023  FC Stegerman
 # Version     : v1.1.0
 # License     : GPLv3+
 #
@@ -474,7 +474,8 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                     raise ZipError(f"Duplicate ZIP entry: {info.filename!r}")
                 offsets[info.filename] = off_o = fho.tell()
                 if realign and info.compress_type == 0 and off_o != info.header_offset:
-                    hdr = _realign_zip_entry(info, hdr, n, m, off_o)
+                    hdr = _realign_zip_entry(info, hdr, n, m, off_o,
+                                             pad_like_apksigner=not zfe_size)
                 fho.write(hdr)
                 _copy_bytes(fhi, fho, info.compress_size)
             if info.flag_bits & 0x08:
@@ -508,7 +509,8 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
 
 
 # NB: doesn't sync local & CD headers!
-def _realign_zip_entry(info: zipfile.ZipInfo, hdr: bytes, n: int, m: int, off_o: int) -> bytes:
+def _realign_zip_entry(info: zipfile.ZipInfo, hdr: bytes, n: int, m: int,
+                       off_o: int, pad_like_apksigner: bool = True) -> bytes:
     align = 4096 if info.filename.endswith(".so") else 4
     old_off = 30 + n + m + info.header_offset
     new_off = 30 + n + m + off_o
@@ -526,8 +528,12 @@ def _realign_zip_entry(info: zipfile.ZipInfo, hdr: bytes, n: int, m: int, off_o:
                 new_xtr += old_xtr[:size + 4]
         old_xtr = old_xtr[size + 4:]
     if old_off % align == 0 and new_off % align != 0:
-        pad = (align - (new_off - m + len(new_xtr) + 6) % align) % align
-        xtr = new_xtr + struct.pack("<HHH", 0xd935, 2 + pad, align) + pad * b"\x00"
+        if pad_like_apksigner:
+            pad = (align - (new_off - m + len(new_xtr) + 6) % align) % align
+            xtr = new_xtr + struct.pack("<HHH", 0xd935, 2 + pad, align) + pad * b"\x00"
+        else:
+            pad = (align - (new_off - m + len(new_xtr)) % align) % align
+            xtr = new_xtr + pad * b"\x00"
         m_b = int.to_bytes(len(xtr), 2, "little")
         hdr = hdr[:28] + m_b + hdr[30:30 + n] + xtr
     return hdr
