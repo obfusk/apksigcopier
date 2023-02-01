@@ -627,7 +627,7 @@ def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
                     if v not in VALID_ZIP_META[k]:
                         raise ZipError(f"Unsupported {k}")
                     diffs[k] = v
-        level = _get_compresslevel(info, data)
+        level = _get_compresslevel(signed_apk, info, data)
         if level != APKZipInfo.COMPRESSLEVEL:
             diffs["compresslevel"] = level
         if diffs:
@@ -669,15 +669,26 @@ def validate_differences(differences: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-# FIXME: false positives on same compressed size? compare actual data?
-def _get_compresslevel(info: zipfile.ZipInfo, data: bytes) -> int:
+def _get_compresslevel(apkfile: str, info: zipfile.ZipInfo, data: bytes) -> int:
     if info.compress_type != 8:
         raise ZipError("Unsupported compress_type")
+    crc = _get_compressed_crc(apkfile, info)
     for level in VALID_ZIP_META["compresslevel"]:
         comp = zlib.compressobj(level, 8, -15)
-        if len(comp.compress(data) + comp.flush()) == info.compress_size:
+        if zlib.crc32(comp.compress(data) + comp.flush()) == crc:
             return level
     raise ZipError("Unsupported compresslevel")
+
+
+def _get_compressed_crc(apkfile: str, info: zipfile.ZipInfo) -> int:
+    with open(apkfile, "rb") as fh:
+        fh.seek(info.header_offset)
+        hdr = fh.read(30)
+        if hdr[:4] != b"\x50\x4b\x03\x04":
+            raise ZipError("Expected local file header signature")
+        n, m = struct.unpack("<HH", hdr[26:30])
+        fh.seek(n + m, os.SEEK_CUR)
+        return zlib.crc32(fh.read(info.compress_size))
 
 
 def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
