@@ -66,6 +66,7 @@ jobs:
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           git clone -b v1.1.3 https://github.com/mastodon/mastodon-android.git
           cd mastodon-android
+          test "$( git rev-parse HEAD )" = 8b40643e6306edadebba2a08f017da7cf1d3bf6f
           touch local.properties
           ./gradlew assembleRelease
           mv mastodon/build/outputs/apk/release/mastodon-release-unsigned.apk ../
