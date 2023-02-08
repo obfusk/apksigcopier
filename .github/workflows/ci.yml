@@ -75,6 +75,7 @@ jobs:
         set -x
         [ -e mastodon-release.apk ] || wget -O mastodon-release.apk -- \
           https://github.com/mastodon/mastodon-android/releases/download/v1.1.3/mastodon-release.apk
+        sha256sum -c <<< '1ec636336a79ada1a3526323c90bb9fbfe5dc32b2984bb724998b5f47c822165  mastodon-release.apk'
     - name: Copy APK
       run: |
         set -x
