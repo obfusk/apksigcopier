@@ -7,7 +7,7 @@
 #
 # File        : apksigcopier
 # Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2023-02-01
+# Date        : 2023-02-08
 #
 # Copyright   : Copyright (C) 2023  FC Stegerman
 # Version     : v1.1.0
@@ -620,7 +620,7 @@ def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
     files = {}
     for info, data in extracted_meta:
         diffs = {}
-        for k in VALID_ZIP_META.keys():
+        for k in VALID_ZIP_META:
             if k != "compresslevel":
                 v = getattr(info, k)
                 if v != APKZipInfo._override[k]:
@@ -646,7 +646,7 @@ def validate_differences(differences: Dict[str, Any]) -> Optional[str]:
 
     Returns None if valid, error otherwise.
     """
-    if set(differences.keys()) - {"files", "zipflinger_virtual_entry"}:
+    if set(differences) - {"files", "zipflinger_virtual_entry"}:
         return "contains unknown key(s)"
     if "zipflinger_virtual_entry" in differences:
         if type(differences["zipflinger_virtual_entry"]) is not int:
@@ -661,7 +661,7 @@ def validate_differences(differences: Dict[str, Any]) -> Optional[str]:
                 return f".files key {name!r} is not a metadata file"
             if not isinstance(info, dict):
                 return f".files[{name!r}] is not a dict"
-            if set(info.keys()) - set(VALID_ZIP_META.keys()):
+            if set(info) - set(VALID_ZIP_META):
                 return f".files[{name!r}] contains unknown key(s)"
             for k, v in info.items():
                 if v not in VALID_ZIP_META[k]:
