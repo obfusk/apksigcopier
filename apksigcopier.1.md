@@ -1,6 +1,6 @@
-% apksigcopier(1) v1.1.0 | General Commands Manual
+% apksigcopier(1) v1.1.1 | General Commands Manual
 % FC Stegerman <flx@obfusk.net>
-% 2022-11-21
+% 2023-02-08
 
 # NAME
 
@@ -76,6 +76,10 @@ Accept unsigned *second_apk*.
 
 Passed to apksigner(1) when verifying.
 
+\--verify-cmd
+
+Command (with arguments) used to verify APKs.  Default: *apksigner verify*.
+
 # ENVIRONMENT VARIABLES
 
 The following environment variables can be set to *1*, *yes*, or
@@ -133,7 +137,7 @@ apksigner(1)
 
 # COPYRIGHT
 
-Copyright © 2022 FC Stegerman.  License GPLv3+: GNU GPL version 3 or
+Copyright © 2023 FC Stegerman.  License GPLv3+: GNU GPL version 3 or
 later <https://gnu.org/licenses/gpl.html>.  This is free software: you
 are free to change and redistribute it.   There  is NO WARRANTY, to
 the extent permitted by law.

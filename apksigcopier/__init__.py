@@ -10,7 +10,7 @@
 # Date        : 2023-02-08
 #
 # Copyright   : Copyright (C) 2023  FC Stegerman
-# Version     : v1.1.0
+# Version     : v1.1.1
 # License     : GPLv3+
 #
 # --                                                            ; }}}1
@@ -74,7 +74,7 @@ import zlib
 from collections import namedtuple
 from typing import Any, BinaryIO, Callable, Dict, Iterable, Iterator, Optional, Tuple, Union
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 NAME = "apksigcopier"
 
 if sys.version_info >= (3, 8):
