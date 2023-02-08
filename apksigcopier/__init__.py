@@ -271,8 +271,14 @@ def exclude_from_copying(filename: str) -> bool:
     False
 
     """
-    if exclude_all_meta:
-        return exclude_meta(filename)
+    return exclude_meta(filename) if exclude_all_meta else exclude_default(filename)
+
+
+def exclude_default(filename: str) -> bool:
+    """
+    Like exclude_from_copying(); excludes directories and filenames in
+    COPY_EXCLUDE (i.e. MANIFEST.MF).
+    """
     return is_directory(filename) or filename in COPY_EXCLUDE
 
 
@@ -1036,7 +1042,7 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
         verify_apk(second_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
     with tempfile.TemporaryDirectory() as tmpdir:
         output_apk = os.path.join(tmpdir, "output.apk")        # FIXME
-        exclude = exclude_meta if not unsigned else None
+        exclude = exclude_default if unsigned else exclude_meta
         do_copy(first_apk, second_apk, output_apk, AUTO, exclude=exclude,
                 ignore_differences=ignore_differences)
         verify_apk(output_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
