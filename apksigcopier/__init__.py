@@ -92,7 +92,8 @@ NOAUTOYES: Tuple[NoAutoYes, NoAutoYes, NoAutoYes] = ("no", "auto", "yes")
 NO, AUTO, YES = NOAUTOYES
 APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)$")
 META_EXT: Tuple[str, ...] = ("SF", "RSA|DSA|EC", "MF")
-COPY_EXCLUDE: Tuple[str, ...] = ("META-INF/MANIFEST.MF",)
+JAR_MANIFEST = "META-INF/MANIFEST.MF"
+COPY_EXCLUDE: Tuple[str, ...] = (JAR_MANIFEST,)
 DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
 VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 
@@ -389,7 +390,8 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
              copy_extra: Optional[bool] = None,
              exclude: Optional[Callable[[str], bool]] = None,
              realign: Optional[bool] = None,
-             zfe_size: Optional[int] = None) -> DateTime:
+             zfe_size: Optional[int] = None,
+             keep_mf: bool = False) -> DateTime:
     """
     Copy APK like apksigner would, excluding files matched by exclude_from_copying().
 
@@ -446,10 +448,13 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
     True
 
     """
+    def skip_entry(filename: str) -> bool:
+        if keep_mf and filename == JAR_MANIFEST:
+            return False
+        return exclude_(filename)
+    exclude_ = exclude or exclude_from_copying
     if copy_extra is None:
         copy_extra = copy_extra_bytes
-    if exclude is None:
-        exclude = exclude_from_copying
     if realign is None:
         realign = not skip_realignment
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
@@ -472,7 +477,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                 raise ZipError("Expected local file header signature")
             n, m = struct.unpack("<HH", hdr[26:30])
             hdr += fhi.read(n + m)
-            skip = exclude(info.filename)
+            skip = skip_entry(info.filename)
             if skip:
                 fhi.seek(info.compress_size, os.SEEK_CUR)
             else:
@@ -502,7 +507,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                 raise ZipError("Expected central directory file header signature")
             n, m, k = struct.unpack("<HHH", hdr[28:34])
             hdr += fhi.read(n + m + k)
-            if not exclude(info.filename):
+            if not skip_entry(info.filename):
                 off = int.to_bytes(offsets[info.filename], 4, "little")
                 hdr = hdr[:42] + off + hdr[46:]
                 fho.write(hdr)
@@ -585,7 +590,23 @@ def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
                 yield info, zf_sig.read(info.filename)
 
 
-def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
+def extract_mf_only_and_meta(signed_apk: str) \
+        -> Tuple[bool, Tuple[Tuple[zipfile.ZipInfo, bytes], ...]]:
+    """
+    Extract v1 signature metadata files from signed APK.
+
+    Returns (mf_only, extracted_meta) where extracted_meta is a tuple of
+    (ZipInfo, data) pairs; if the metadata files consist solely of a
+    MANIFEST.IN, mf_only=True and extracted_meta=().
+    """
+    extracted_meta = tuple(extract_meta(signed_apk))
+    if [i.filename for i, _ in extracted_meta] == [JAR_MANIFEST]:
+        return True, ()
+    return False, extracted_meta
+
+
+def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs, *,
+                        mf_only: bool = False) \
         -> Optional[Dict[str, Any]]:
     """
     Extract ZIP metadata differences from signed APK.
@@ -643,6 +664,8 @@ def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
     zfe_size = detect_zfe(signed_apk)
     if zfe_size:
         differences["zipflinger_virtual_entry"] = zfe_size
+    if mf_only:
+        differences["jar_manifest_only"] = True
     return differences or None
 
 
@@ -652,13 +675,16 @@ def validate_differences(differences: Dict[str, Any]) -> Optional[str]:
 
     Returns None if valid, error otherwise.
     """
-    if set(differences) - {"files", "zipflinger_virtual_entry"}:
+    if set(differences) - {"files", "zipflinger_virtual_entry", "jar_manifest_only"}:
         return "contains unknown key(s)"
     if "zipflinger_virtual_entry" in differences:
         if type(differences["zipflinger_virtual_entry"]) is not int:
             return ".zipflinger_virtual_entry is not an int"
         if not (30 <= differences["zipflinger_virtual_entry"] <= 4096):
             return ".zipflinger_virtual_entry is < 30 or > 4096"
+    if "jar_manifest_only" in differences:
+        if type(differences["jar_manifest_only"]) is not int:
+            return ".jar_manifest_only is not an int"
     if "files" in differences:
         if not isinstance(differences["files"], dict):
             return ".files is not a dict"
@@ -743,7 +769,10 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
     """
     with zipfile.ZipFile(output_apk, "r") as zf_out:
         for info in zf_out.infolist():
-            if is_meta(info.filename):
+            if info.filename == JAR_MANIFEST and differences \
+                    and differences.get("jar_manifest_only"):
+                pass
+            elif is_meta(info.filename):
                 raise ZipError("Unexpected metadata")
     with zipfile.ZipFile(output_apk, "a") as zf_out:
         for info, data in extracted_meta:
@@ -876,11 +905,14 @@ def patch_apk(extracted_meta: ZipInfoDataPairs, extracted_v2_sig: Optional[Tuple
     Patch extracted_meta + extracted_v2_sig (if not None) onto unsigned_apk and
     save as output_apk.
     """
-    if differences and "zipflinger_virtual_entry" in differences:
-        zfe_size = differences["zipflinger_virtual_entry"]
+    if differences:
+        zfe_size = differences.get("zipflinger_virtual_entry", None)
+        keep_mf = differences.get("jar_manifest_only", False)
     else:
         zfe_size = None
-    date_time = copy_apk(unsigned_apk, output_apk, exclude=exclude, zfe_size=zfe_size)
+        keep_mf = False
+    date_time = copy_apk(unsigned_apk, output_apk, exclude=exclude,
+                         zfe_size=zfe_size, keep_mf=keep_mf)
     patch_meta(extracted_meta, output_apk, date_time=date_time, differences=differences)
     if extracted_v2_sig is not None:
         patch_v2_sig(extracted_v2_sig, output_apk)
@@ -914,7 +946,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
     * use v1_only=YES (or v1_only=True) to ignore any v2/v3 signatures.
     """
     v1_only = noautoyes(v1_only)
-    extracted_meta = tuple(extract_meta(signed_apk))
+    mf_only, extracted_meta = extract_mf_only_and_meta(signed_apk)
     if len(extracted_meta) not in (len(META_EXT), 0):
         raise APKSigCopierError("Unexpected or missing metadata files in signed_apk")
     for info, data in extracted_meta:
@@ -937,7 +969,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
     with open(os.path.join(output_dir, SIGBLOCK), "wb") as fh:
         fh.write(signed_sb)
     if not ignore_differences:
-        differences = extract_differences(signed_apk, extracted_meta)
+        differences = extract_differences(signed_apk, extracted_meta, mf_only=mf_only)
         if differences:
             with open(os.path.join(output_dir, "differences.json"), "w") as fh:
                 json.dump(differences, fh, sort_keys=True, indent=2)
@@ -1014,14 +1046,14 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
     * use v1_only=YES (or v1_only=True) to ignore any v2/v3 signatures.
     """
     v1_only = noautoyes(v1_only)
-    extracted_meta = tuple(extract_meta(signed_apk))
+    mf_only, extracted_meta = extract_mf_only_and_meta(signed_apk)
     differences = None
     if v1_only == YES:
         extracted_v2_sig = None
     else:
         extracted_v2_sig = extract_v2_sig(signed_apk, expected=v1_only == NO)
         if extracted_v2_sig is not None and not ignore_differences:
-            differences = extract_differences(signed_apk, extracted_meta)
+            differences = extract_differences(signed_apk, extracted_meta, mf_only=mf_only)
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
               differences=differences, exclude=exclude)
 
