@@ -3,12 +3,12 @@ Section: misc
 Priority: optional
 Maintainer: FC Stegerman <flx@obfusk.net>
 Build-Depends: debhelper-compat (= 13),
-               dh-python,
+               dh-sequence-python3,
                python3-all,
                python3-click,
                python3-setuptools,
                pandoc,
-Standards-Version: 4.6.1
+Standards-Version: 4.6.2
 Vcs-Git: https://salsa.debian.org/obfusk/apksigcopier.git
 Vcs-Browser: https://salsa.debian.org/obfusk/apksigcopier
 Homepage: https://github.com/obfusk/apksigcopier

@@ -1,3 +1,16 @@
+apksigcopier (1.1.1-1) unstable; urgency=medium
+
+  * New upstream version 1.1.1.
+  * d/rules:
+    - drop --with python3 (in favour of dh-sequence-python3).
+  * d/control:
+    - add Build-Depends: dh-sequence-python3.
+    - bump Standards-Version to 4.6.2 (no changes required).
+  * d/copyright: bump year to 2023.
+  * d/docs: add changelog.txt.
+
+ -- FC Stegerman <flx@obfusk.net>  Thu, 16 Feb 2023 21:57:46 +0100
+
 apksigcopier (1.1.0-1) unstable; urgency=medium
 
   * New upstream version 1.1.0.

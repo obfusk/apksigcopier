@@ -6,4 +6,4 @@ execute_after_dh_auto_clean:
 override_dh_auto_test:
 	PATH=$$PWD/bin:$$PATH $(MAKE) test-cli
 %:
-	dh $@ --with python3 --buildsystem=pybuild
+	dh $@ --buildsystem=pybuild
