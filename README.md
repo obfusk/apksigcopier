@@ -2,10 +2,10 @@
 
     File        : README.md
     Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2022-11-01
+    Date        : 2023-02-08
 
-    Copyright   : Copyright (C) 2022  FC Stegerman
-    Version     : v1.1.0
+    Copyright   : Copyright (C) 2023  FC Stegerman
+    Version     : v1.1.1
     License     : GPLv3+
 
 }}}1 -->
@@ -67,7 +67,10 @@ $ apksigcopier patch meta unsigned.apk out.apk
 $ apksigcopier copy signed.apk unsigned.apk out.apk
 ```
 
-### Compare (Copy to temporary file & Verify)
+### Compare (Copy & Verify)
+
+Compare two APKs by copying the signature from the first to a copy of the second
+and checking if the resulting APK verifies.
 
 This command requires `apksigner`.
 
@@ -75,6 +78,9 @@ This command requires `apksigner`.
 $ apksigcopier compare foo-from-fdroid.apk foo-built-locally.apk
 $ apksigcopier compare --unsigned foo.apk foo-unsigned.apk
 ```
+
+NB: copying from an APK v1-signed with `signflinger` to an APK signed with
+`apksigner` works, whereas the reverse fails; see the [FAQ](#faq).
 
 ### Help
 
@@ -92,6 +98,7 @@ The following environment variables can be set to `1`, `yes`, or
 
 * set `APKSIGCOPIER_EXCLUDE_ALL_META=1` to exclude all metadata files
 * set `APKSIGCOPIER_COPY_EXTRA_BYTES=1` to copy extra bytes after data (e.g. a v2 sig)
+* set `APKSIGCOPIER_SKIP_REALIGNMENT=1` to skip realignment of ZIP entries
 
 ## Python API
 
@@ -111,6 +118,7 @@ to override the default behaviour:
 
 * set `exclude_all_meta=True` to exclude all metadata files
 * set `copy_extra_bytes=True` to copy extra bytes after data (e.g. a v2 sig)
+* set `skip_realignment=True` to skip realignment of ZIP entries
 
 ## FAQ
 
@@ -134,7 +142,24 @@ Then it adds the extracted v1 signature files (`.SF`, `.RSA`/`.DSA`/`.EC`,
 metadata as `apksigner` would, or from `differences.json`).
 
 And lastly it inserts the extracted APK Signing Block at the correct offset
-(adding zero padding if needed) and updates the CD offset in the EOCD.
+(adding zero padding if needed) and updates the central directory (CD) offset in
+the end of central directory (EOCD) record.
+
+For more information about the ZIP file format, see e.g. [the Wikipedia
+article](https://en.wikipedia.org/wiki/ZIP_%28file_format%29).
+
+### What does the "APK Signing Block offset < central directory offset" error mean?
+
+It means that `apksigcopier` can't insert the APK Signing Block at the required
+location, since that offset is in the middle of the ZIP data (instead of right
+after the data, before the central directory).
+
+In other words: the APK you are trying to copy the signature to is larger than
+the one the signature was copied from.  Thus the signature cannot be copied (and
+could never have been valid for the APK you are trying to copy it to).
+
+In the context of verifying [reproducible builds](https://reproducible-builds.org),
+getting this error almost certainly means the build was not reproducible.
 
 ### What about APKs signed by gradle/zipflinger/signflinger instead of apksigner?
 
@@ -149,6 +174,19 @@ Recent versions of `apksigcopier` will detect these ZIP metadata differences and
 the virtual entry (if any); `extract` will save them in a `differences.json`
 file (if they exist), which `patch` will read (if it exists); `copy` and
 `compare` simply pass the same information along internally.
+
+#### CAVEAT for compare
+
+NB: because `compare` copies from the first APK to the second, it will fail when
+only the second APK is v1-signed with `zipflinger`/`signflinger`; e.g.
+
+```bash
+$ compare foo-signflinger.apk foo-apksigner.apk   # copies virtual entry; works
+$ compare foo-apksigner.apk foo-signflinger.apk   # only 2nd APK has virtual entry
+DOES NOT VERIFY
+[...]
+Error: failed to verify /tmp/.../output.apk.
+```
 
 ### What are these virtual entries?
 
@@ -170,6 +208,7 @@ Depending on what value of `Created-By` and `Built-By` were used for the default
 manifest, this virtual entry may be a different size; `apksigcopier` supports
 any size between 30 and 4096 bytes.
 
+<!--
 ## Tab Completion
 
 NB: the syntax for the environment variable changed in click >= 8.0,
@@ -192,6 +231,7 @@ For Fish, add this to `~/.config/fish/completions/apksigcopier.fish`:
 ```fish
 eval (env _APKSIGCOPIER_COMPLETE=fish_source apksigcopier)
 ```
+-->
 
 ## Installing
 

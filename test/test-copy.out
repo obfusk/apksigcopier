@@ -1,0 +1,1002 @@
+apks/apks/debuggable-boolean.apk:
+checksum OK
+
+apks/apks/debuggable-resource.apk:
+checksum OK
+
+apks/apks/golden-aligned-in.apk:
+checksum OK
+
+apks/apks/golden-aligned-out.apk:
+checksum OK
+
+apks/apks/golden-aligned-v1-out.apk:
+checksum OK
+
+apks/apks/golden-aligned-v1v2-out.apk:
+checksum OK
+
+apks/apks/golden-aligned-v1v2v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-aligned-v1v2v3-out.apk:
+checksum OK
+
+apks/apks/golden-aligned-v2-out.apk:
+checksum OK
+
+apks/apks/golden-aligned-v2v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-aligned-v2v3-out.apk:
+checksum OK
+
+apks/apks/golden-aligned-v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-aligned-v3-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-in.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v1-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v1v2-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v1v2v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v1v2v3-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v2-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v2v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v2v3-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v3-out.apk:
+checksum OK
+
+apks/apks/golden-pinsapp-signed.apk:
+checksum OK
+
+apks/apks/golden-rsa-minSdkVersion-1-out.apk:
+checksum OK
+
+apks/apks/golden-rsa-minSdkVersion-18-out.apk:
+checksum OK
+
+apks/apks/golden-rsa-minSdkVersion-24-out.apk:
+checksum OK
+
+apks/apks/golden-rsa-no-verity-out.apk:
+checksum OK
+
+apks/apks/golden-rsa-out.apk:
+checksum OK
+
+apks/apks/golden-rsa-verity-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-in.apk:
+checksum OK
+
+apks/apks/golden-unaligned-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-v1-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-v1v2-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-v1v2v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-v1v2v3-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-v2-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-v2v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-v2v3-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-unaligned-v3-out.apk:
+checksum OK
+
+apks/apks/mismatched-compression-method.apk:
+checksum OK
+
+apks/apks/original-with-stamp-file.apk:
+checksum OK
+
+apks/apks/original-with-versionCodeMajor.apk:
+checksum OK
+
+apks/apks/original.apk:
+checksum OK
+
+apks/apks/pinsapp-unsigned.apk:
+checksum OK
+
+apks/apks/stamp-apk-hash-mismatch-v1.apk:
+checksum OK
+
+apks/apks/stamp-apk-hash-mismatch-v2.apk:
+checksum OK
+
+apks/apks/stamp-apk-hash-mismatch-v3.apk:
+checksum OK
+
+apks/apks/stamp-apk-hash-mismatch.apk:
+checksum OK
+
+apks/apks/stamp-certificate-mismatch.apk:
+checksum OK
+
+apks/apks/stamp-lineage-invalid.apk:
+checksum OK
+
+apks/apks/stamp-lineage-valid.apk:
+checksum OK
+
+apks/apks/stamp-lineage-with-3-signers.apk:
+checksum OK
+
+apks/apks/stamp-malformed-signature.apk:
+checksum OK
+
+apks/apks/stamp-without-apk-signature.apk:
+checksum OK
+
+apks/apks/stamp-without-block.apk:
+checksum OK
+
+apks/apks/targetSandboxVersion-2.apk:
+checksum OK
+
+apks/apks/two-signers-second-signer-v2-broken.apk:
+checksum OK
+
+apks/apks/two-signers.apk:
+checksum OK
+
+apks/apks/unsigned-targetSandboxVersion-2.apk:
+checksum OK
+
+apks/apks/v1-ec-p256-targetSdk-30.apk:
+checksum OK
+
+apks/apks/v1-only-max-sized-eocd-comment.apk:
+copy failed: Expected end of central directory record (EOCD)
+
+apks/apks/v1-only-no-uses-sdk.apk:
+checksum OK
+
+apks/apks/v1-only-pkcs7-cert-bag-first-cert-not-used.apk:
+checksum OK
+
+apks/apks/v1-only-targetSandboxVersion-2.apk:
+checksum OK
+
+apks/apks/v1-only-two-signers.apk:
+checksum OK
+
+apks/apks/v1-only-with-cr-in-entry-name.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.3-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.3-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.3-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha224-1.2.840.10040.4.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha224-1.2.840.10040.4.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha224-1.2.840.10040.4.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha224-2.16.840.1.101.3.4.3.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha224-2.16.840.1.101.3.4.3.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha224-2.16.840.1.101.3.4.3.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha256-1.2.840.10040.4.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha256-1.2.840.10040.4.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha256-1.2.840.10040.4.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha256-2.16.840.1.101.3.4.3.2-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha256-2.16.840.1.101.3.4.3.2-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha256-2.16.840.1.101.3.4.3.2-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha384-2.16.840.1.101.3.4.3.3-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha384-2.16.840.1.101.3.4.3.3-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha384-2.16.840.1.101.3.4.3.3-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha512-2.16.840.1.101.3.4.3.4-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha512-2.16.840.1.101.3.4.3.4-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-dsa-sha512-2.16.840.1.101.3.4.3.4-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.2.1-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.2.1-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.2.1-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.4.1-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.4.1-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.4.1-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.2.1-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.2.1-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.2.1-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.4.3.1-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.4.3.1-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.4.3.1-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.2.1-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.2.1-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.2.1-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.4.3.2-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.4.3.2-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.4.3.2-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.2.1-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.2.1-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.2.1-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.4.3.3-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.4.3.3-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.4.3.3-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.2.1-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.2.1-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.2.1-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.4.3.4-p256.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.4.3.4-p384.apk:
+checksum OK
+
+apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.4.3.4-p521.apk:
+checksum OK
+
+apks/apks/v1-only-with-lf-in-entry-name.apk:
+checksum OK
+
+apks/apks/v1-only-with-nul-in-entry-name.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-1024-cert-not-der.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-1024-cert-not-der2.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.4-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.4-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.4-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.4-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.4-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.4-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.5-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.5-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.5-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.5-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.5-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.5-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.14-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.14-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.14-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.14-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.14-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.14-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.11-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.11-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.11-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.11-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.11-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.11-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.12-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.12-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.12-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.12-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.12-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.12-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.13-1024.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.13-16384.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.13-2048.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.13-3072.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.13-4096.apk:
+checksum OK
+
+apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.13-8192.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-missing-content-type.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-missing-digest.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-multiple-good-digests.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-signerInfo1-good-signerInfo2-good.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-signerInfo1-missing-content-type-signerInfo2-good.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-signerInfo1-missing-digest-signerInfo2-good.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-signerInfo1-multiple-good-digests-signerInfo2-good.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-signerInfo1-wrong-content-type-signerInfo2-good.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-signerInfo1-wrong-digest-signerInfo2-good.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-signerInfo1-wrong-order-signerInfo2-good.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-signerInfo1-wrong-signature-signerInfo2-good.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-wrong-content-type.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-wrong-digest.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-wrong-order.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs-wrong-signature.apk:
+checksum OK
+
+apks/apks/v1-only-with-signed-attrs.apk:
+checksum OK
+
+apks/apks/v1-only-with-stamp.apk:
+checksum OK
+
+apks/apks/v1-sha1-sha256-manifest-and-sf-with-sha1-wrong-in-manifest.apk:
+checksum OK
+
+apks/apks/v1-sha1-sha256-manifest-and-sf-with-sha1-wrong-in-sf.apk:
+checksum OK
+
+apks/apks/v1-sha1-sha256-manifest-and-sf-with-sha256-wrong-in-manifest.apk:
+checksum OK
+
+apks/apks/v1-sha1-sha256-manifest-and-sf-with-sha256-wrong-in-sf.apk:
+checksum OK
+
+apks/apks/v1-sha1-sha256-manifest-and-sf.apk:
+checksum OK
+
+apks/apks/v1-sha1-sha256-manifest-and-sha1-sf.apk:
+checksum OK
+
+apks/apks/v1-with-apk-sig-block-but-without-apk-sig-scheme-v2-block.apk:
+checksum OK
+
+apks/apks/v1v2v3-rotated-v3-key-valid-stamp.apk:
+checksum OK
+
+apks/apks/v1v2v3-rsa-2048-negmod-in-cert.apk:
+checksum OK
+
+apks/apks/v1v2v3-with-rsa-2048-lineage-3-signers-invalid-lineage-attr.apk:
+checksum OK
+
+apks/apks/v1v2v3-with-rsa-2048-lineage-3-signers-invalid-zip.apk:
+copy failed: Bad magic number for central directory
+
+apks/apks/v1v2v3-with-rsa-2048-lineage-3-signers-no-sig-block.apk:
+checksum failed: expected c68b3e83132087ed21a7a447f90f9b251a218c1e52664d16a02d62280369e74f, got 11250dcd9bf01c94644aecdbd70e7f071d9185193e37cff3eb6991b97b1fc2a9
+
+apks/apks/v1v2v3-with-rsa-2048-lineage-3-signers.apk:
+checksum OK
+
+apks/apks/v2-ec-p256-targetSdk-30.apk:
+checksum OK
+
+apks/apks/v2-only-apk-sig-block-size-mismatch.apk:
+copy failed: APK Signing Block sizes not equal
+
+apks/apks/v2-only-cert-and-public-key-mismatch.apk:
+checksum OK
+
+apks/apks/v2-only-garbage-between-cd-and-eocd.apk:
+copy failed: Bad magic number for central directory
+
+apks/apks/v2-only-max-sized-eocd-comment.apk:
+copy failed: Expected end of central directory record (EOCD)
+
+apks/apks/v2-only-missing-classes.dex.apk:
+checksum OK
+
+apks/apks/v2-only-no-certs-in-sig.apk:
+checksum OK
+
+apks/apks/v2-only-signatures-and-digests-block-mismatch.apk:
+checksum OK
+
+apks/apks/v2-only-targetSandboxVersion-2.apk:
+checksum OK
+
+apks/apks/v2-only-targetSandboxVersion-3.apk:
+checksum OK
+
+apks/apks/v2-only-truncated-cd.apk:
+copy failed: Bad magic number for central directory
+
+apks/apks/v2-only-two-signers-second-signer-no-sig.apk:
+checksum OK
+
+apks/apks/v2-only-two-signers-second-signer-no-supported-sig.apk:
+checksum OK
+
+apks/apks/v2-only-two-signers.apk:
+checksum OK
+
+apks/apks/v2-only-unknown-additional-attr.apk:
+checksum OK
+
+apks/apks/v2-only-unknown-pair-in-apk-sig-block.apk:
+checksum OK
+
+apks/apks/v2-only-with-dsa-sha256-1024-sig-does-not-verify.apk:
+checksum OK
+
+apks/apks/v2-only-with-dsa-sha256-1024.apk:
+checksum OK
+
+apks/apks/v2-only-with-dsa-sha256-2048.apk:
+checksum OK
+
+apks/apks/v2-only-with-dsa-sha256-3072.apk:
+checksum OK
+
+apks/apks/v2-only-with-ecdsa-sha256-p256-digest-mismatch.apk:
+checksum OK
+
+apks/apks/v2-only-with-ecdsa-sha256-p256-sig-does-not-verify.apk:
+checksum OK
+
+apks/apks/v2-only-with-ecdsa-sha256-p256.apk:
+checksum OK
+
+apks/apks/v2-only-with-ecdsa-sha256-p384.apk:
+checksum OK
+
+apks/apks/v2-only-with-ecdsa-sha256-p521.apk:
+checksum OK
+
+apks/apks/v2-only-with-ecdsa-sha512-p256.apk:
+checksum OK
+
+apks/apks/v2-only-with-ecdsa-sha512-p384.apk:
+checksum OK
+
+apks/apks/v2-only-with-ecdsa-sha512-p521.apk:
+checksum OK
+
+apks/apks/v2-only-with-ignorable-unsupported-sig-algs.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha256-1024-cert-not-der.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha256-1024.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha256-16384.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha256-2048-sig-does-not-verify.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha256-2048.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha256-3072.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha256-4096.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha256-8192.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha512-1024.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha512-16384.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha512-2048.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha512-3072.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha512-4096-digest-mismatch.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha512-4096.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pkcs1-sha512-8192.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha256-1024.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha256-16384.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha256-2048-sig-does-not-verify.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha256-2048.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha256-3072.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha256-4096.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha256-8192.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha512-16384.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha512-2048.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha512-3072.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha512-4096.apk:
+checksum OK
+
+apks/apks/v2-only-with-rsa-pss-sha512-8192.apk:
+checksum OK
+
+apks/apks/v2-only-with-stamp.apk:
+checksum OK
+
+apks/apks/v2-only-wrong-apk-sig-block-magic.apk:
+checksum failed: expected d48bed9dc4d49fd11fc5d199beab9533d926f2d27d34230a8d693e59f19eec98, got 68682d7d0337b22dc819d5a7323c7c27a24dba0a69b5367fe65635b9c3858066
+
+apks/apks/v2-rsa-2048-with-extra-sig-block.apk:
+checksum OK
+
+apks/apks/v2-stripped-with-ignorable-signing-schemes.apk:
+checksum OK
+
+apks/apks/v2-stripped.apk:
+checksum OK
+
+apks/apks/v2v3-signed-v3-block-stripped.apk:
+checksum OK
+
+apks/apks/v2v3-unknown-additional-attr.apk:
+checksum OK
+
+apks/apks/v3-ec-p256-targetSdk-30.apk:
+checksum OK
+
+apks/apks/v3-only-cert-and-public-key-mismatch.apk:
+checksum OK
+
+apks/apks/v3-only-no-certs-in-sig.apk:
+checksum OK
+
+apks/apks/v3-only-no-supported-sig-algs.apk:
+checksum OK
+
+apks/apks/v3-only-signatures-and-digests-block-mismatch.apk:
+checksum OK
+
+apks/apks/v3-only-unknown-additional-attr.apk:
+checksum OK
+
+apks/apks/v3-only-unknown-pair-in-apk-sig-block.apk:
+checksum OK
+
+apks/apks/v3-only-with-dsa-sha256-1024.apk:
+checksum OK
+
+apks/apks/v3-only-with-dsa-sha256-2048-sig-does-not-verify.apk:
+checksum OK
+
+apks/apks/v3-only-with-dsa-sha256-2048.apk:
+checksum OK
+
+apks/apks/v3-only-with-dsa-sha256-3072-digest-mismatch.apk:
+checksum OK
+
+apks/apks/v3-only-with-dsa-sha256-3072.apk:
+checksum OK
+
+apks/apks/v3-only-with-ecdsa-sha256-p256.apk:
+checksum OK
+
+apks/apks/v3-only-with-ecdsa-sha256-p384.apk:
+checksum OK
+
+apks/apks/v3-only-with-ecdsa-sha256-p521.apk:
+checksum OK
+
+apks/apks/v3-only-with-ecdsa-sha512-p256.apk:
+checksum OK
+
+apks/apks/v3-only-with-ecdsa-sha512-p384-wrong-apk-sig-block-magic.apk:
+checksum failed: expected 7c680d1b6730515e712652046b2ab8bc38afb337b3aae9ad991680f31a58e38e, got 68682d7d0337b22dc819d5a7323c7c27a24dba0a69b5367fe65635b9c3858066
+
+apks/apks/v3-only-with-ecdsa-sha512-p384.apk:
+checksum OK
+
+apks/apks/v3-only-with-ecdsa-sha512-p521-sig-does-not-verify.apk:
+checksum OK
+
+apks/apks/v3-only-with-ecdsa-sha512-p521.apk:
+checksum OK
+
+apks/apks/v3-only-with-ignorable-unsupported-sig-algs.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha256-1024.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha256-16384.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha256-2048.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha256-3072-sig-does-not-verify.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha256-3072.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha256-4096.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha256-8192.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha512-1024.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha512-16384.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha512-2048.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha512-3072.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha512-4096-apk-sig-block-size-mismatch.apk:
+copy failed: APK Signing Block sizes not equal
+
+apks/apks/v3-only-with-rsa-pkcs1-sha512-4096.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha512-8192-digest-mismatch.apk:
+checksum OK
+
+apks/apks/v3-only-with-rsa-pkcs1-sha512-8192.apk:
+checksum OK
+
+apks/apks/v3-only-with-stamp.apk:
+checksum OK
+
+apks/apks/v3-stripped.apk:
+checksum OK
+
+apks/apks/valid-stamp.apk:
+checksum OK
+
+apks/apks/weird-compression-method.apk:
+checksum OK
+

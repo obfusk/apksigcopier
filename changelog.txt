@@ -1,0 +1,33 @@
+v1.1.1
+
+• docs: update FAQ, add changelog.txt, add caveat about compare & signflinger.
+• copy_apk(): exclude dirs, fix max date_time.
+• copy_apk(): add copy_extra/exclude/realign kwargs.
+• _realign_zip_entry(): use extra field from LH, not CD.
+• _get_compresslevel(): check crc32, not just length.
+• _realign_zip_entry(): pad w/ zeroes when zfe is present.
+• split off is_directory(), exclude_meta(), exclude_default(), detect_zfe().
+• compare: add --verify-cmd.
+• cli: catch zipfile.BadZipFile.
+• add skip_realignment option.
+• validate_differences(): add is_meta() check.
+• add doctests, improve CI & typechecking.
+• improve & refactor code.
+• improve tests, use --min-sdk-version=24 instead of 28.
+• mypy: --strict --disallow-any-unimported.
+• Makefile: set SOURCE_DATE_EPOCH for reproducible wheels.
+• rm tab completion info & code.
+
+v1.1.0
+
+• uses differences.json to support gradle/zipflinger/signflinger signing (#52).
+• adds py.typed file for mypy type checking.
+• adds more FAQs to the README.
+• supports python 3.11.
+
+v1.0.2
+
+• provides type annotations (for mypy type checking).
+• adds a --min-sdk-version option to the compare command.
+• drops support for python 3.5 and 3.6.
+• fixes some pylint errors.

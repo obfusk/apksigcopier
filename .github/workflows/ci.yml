@@ -31,7 +31,7 @@ jobs:
         # sudo apt-get upgrade -y
         sudo apt-get install -y apksigner
         python3 -m pip install --upgrade pip
-        python3 -m pip install flake8 pylint
+        python3 -m pip install flake8 pylint coverage
     - name: Install mypy
       run: python3 -m pip install mypy
       continue-on-error:
@@ -40,122 +40,121 @@ jobs:
     - name: Install
       run: make install
     - name: Test & lint
-      run: make test-cli lint
+      run: make test-cli doctest lint
     - name: Extra lint
       run: make lint-extra
       continue-on-error:
         ${{ contains(matrix.python-version, 'alpha') ||
             contains(matrix.python-version, 'pypy') }}
-    - name: Cache NewPipe build
-      uses: actions/cache@v2
+    - name: Test coverage
+      run: make coverage
+    - name: Cache mastodon build
+      uses: actions/cache@v3
       with:
-        path: |
-          app-release-unsigned-zipflinger.apk
-          app-release-unsigned.apk
-        key: v0.21.0-20210615
-    - name: Cache NewPipe downloads
-      uses: actions/cache@v2
+        path: mastodon-release-unsigned.apk
+        key: v1.1.3-20221121
+    - name: Cache mastodon download
+      uses: actions/cache@v3
       with:
-        path: |
-          NewPipe_v0.21.0.apk
-          org.schabi.newpipe_966.apk
-        key: v0.21.0-20210615
-    - name: Build NewPipe
+        path: mastodon-release.apk
+        key: v1.1.3-20221121
+    - name: Build mastodon
       run: |
         set -x
-        if [ ! -e app-release-unsigned.apk ]; then
-          sudo apt-get install -y openjdk-8-jdk-headless
-          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
-          git clone -b v0.21.0 https://github.com/TeamNewPipe/NewPipe.git
-          cd NewPipe
+        if [ ! -e mastodon-release-unsigned.apk ]; then
+          sudo apt-get install -y openjdk-17-jdk-headless
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          git clone -b v1.1.3 https://github.com/mastodon/mastodon-android.git
+          cd mastodon-android
+          test "$( git rev-parse HEAD )" = 8b40643e6306edadebba2a08f017da7cf1d3bf6f
+          touch local.properties
           ./gradlew assembleRelease
-          mv app/build/outputs/apk/release/app-release-unsigned.apk \
-            ../app-release-unsigned-zipflinger.apk
-          printf '\nandroid.useNewApkCreator=false\n' >> gradle.properties
-          ./gradlew clean
-          ./gradlew assembleRelease
-          mv app/build/outputs/apk/release/app-release-unsigned.apk ../
-          cd ..
+          mv mastodon/build/outputs/apk/release/mastodon-release-unsigned.apk ../
         fi
+    - name: Download mastodon
+      run: |
+        set -x
+        [ -e mastodon-release.apk ] || wget -O mastodon-release.apk -- \
+          https://github.com/mastodon/mastodon-android/releases/download/v1.1.3/mastodon-release.apk
+        sha256sum -c <<< '1ec636336a79ada1a3526323c90bb9fbfe5dc32b2984bb724998b5f47c822165  mastodon-release.apk'
     - name: Copy APK
       run: |
         set -x
-        cp app-release-unsigned.apk signed.apk
-        cp app-release-unsigned.apk signed-v1.apk
-        cp app-release-unsigned.apk signed-jarsigner.apk
-        cp app-release-unsigned-zipflinger.apk signed-zipflinger.apk
-        cp app-release-unsigned-zipflinger.apk signed-zipflinger-v1.apk
-    - name: Generate dummy keystore & sign APKs
+        cp mastodon-release-unsigned.apk signed-dummy.apk
+        cp mastodon-release-unsigned.apk signed-dummy-v1.apk
+        cp mastodon-release-unsigned.apk signed-dummy-jarsigner.apk
+    - name: Generate dummy keystore
       run: |
         set -x
         keytool -genkey -keystore ci-ks -alias dummy -keyalg RSA \
           -keysize 4096 -sigalg SHA512withRSA -validity 10000 \
           -storepass dummy-password -dname CN=dummy
+    - name: Sign APKs
+      run: |
+        set -x
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
-          --ks-pass pass:dummy-password signed.apk
+          --ks-pass pass:dummy-password signed-dummy.apk
         apksigner sign -v --ks ci-ks --ks-key-alias dummy \
           --ks-pass pass:dummy-password \
-          --v2-signing-enabled=false --v3-signing-enabled=false signed-v1.apk
+          --v2-signing-enabled=false --v3-signing-enabled=false signed-dummy-v1.apk
         PASS=dummy-password jarsigner -keystore ci-ks -storepass:env PASS \
-          -sigalg SHA256withRSA -digestalg SHA-256 signed-jarsigner.apk dummy
-        apksigner sign -v --ks ci-ks --ks-key-alias dummy \
-          --ks-pass pass:dummy-password signed-zipflinger.apk
-        apksigner sign -v --ks ci-ks --ks-key-alias dummy \
-          --ks-pass pass:dummy-password \
-          --v2-signing-enabled=false --v3-signing-enabled=false signed-zipflinger-v1.apk
-    - name: Copy signatures
+          -sigalg SHA256withRSA -digestalg SHA-256 signed-dummy-jarsigner.apk dummy
+    - name: Copy signatures (dummy)
       run: |
         set -x
-        mkdir meta meta-zipflinger
-        apksigcopier extract signed.apk meta
-        apksigcopier extract signed-zipflinger.apk meta-zipflinger
-        ls -hlA meta meta-zipflinger
-        apksigcopier patch meta app-release-unsigned.apk patched.apk
-        apksigcopier copy signed.apk app-release-unsigned.apk copied.apk
-        apksigcopier copy --v1-only=auto signed-v1.apk \
-          app-release-unsigned.apk copied-v1.apk
-        apksigcopier copy --v1-only=yes signed-jarsigner.apk \
-          app-release-unsigned.apk copied-jarsigner.apk
-        apksigcopier patch meta-zipflinger \
-          app-release-unsigned-zipflinger.apk patched-zipflinger.apk
-        apksigcopier copy signed-zipflinger.apk \
-          app-release-unsigned-zipflinger.apk copied-zipflinger.apk
-        apksigcopier copy --v1-only=auto signed-zipflinger-v1.apk \
-          app-release-unsigned-zipflinger.apk copied-zipflinger-v1.apk
-    - name: Compare APKs
+        mkdir meta-dummy
+        apksigcopier extract signed-dummy.apk meta-dummy
+        ls -hlA meta-dummy
+        apksigcopier patch meta-dummy mastodon-release-unsigned.apk patched-dummy.apk
+        apksigcopier copy signed-dummy.apk mastodon-release-unsigned.apk copied-dummy.apk
+        apksigcopier copy --v1-only=auto signed-dummy-v1.apk \
+          mastodon-release-unsigned.apk copied-dummy-v1.apk
+        apksigcopier copy --v1-only=yes signed-dummy-jarsigner.apk \
+          mastodon-release-unsigned.apk copied-dummy-jarsigner.apk
+    - name: Copy signatures (upstream)
       run: |
         set -x
-        sha512sum *.apk | sort
-        cmp signed.apk patched.apk
-        cmp signed.apk copied.apk
-        cmp signed-v1.apk copied-v1.apk
-        cmp signed-jarsigner.apk copied-jarsigner.apk || true
-        cmp signed-zipflinger.apk patched-zipflinger.apk
-        cmp signed-zipflinger.apk copied-zipflinger.apk
-        cmp signed-zipflinger-v1.apk copied-zipflinger-v1.apk
+        mkdir meta-upstream
+        apksigcopier extract mastodon-release.apk meta-upstream
+        ls -hlA meta-upstream
+        cat meta-upstream/differences.json
+        apksigcopier patch meta-upstream mastodon-release-unsigned.apk patched-upstream.apk
+        apksigcopier copy mastodon-release.apk mastodon-release-unsigned.apk copied-upstream.apk
+    - name: Compare APKs (dummy)
+      run: |
+        set -x
+        cmp signed-dummy.apk patched-dummy.apk
+        cmp signed-dummy.apk copied-dummy.apk
+        cmp signed-dummy-v1.apk copied-dummy-v1.apk
+        cmp signed-dummy-jarsigner.apk copied-dummy-jarsigner.apk || true
+    - name: Compare APKs (upstream)
+      run: |
+        set -x
+        cmp mastodon-release.apk patched-upstream.apk
+        cmp mastodon-release.apk copied-upstream.apk
+    - name: Checksums
+      run: sha512sum *.apk | sort
     - name: Verify APKs
       run: |
         set -x
-        for apk in signed*.apk patched*.apk copied*.apk; do
-          apksigner verify -v --print-certs "$apk" | grep -v ^WARNING:
+        for apk in mastodon-release.apk signed*.apk patched*.apk copied*.apk; do
+          if [[ "$apk" == *jarsigner* ]] || [[ "$apk" == *v1* ]]; then
+            jarsigner -verify -strict "$apk" || test $? = 4
+          else
+            apksigner verify --verbose --print-certs "$apk" | grep -v ^WARNING:
+          fi
         done
-    - name: Download & verify F-Droid & upstream APKs
-      run: |
-        set -x
-        [ -e NewPipe_v0.21.0.apk ] || wget -O NewPipe_v0.21.0.apk -- \
-          https://github.com/TeamNewPipe/NewPipe/releases/download/v0.21.0/NewPipe_v0.21.0.apk
-        [ -e org.schabi.newpipe_966.apk ] || wget -O org.schabi.newpipe_966.apk -- \
-          https://web.archive.org/web/20210618174010/https://f-droid.org/archive/org.schabi.newpipe_966.apk
-        for apk in NewPipe_v0.21.0.apk org.schabi.newpipe_966.apk; do
-          apksigner verify -v --print-certs "$apk" | grep -v ^WARNING:
-        done
-    # FIXME: not actually RB :(
     - name: apksigcopier compare
       run: |
         set -x
-        apksigcopier compare NewPipe_v0.21.0.apk org.schabi.newpipe_966.apk
-        apksigcopier compare NewPipe_v0.21.0.apk signed-zipflinger.apk || true
-        apksigcopier compare NewPipe_v0.21.0.apk \
-          --unsigned app-release-unsigned-zipflinger.apk || true
+        apksigcopier compare mastodon-release.apk patched-upstream.apk
+        apksigcopier compare mastodon-release.apk copied-upstream.apk
+        apksigcopier compare mastodon-release.apk --unsigned mastodon-release-unsigned.apk
+        apksigcopier compare mastodon-release.apk signed-dummy.apk
+        apksigcopier compare mastodon-release.apk copied-dummy.apk
+        # copying from an APK v1-signed with signflinger to an APK
+        # signed with apksigner works, whereas the reverse fails
+        ! apksigcopier compare signed-dummy.apk mastodon-release.apk
+        ! apksigcopier compare copied-dummy.apk mastodon-release.apk
     - name: Test APKs
       run: make test-apks
