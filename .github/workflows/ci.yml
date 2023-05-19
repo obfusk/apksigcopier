@@ -39,8 +39,12 @@ jobs:
             contains(matrix.python-version, 'pypy') }}
     - name: Install
       run: make install
-    - name: Test & lint
-      run: make test-cli doctest lint
+    - name: Test
+      run: make test-cli doctest
+    - name: Lint
+      run: make lint
+      continue-on-error:
+        ${{ contains(matrix.python-version, 'alpha') }}
     - name: Extra lint
       run: make lint-extra
       continue-on-error:
