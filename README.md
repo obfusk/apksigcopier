@@ -2,7 +2,7 @@
 
     File        : README.md
     Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2023-02-08
+    Date        : 2023-05-19
 
     Copyright   : Copyright (C) 2023  FC Stegerman
     Version     : v1.1.1
@@ -30,12 +30,16 @@
 
 ## copy/extract/patch android apk signatures & compare apks
 
-`apksigcopier` is a tool for copying [android APK
-signatures](https://source.android.com/docs/security/features/apksigning)
-from a signed APK to an unsigned one (in order to verify [reproducible
-builds](https://f-droid.org/docs/Reproducible_Builds/)).  It can also
-be used to compare two APKs with different signatures.  Its
-command-line tool offers four operations:
+`apksigcopier` is a tool that enables using an [android APK
+signature](https://source.android.com/docs/security/features/apksigning) as a
+[build input](https://reproducible-builds.org/docs/embedded-signatures/) (by
+copying it from a signed APK to an unsigned one), making it possible to create a
+([bit-by-bit identical](https://reproducible-builds.org/docs/definition/))
+[reproducible build](https://f-droid.org/docs/Reproducible_Builds/) from the
+source code without having access to the private key used to create the
+signature.  It can also be used to verify that two APKs with different
+signatures are otherwise identical.  Its command-line tool offers four
+operations:
 
 * copy signatures directly from a signed to an unsigned APK
 * extract signatures from a signed APK to a directory
