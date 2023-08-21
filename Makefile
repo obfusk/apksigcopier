@@ -72,6 +72,7 @@ cleanup:
 
 %.1: %.1.md
 	pandoc -s -t man -o $@ $<
+	sed -ri 's!-!\\-!g' $@
 
 .PHONY: _package _publish
 
