@@ -125,6 +125,35 @@ to override the default behaviour:
 
 ## FAQ
 
+### What is the purpose of this tool?
+
+This is a tool for [*reproducible builds*](https://reproducible-builds.org/)
+only.  Its purpose is to allow verifying that *different builds* from the same
+source code produce identical results, to prove that two APKs -- one built and
+signed by the upstream developer, another one built by you (or some trusted
+third party) from the published source code -- are *identical*.  Since you
+cannot create an identical signature without the private key, you need to copy
+it (and nothing else) as part of the build process instead to be able to create
+a bit-by-bit identical APK.
+
+> The motivation behind the Reproducible Builds project is [...] to allow
+> verification that no vulnerabilities or backdoors have been introduced during
+> this compilation process. By promising identical results are always generated
+> from a given source, this allows multiple third parties to come to a consensus
+> on a “correct” result, highlighting any deviations as suspect and worthy of
+> scrutiny.
+
+#### Modified APKs
+
+Copying a signature to a modified APK will not work (i.e. it cannot possibly be
+valid even if the copying itself seems to work) and this is not a tool for doing
+anything of the sort.
+
+Copying a signature will succeed even if the signature is not valid for the
+target APK -- as long as the target APK is unsigned and not larger than the
+source APK it can be inserted successfully.  But a signature that is not valid
+for the target APK will never verify.
+
 ### What kind of signatures does apksigcopier support?
 
 It currently supports v1 + v2 + v3 (which is a variant of v2).
@@ -163,6 +192,11 @@ could never have been valid for the APK you are trying to copy it to).
 
 In the context of verifying [reproducible builds](https://reproducible-builds.org),
 getting this error almost certainly means the build was not reproducible.
+
+### What does the "Unexpected metadata" error mean?
+
+It almost always means the target APK was signed; you can only copy a signature
+to an unsigned APK.
 
 ### What about APKs signed by gradle/zipflinger/signflinger instead of apksigner?
 
