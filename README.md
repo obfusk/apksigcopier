@@ -35,11 +35,10 @@ signature](https://source.android.com/docs/security/features/apksigning) as a
 [build input](https://reproducible-builds.org/docs/embedded-signatures/) (by
 copying it from a signed APK to an unsigned one), making it possible to create a
 ([bit-by-bit identical](https://reproducible-builds.org/docs/definition/))
-[reproducible build](https://f-droid.org/docs/Reproducible_Builds/) from the
-source code without having access to the private key used to create the
-signature.  It can also be used to verify that two APKs with different
-signatures are otherwise identical.  Its command-line tool offers four
-operations:
+[reproducible build](https://reproducible-builds.org/) from the source code
+without having access to the private key used to create the signature.  It can
+also be used to verify that two APKs with different signatures are otherwise
+identical.  Its command-line tool offers four operations:
 
 * copy signatures directly from a signed to an unsigned APK
 * extract signatures from a signed APK to a directory
