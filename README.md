@@ -189,6 +189,42 @@ getting this error almost certainly means the build was not reproducible.
 It almost always means the target APK was signed; you can only copy a signature
 to an unsigned APK.
 
+### What about signatures made by apksigner from build-tools >= 35.0.0-rc1?
+
+Since `build-tools` >= 35.0.0-rc1, backwards-incompatible changes to `apksigner`
+break `apksigcopier` as it now by default forcibly replaces existing alignment
+padding and changed the default page alignment from 4k to 16k (same as Android
+Gradle Plugin >= 8.3, so the latter is only an issue when using older AGP).
+
+Unlike `zipalign` and Android Gradle Plugin, which use zero padding, `apksigner`
+uses a `0xd935` "Android ZIP Alignment Extra Field" which stores the alignment
+itself plus zero padding and is thus always at least 6 bytes.
+
+It now forcibly replaces existing padding even when the file is already aligned
+as it should be, except when `--alignment-preserved` is specified, in which case
+it will still align files that aren't already aligned correctly but keep
+existing padding for files that are.
+
+This means it will replace existing zero padding with different padding for each
+and every non-compressed file.  This padding will not only be different but also
+longer for regular files aligned to 4 bytes with zero padding, but often the
+same size for `.so` shared objects aligned to 16k (unless they happened to
+require less than 6 bytes of zero padding before).
+
+Unfortunately, supporting this change in `apksigcopier` without breaking
+compatibility with the signatures currently supported would require rather
+significant changes.  Luckily, there are 3 workarounds available:
+
+First: use `apksigner` from `build-tools` <= 34.0.0 (clearly not ideal).
+
+Second: use `apksigner sign` from `build-tools` >= 35.0.0-rc1 with the
+`--alignment-preserved` option.
+
+Third: use [`zipalign.py --page-size 16 --pad-like-apksigner
+--replace`](https://github.com/obfusk/reproducible-apk-tools#zipalignpy) on the
+unsigned APK to replace the padding the same way `apksigner` now does before
+using `apksigcopier`.
+
 ### What about APKs signed by gradle/zipflinger/signflinger instead of apksigner?
 
 Compared to APKs signed by `apksigner`, APKs signed with a v1 signature by
