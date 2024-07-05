@@ -1,19 +1,7 @@
 #!/usr/bin/python3
 # encoding: utf-8
-# SPDX-FileCopyrightText: 2023 FC Stegerman <flx@obfusk.net>
+# SPDX-FileCopyrightText: 2023 FC (Fay) Stegerman <flx@obfusk.net>
 # SPDX-License-Identifier: GPL-3.0-or-later
-
-# --                                                            ; {{{1
-#
-# File        : apksigcopier
-# Maintainer  : FC Stegerman <flx@obfusk.net>
-# Date        : 2023-02-08
-#
-# Copyright   : Copyright (C) 2023  FC Stegerman
-# Version     : v1.1.1
-# License     : GPLv3+
-#
-# --                                                            ; }}}1
 
 """
 copy/extract/patch android apk signatures & compare apks

@@ -1,14 +1,5 @@
-<!-- {{{1
-
-    File        : README.md
-    Maintainer  : FC Stegerman <flx@obfusk.net>
-    Date        : 2023-05-19
-
-    Copyright   : Copyright (C) 2023  FC Stegerman
-    Version     : v1.1.1
-    License     : GPLv3+
-
-}}}1 -->
+<!-- SPDX-FileCopyrightText: 2024 FC (Fay) Stegerman <flx@obfusk.net> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
 [![GitHub Release](https://img.shields.io/github/release/obfusk/apksigcopier.svg?logo=github)](https://github.com/obfusk/apksigcopier/releases)
 [![PyPI Version](https://img.shields.io/pypi/v/apksigcopier.svg)](https://pypi.python.org/pypi/apksigcopier)
