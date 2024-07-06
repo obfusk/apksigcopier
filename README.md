@@ -202,8 +202,7 @@ itself plus zero padding and is thus always at least 6 bytes.
 
 It now forcibly replaces existing padding even when the file is already aligned
 as it should be, except when `--alignment-preserved` is specified, in which case
-it will still align files that aren't already aligned correctly but keep
-existing padding for files that are.
+it will keep existing (non)alignment and padding.
 
 This means it will replace existing zero padding with different padding for each
 and every non-compressed file.  This padding will not only be different but also
