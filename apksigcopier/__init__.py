@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # encoding: utf-8
-# SPDX-FileCopyrightText: 2023 FC (Fay) Stegerman <flx@obfusk.net>
+# SPDX-FileCopyrightText: 2024 FC (Fay) Stegerman <flx@obfusk.net>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
@@ -76,6 +76,7 @@ NoAutoYesBoolNone = Union[NoAutoYes, bool, None]
 ZipInfoDataPairs = Iterable[Tuple[zipfile.ZipInfo, bytes]]
 
 SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
+DIFF_JSON = "differences.json"
 NOAUTOYES: Tuple[NoAutoYes, NoAutoYes, NoAutoYes] = ("no", "auto", "yes")
 NO, AUTO, YES = NOAUTOYES
 APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)$")
@@ -927,7 +928,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
     if not ignore_differences:
         differences = extract_differences(signed_apk, extracted_meta)
         if differences:
-            with open(os.path.join(output_dir, "differences.json"), "w") as fh:
+            with open(os.path.join(output_dir, DIFF_JSON), "w") as fh:
                 json.dump(differences, fh, sort_keys=True, indent=2)
                 fh.write("\n")
 
@@ -972,16 +973,16 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
             with open(sigblock_file, "rb") as fh:
                 signed_sb = fh.read()
             extracted_v2_sig = signed_sb_offset, signed_sb
-            differences_file = os.path.join(metadata_dir, "differences.json")
+            differences_file = os.path.join(metadata_dir, DIFF_JSON)
             if not ignore_differences and os.path.exists(differences_file):
                 with open(differences_file, "r") as fh:
                     try:
                         differences = json.load(fh)
                     except json.JSONDecodeError as e:
-                        raise APKSigCopierError(f"Invalid differences.json: {e}")   # pylint: disable=W0707
+                        raise APKSigCopierError(f"Invalid {DIFF_JSON}: {e}")    # pylint: disable=W0707
                     error = validate_differences(differences)
                     if error:
-                        raise APKSigCopierError(f"Invalid differences.json: {error}")
+                        raise APKSigCopierError(f"Invalid {DIFF_JSON}: {error}")
     if not extracted_meta and extracted_v2_sig is None:
         raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
@@ -1060,7 +1061,7 @@ def main() -> None:
     """)
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
-    @click.option("--ignore-differences", is_flag=True, help="Don't write differences.json.")
+    @click.option("--ignore-differences", is_flag=True, help=f"Don't write {DIFF_JSON}.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
     def extract(*args: Any, **kwargs: Any) -> None:
@@ -1071,7 +1072,7 @@ def main() -> None:
     """)
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
-    @click.option("--ignore-differences", is_flag=True, help="Don't read differences.json.")
+    @click.option("--ignore-differences", is_flag=True, help=f"Don't read {DIFF_JSON}.")
     @click.argument("metadata_dir", type=click.Path(exists=True, file_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
