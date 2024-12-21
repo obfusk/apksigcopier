@@ -27,6 +27,7 @@ override the default behaviour:
 * set APKSIGCOPIER_EXCLUDE_ALL_META=1 to exclude all metadata files
 * set APKSIGCOPIER_COPY_EXTRA_BYTES=1 to copy extra bytes after data (e.g. a v2 sig)
 * set APKSIGCOPIER_SKIP_REALIGNMENT=1 to skip realignment of ZIP entries
+* set APKSIGCOPIER_LEGACY_V1SIGFILE=1 to use the legacy v1 signature files format
 
 
 API
@@ -46,6 +47,7 @@ override the default behaviour:
 * set exclude_all_meta=True to exclude all metadata files
 * set copy_extra_bytes=True to copy extra bytes after data (e.g. a v2 sig)
 * set skip_realignment=True to skip realignment of ZIP entries
+* set legacy_v1sigfile=True to use the legacy v1 signature files format
 """
 
 import glob
@@ -76,6 +78,7 @@ NoAutoYesBoolNone = Union[NoAutoYes, bool, None]
 ZipInfoDataPairs = Iterable[Tuple[zipfile.ZipInfo, bytes]]
 
 SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
+V1SIGZIP = "v1signature.zip"
 DIFF_JSON = "differences.json"
 NOAUTOYES: Tuple[NoAutoYes, NoAutoYes, NoAutoYes] = ("no", "auto", "yes")
 NO, AUTO, YES = NOAUTOYES
@@ -118,6 +121,7 @@ ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
 exclude_all_meta = False    # exclude all metadata files in copy_apk()
 copy_extra_bytes = False    # copy extra bytes after data in copy_apk()
 skip_realignment = False    # skip realignment of ZIP entries in copy_apk()
+legacy_v1sigfile = False    # use the legacy v1 signature files format
 
 
 class APKSigCopierError(Exception):
@@ -369,6 +373,7 @@ def detect_zfe(apkfile: str) -> Optional[int]:
 ################################################################################
 
 
+# FIXME: v1sig
 # FIXME: makes certain assumptions and doesn't handle all valid ZIP files!
 # FIXME: support zip64?
 # FIXME: handle utf8 filenames w/o utf8 flag (as produced by zipflinger)?
@@ -545,9 +550,10 @@ def _copy_bytes(fhi: BinaryIO, fho: BinaryIO, size: int, blocksize: int = 4096) 
         raise ZipError("Unexpected EOF")
 
 
+# FIXME: v1sig
 def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
     """
-    Extract v1 signature metadata files from signed APK.
+    Extract legacy v1 signature metadata files from signed APK.
 
     Yields (ZipInfo, data) pairs.
 
@@ -686,6 +692,7 @@ def _get_compressed_crc(apkfile: str, info: zipfile.ZipInfo) -> int:
         return zlib.crc32(fh.read(info.compress_size))
 
 
+# FIXME: v1sig
 def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
                date_time: DateTime = DATETIMEZERO, *,
                differences: Optional[Dict[str, Any]] = None) -> None:
@@ -857,6 +864,7 @@ def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
         fh.write(int.to_bytes(data_out.cd_offset + offset, 4, "little"))
 
 
+# FIXME: v1sig
 def patch_apk(extracted_meta: ZipInfoDataPairs, extracted_v2_sig: Optional[Tuple[int, bytes]],
               unsigned_apk: str, output_apk: str, *,
               differences: Optional[Dict[str, Any]] = None,
@@ -890,9 +898,10 @@ def verify_apk(apk: str, min_sdk_version: Optional[int] = None,
         raise APKSigCopierError(f"{args[0]} command not found")     # pylint: disable=W0707
 
 
+# FIXME: v1sig
 # FIXME: support multiple signers?
 def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO,
-               *, ignore_differences: bool = False) -> None:
+               *, ignore_differences: bool = False, legacy: Optional[bool] = None) -> None:
     """
     Extract signatures from signed_apk and save in output_dir.
 
@@ -902,6 +911,8 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
     * use v1_only=AUTO (or v1_only=None) to automatically detect v2/v3 signatures;
     * use v1_only=YES (or v1_only=True) to ignore any v2/v3 signatures.
     """
+    if legacy is None:
+        legacy = legacy_v1sigfile
     v1_only = noautoyes(v1_only)
     extracted_meta = tuple(extract_meta(signed_apk))
     if len(extracted_meta) not in (len(META_EXT), 0):
@@ -933,6 +944,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
                 fh.write("\n")
 
 
+# FIXME: v1sig
 # FIXME: support multiple signers?
 def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
              v1_only: NoAutoYesBoolNone = NO, *,
@@ -989,10 +1001,11 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
               differences=differences, exclude=exclude)
 
 
+# FIXME: v1sig
 def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
             v1_only: NoAutoYesBoolNone = NO, *,
             exclude: Optional[Callable[[str], bool]] = None,
-            ignore_differences: bool = False) -> None:
+            ignore_differences: bool = False, legacy: Optional[bool] = None) -> None:
     """
     Copy signatures from signed_apk onto unsigned_apk and save as output_apk.
 
@@ -1002,6 +1015,8 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
     * use v1_only=AUTO (or v1_only=None) to automatically detect v2/v3 signatures;
     * use v1_only=YES (or v1_only=True) to ignore any v2/v3 signatures.
     """
+    if legacy is None:
+        legacy = legacy_v1sigfile
     v1_only = noautoyes(v1_only)
     extracted_meta = tuple(extract_meta(signed_apk))
     differences = None
@@ -1015,9 +1030,10 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
               differences=differences, exclude=exclude)
 
 
+# FIXME: v1sig
 def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
                min_sdk_version: Optional[int] = None, *,
-               ignore_differences: bool = False,
+               ignore_differences: bool = False, legacy: Optional[bool] = None,
                verify_cmd: Optional[Tuple[str, ...]] = None) -> None:
     """
     Compare first_apk to second_apk by:
@@ -1026,6 +1042,8 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
     * copying the signature from first_apk to a copy of second_apk
     * checking if the resulting APK verifies
     """
+    if legacy is None:
+        legacy = legacy_v1sigfile
     verify_apk(first_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
     if not unsigned:
         verify_apk(second_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
@@ -1040,10 +1058,11 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
 def main() -> None:
     """CLI; requires click."""
 
-    global exclude_all_meta, copy_extra_bytes, skip_realignment
+    global exclude_all_meta, copy_extra_bytes, skip_realignment, legacy_v1sigfile
     exclude_all_meta = os.environ.get("APKSIGCOPIER_EXCLUDE_ALL_META") in ("1", "yes", "true")
     copy_extra_bytes = os.environ.get("APKSIGCOPIER_COPY_EXTRA_BYTES") in ("1", "yes", "true")
     skip_realignment = os.environ.get("APKSIGCOPIER_SKIP_REALIGNMENT") in ("1", "yes", "true")
+    legacy_v1sigfile = os.environ.get("APKSIGCOPIER_LEGACY_V1SIGFILE") in ("1", "yes", "true")
 
     import click
 
@@ -1062,6 +1081,7 @@ def main() -> None:
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
     @click.option("--ignore-differences", is_flag=True, help=f"Don't write {DIFF_JSON}.")
+    @click.option("--legacy", is_flag=True, help="Use the legacy v1 signature files format.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
     def extract(*args: Any, **kwargs: Any) -> None:
@@ -1085,6 +1105,7 @@ def main() -> None:
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
     @click.option("--ignore-differences", is_flag=True, help="Don't copy metadata differences.")
+    @click.option("--legacy", is_flag=True, help="Use the legacy v1 signature files format.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
@@ -1100,6 +1121,7 @@ def main() -> None:
     @click.option("--unsigned", is_flag=True, help="Accept unsigned SECOND_APK.")
     @click.option("--min-sdk-version", type=click.INT, help="Passed to apksigner.")
     @click.option("--ignore-differences", is_flag=True, help="Don't copy metadata differences.")
+    @click.option("--legacy", is_flag=True, help="Use the legacy v1 signature files format.")
     @click.option("--verify-cmd", metavar="COMMAND", help="Command (with arguments) used to "
                   f"verify APKs.  [default: {' '.join(VERIFY_CMD)!r}]")
     @click.argument("first_apk", type=click.Path(exists=True, dir_okay=False))
