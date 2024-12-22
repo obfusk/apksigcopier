@@ -86,6 +86,7 @@ DIFF_JSON = "differences.json"
 
 ANDROID_MANIFEST = "AndroidManifest.xml"
 AFTER_MANIFEST = b"after_manifest"
+ZFE_SIZE = re.compile(rb"^zfe_size=(\d+)$")
 
 NOAUTOYES: Tuple[NoAutoYes, NoAutoYes, NoAutoYes] = ("no", "auto", "yes")
 NO, AUTO, YES = NOAUTOYES
@@ -465,7 +466,13 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         v1_sig_fhi = io.BytesIO(v1_sig)
         with zipfile.ZipFile(v1_sig_fhi) as zf:
             v1_infos = zf.infolist()
-            after_manifest = AFTER_MANIFEST in zf.comment.split(b",")
+            v1_options = zf.comment.split(b",")
+            after_manifest = AFTER_MANIFEST in v1_options
+            for opt in v1_options:
+                if match := ZFE_SIZE.fullmatch(opt):
+                    zfe_size = int(match.group(1))
+    if zfe_size and not (30 <= zfe_size <= 4096):
+        raise APKSigCopierError(f"Unsupported virtual entry size: {zfe_size}")
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
         infos = zf.infolist()
     zdata = zip_data(unsigned_apk)
@@ -620,27 +627,32 @@ def extract_v1_sig(apkfile: str, check_at_end: bool = True) -> Optional[bytes]:
     """
     with zipfile.ZipFile(apkfile, "r") as zf:
         infos = zf.infolist()
+    comments = []
     offsets: Dict[str, int] = {}
     fho = io.BytesIO()
+    if zfe_size := detect_zfe(apkfile):
+        comments.append(f"zfe_size={zfe_size}".encode())
     with open(apkfile, "rb") as fhi:
-        comment = copy_v1_sig_entries(fhi, fho, infos, offsets, check_at_end=check_at_end)
+        comments.extend(copy_v1_sig_entries(fhi, fho, infos, offsets, check_at_end=check_at_end))
         cd_offset = fho.tell()
         fhi.seek(_zip_data(fhi).cd_offset)
-        copy_v1_sig_cd_entries(fhi, fho, infos, offsets, check_at_end=check_at_end and not comment)
+        copy_v1_sig_cd_entries(
+            fhi, fho, infos, offsets, check_at_end=check_at_end and AFTER_MANIFEST not in comments)
         eocd_offset = fho.tell()
-        fho.write(_eocd(len(offsets), eocd_offset, cd_offset, comment))
+        fho.write(_eocd(len(offsets), eocd_offset, cd_offset, b",".join(comments)))
     return fho.getvalue() if offsets else None
 
 
-def _eocd(entries: int, eocd_offset: int, cd_offset: int, comment: Optional[bytes] = None) -> bytes:
+def _eocd(entries: int, eocd_offset: int, cd_offset: int, comment: bytes = b"") -> bytes:
     data = struct.pack("<HHHHLLH", 0, 0, entries, entries, eocd_offset - cd_offset,
-                       cd_offset, len(comment or b""))
-    return b"\x50\x4b\x05\x06" + data + (comment or b"")
+                       cd_offset, len(comment))
+    return b"\x50\x4b\x05\x06" + data + comment
 
 
 def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
-                        offsets: Dict[str, int], check_at_end: bool = False) -> Optional[bytes]:
+                        offsets: Dict[str, int], check_at_end: bool = False) -> List[bytes]:
     """Copy v1 signature entries."""
+    comments = []
     meta_header_offsets = {}
     last_non_meta_header_offset = -1
     sorted_infos = sorted(infos, key=lambda info: info.header_offset)
@@ -654,7 +666,7 @@ def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInf
         fhi.seek(info.header_offset)
         hdr, n, m = _read_lfh(fhi)
         if error := validate_zip_header(hdr):
-            raise APKSigCopierError(f"Unsupported LFH for {info.filename!r}: {error}")
+            raise ZipError(f"Unsupported LFH for {info.filename!r}: {error}")
         offsets[info.filename] = fho.tell()
         fho.write(hdr)
         _copy_bytes(fhi, fho, info.compress_size)
@@ -665,10 +677,11 @@ def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInf
             if info.filename == ANDROID_MANIFEST:
                 after = sorted_infos[i + 1:i + 1 + len(meta_header_offsets)]
                 if [info.filename for info in after] == list(meta_header_offsets):
-                    return AFTER_MANIFEST
+                    comments.append(AFTER_MANIFEST)
                 break
-        raise APKSigCopierError("Expected v1 signature entries at end of archive")
-    return None
+        if AFTER_MANIFEST not in comments:
+            raise APKSigCopierError("Expected v1 signature entries at end of archive")
+    return comments
 
 
 def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
@@ -683,7 +696,7 @@ def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.Zip
             continue
         meta_indices.add(i)
         if error := validate_zip_header(hdr):
-            raise APKSigCopierError(f"Unsupported CDFH for {info.filename!r}: {error}")
+            raise ZipError(f"Unsupported CDFH for {info.filename!r}: {error}")
         fho.write(_adjust_offset(hdr, offsets[info.filename]))
     if check_at_end and any(i < last_non_meta_index for i in meta_indices):
         raise APKSigCopierError("Expected v1 signature CD entries at end of archive")
@@ -820,8 +833,7 @@ def extract_differences(signed_apk: str, extracted_meta: Optional[ZipInfoDataPai
             files[info.filename] = diffs
     if files:
         differences["files"] = files
-    zfe_size = detect_zfe(signed_apk)
-    if zfe_size:
+    if zfe_size := detect_zfe(signed_apk):
         differences["zipflinger_virtual_entry"] = zfe_size
     return differences or None
 
@@ -1152,7 +1164,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
         fh.write(str(signed_sb_offset) + "\n")
     with open(os.path.join(output_dir, SIGBLOCK), "wb") as fh:
         fh.write(signed_sb)
-    if not ignore_differences:
+    if not (ignore_differences or v1_sig):
         differences = extract_differences(signed_apk, extracted_meta)
         if differences:
             with open(os.path.join(output_dir, DIFF_JSON), "w") as fh:
@@ -1239,7 +1251,10 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
         extracted_meta, v1_sig = tuple(extract_meta(signed_apk)), None
     else:
         extracted_meta, v1_sig = None, extract_v1_sig(signed_apk, check_at_end=bool(v2_sig))
-    differences = extract_differences(signed_apk, extracted_meta) if v2_sig and not ignore_differences else None
+    if v2_sig and not (ignore_differences or v1_sig):
+        differences = extract_differences(signed_apk, extracted_meta)
+    else:
+        differences = None
     patch_apk(extracted_meta, v2_sig, unsigned_apk, output_apk, differences=differences,
               exclude=exclude, v1_sig=v1_sig)
 

@@ -122,8 +122,10 @@ jobs:
         mkdir meta-upstream
         apksigcopier extract mastodon-release.apk meta-upstream
         ls -hlA meta-upstream
-        cat meta-upstream/differences.json
+        ! test -e meta-upstream/differences.json
+        ! test -e meta-upstream/MANIFEST.MF
         zipinfo -l meta-upstream/v1signature.zip
+        zipinfo -v meta-upstream/v1signature.zip | head
         apksigcopier patch meta-upstream mastodon-release-unsigned.apk patched-upstream.apk
         apksigcopier copy mastodon-release.apk mastodon-release-unsigned.apk copied-upstream.apk
     - name: Copy signatures (upstream, legacy)
@@ -134,6 +136,7 @@ jobs:
         ls -hlA meta-upstream-legacy
         cat meta-upstream-legacy/differences.json
         test -e meta-upstream-legacy/MANIFEST.MF
+        ! test -e meta-upstream-legacy/v1signature.zip
         apksigcopier patch meta-upstream-legacy mastodon-release-unsigned.apk \
           patched-upstream-legacy.apk
         apksigcopier copy --legacy mastodon-release.apk mastodon-release-unsigned.apk \
