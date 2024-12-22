@@ -628,9 +628,13 @@ def _eocd(entries: int, eocd_offset: int, cd_offset: int) -> bytes:
 def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
                         offsets: Dict[str, int]) -> None:
     """Copy v1 signature entries."""
+    meta_header_offsets = set()
+    last_non_meta_header_offset = -1
     for info in sorted(infos, key=lambda info: info.header_offset):
         if not is_meta(info.filename):
+            last_non_meta_header_offset = info.header_offset
             continue
+        meta_header_offsets.add(info.header_offset)
         if info.filename in offsets:
             raise ZipError(f"Duplicate ZIP entry: {info.filename!r}")
         fhi.seek(info.header_offset)
@@ -642,17 +646,26 @@ def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInf
         _copy_bytes(fhi, fho, info.compress_size)
         if data_descriptor := _read_data_descriptor(fhi, info):
             fho.write(data_descriptor)
+    if any(i < last_non_meta_header_offset for i in meta_header_offsets):
+        raise APKSigCopierError("Expected v1 signature entries at end of archive")
 
 
 def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
                            offsets: Dict[str, int]) -> None:
     """Copy v1 signature CD entries."""
-    for info in infos:
+    meta_indices = set()
+    last_non_meta_index = -1
+    for i, info in enumerate(infos):
         hdr, n, m, k = _read_cdfh(fhi)
-        if is_meta(info.filename):
-            if error := validate_zip_header(hdr):
-                raise APKSigCopierError(f"Unsupported CDFH for {info.filename!r}: {error}")
-            fho.write(_adjust_offset(hdr, offsets[info.filename]))
+        if not is_meta(info.filename):
+            last_non_meta_index = i
+            continue
+        meta_indices.add(i)
+        if error := validate_zip_header(hdr):
+            raise APKSigCopierError(f"Unsupported CDFH for {info.filename!r}: {error}")
+        fho.write(_adjust_offset(hdr, offsets[info.filename]))
+    if any(i < last_non_meta_index for i in meta_indices):
+        raise APKSigCopierError("Expected v1 signature CD entries at end of archive")
 
 
 def validate_zip_header(hdr: bytes) -> Optional[str]:
