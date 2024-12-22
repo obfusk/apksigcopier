@@ -670,7 +670,7 @@ def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
                 yield info, zf_sig.read(info.filename)
 
 
-def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
+def extract_differences(signed_apk: str, extracted_meta: Optional[ZipInfoDataPairs]) \
         -> Optional[Dict[str, Any]]:
     """
     Extract ZIP metadata differences from signed APK.
@@ -709,7 +709,7 @@ def extract_differences(signed_apk: str, extracted_meta: ZipInfoDataPairs) \
     """
     differences: Dict[str, Any] = {}
     files = {}
-    for info, data in extracted_meta:
+    for info, data in (extracted_meta or ()):
         diffs = {}
         for k in VALID_ZIP_META:
             if k != "compresslevel":
@@ -926,12 +926,24 @@ def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
     >>> import apksigcopier as asc
     >>> unsigned_apk = "test/apks/apks/golden-aligned-in.apk"
     >>> signed_apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
-    >>> meta = tuple(asc.extract_meta(signed_apk))
     >>> v2_sig = asc.extract_v2_sig(signed_apk)
+    >>> meta = tuple(asc.extract_meta(signed_apk))
     >>> with tempfile.TemporaryDirectory() as tmpdir:
     ...     out = os.path.join(tmpdir, "out.apk")
     ...     date_time = asc.copy_apk(unsigned_apk, out)
     ...     asc.patch_meta(meta, out, date_time=date_time)
+    ...     asc.extract_v2_sig(out, expected=False) is None
+    ...     asc.patch_v2_sig(v2_sig, out)
+    ...     asc.extract_v2_sig(out) == v2_sig
+    ...     with open(signed_apk, "rb") as a, open(out, "rb") as b:
+    ...         a.read() == b.read()
+    True
+    True
+    True
+    >>> v1_sig = asc.extract_v1_sig(signed_apk)
+    >>> with tempfile.TemporaryDirectory() as tmpdir:
+    ...     out = os.path.join(tmpdir, "out.apk")
+    ...     date_time = asc.copy_apk(unsigned_apk, out, v1_sig=v1_sig)
     ...     asc.extract_v2_sig(out, expected=False) is None
     ...     asc.patch_v2_sig(v2_sig, out)
     ...     asc.extract_v2_sig(out) == v2_sig
@@ -957,21 +969,35 @@ def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
         fh.write(int.to_bytes(data_out.cd_offset + offset, 4, "little"))
 
 
-# FIXME: v1_sig
-def patch_apk(extracted_meta: ZipInfoDataPairs, extracted_v2_sig: Optional[Tuple[int, bytes]],
+def patch_apk(extracted_meta: Union[ZipInfoDataPairs, bytes, None],
+              extracted_v2_sig: Optional[Tuple[int, bytes]],
               unsigned_apk: str, output_apk: str, *,
               differences: Optional[Dict[str, Any]] = None,
-              exclude: Optional[Callable[[str], bool]] = None) -> None:
+              exclude: Optional[Callable[[str], bool]] = None,
+              v1_sig: Optional[bytes] = None) -> None:
     """
-    Patch extracted_meta + extracted_v2_sig (if not None) onto unsigned_apk and
-    save as output_apk.
+    Patch extracted_meta/v1_sig + extracted_v2_sig (if not None) onto
+    unsigned_apk and save as output_apk.
+
+    NB: extracted_meta as ZipInfoDataPairs uses the legacy v1 signature files
+    format returned by extract_meta(), which has been superseded by the ZIP file
+    data returned by extract_v1_sig() as a bytes object; for backwards
+    compatibility, the mandatory extracted_meta parameter was kept as-is, though
+    it can now be None or a bytes object, and the optional keyword-only v1_sig
+    parameter added as a more explicit way to use the new format (in which case
+    extracted_meta must be None).
     """
+    if extracted_meta and v1_sig:
+        raise ValueError("Expected either extracted_meta or v1_sig, not both")
+    if isinstance(extracted_meta, bytes):
+        v1_sig, extracted_meta = extracted_meta, None
     if differences and "zipflinger_virtual_entry" in differences:
         zfe_size = differences["zipflinger_virtual_entry"]
     else:
         zfe_size = None
-    date_time = copy_apk(unsigned_apk, output_apk, exclude=exclude, zfe_size=zfe_size)
-    patch_meta(extracted_meta, output_apk, date_time=date_time, differences=differences)
+    date_time = copy_apk(unsigned_apk, output_apk, exclude=exclude, zfe_size=zfe_size, v1_sig=v1_sig)
+    if extracted_meta:
+        patch_meta(extracted_meta, output_apk, date_time=date_time, differences=differences)
     if extracted_v2_sig is not None:
         patch_v2_sig(extracted_v2_sig, output_apk)
 
@@ -991,7 +1017,6 @@ def verify_apk(apk: str, min_sdk_version: Optional[int] = None,
         raise APKSigCopierError(f"{args[0]} command not found")     # pylint: disable=W0707
 
 
-# FIXME: v1_sig
 # FIXME: support multiple signers?
 def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO,
                *, ignore_differences: bool = False, legacy: Optional[bool] = None) -> None:
@@ -1007,21 +1032,27 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
     if legacy is None:
         legacy = legacy_v1sigfile
     v1_only = noautoyes(v1_only)
-    extracted_meta = tuple(extract_meta(signed_apk))
-    if len(extracted_meta) not in (len(META_EXT), 0):
-        raise APKSigCopierError("Unexpected or missing metadata files in signed_apk")
-    for info, data in extracted_meta:
-        name = os.path.basename(info.filename)
-        with open(os.path.join(output_dir, name), "wb") as fh:
-            fh.write(data)
+    if legacy:
+        extracted_meta, v1_sig = tuple(extract_meta(signed_apk)), None
+        if len(extracted_meta) not in (len(META_EXT), 0):
+            raise APKSigCopierError("Unexpected or missing metadata files in signed_apk")
+        for info, data in extracted_meta:
+            name = os.path.basename(info.filename)
+            with open(os.path.join(output_dir, name), "wb") as fh:
+                fh.write(data)
+    else:
+        extracted_meta, v1_sig = None, extract_v1_sig(signed_apk)
+        if v1_sig:
+            with open(os.path.join(output_dir, V1SIGZIP), "wb") as fh:
+                fh.write(v1_sig)
     if v1_only == YES:
-        if not extracted_meta:
+        if not (extracted_meta or v1_sig):
             raise APKSigCopierError("Expected v1 signature")
         return
     expected = v1_only == NO
     extracted_v2_sig = extract_v2_sig(signed_apk, expected=expected)
     if extracted_v2_sig is None:
-        if not extracted_meta:
+        if not (extracted_meta or v1_sig):
             raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
         return
     signed_sb_offset, signed_sb = extracted_v2_sig
@@ -1037,7 +1068,6 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
                 fh.write("\n")
 
 
-# FIXME: v1_sig
 # FIXME: support multiple signers?
 def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
              v1_only: NoAutoYesBoolNone = NO, *,
@@ -1053,8 +1083,11 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
     * use v1_only=YES (or v1_only=True) to ignore any v2/v3 signatures.
     """
     v1_only = noautoyes(v1_only)
-    extracted_meta = []
-    differences = None
+    extracted_meta, differences, v1_sig = [], None, None
+    v1_sig_file = os.path.join(metadata_dir, V1SIGZIP)
+    if os.path.exists(v1_sig_file):
+        with open(v1_sig_file, "rb") as fh:
+            v1_sig = fh.read()
     for pat in META_EXT:
         files = [fn for ext in pat.split("|") for fn in
                  glob.glob(os.path.join(metadata_dir, "*." + ext))]
@@ -1063,7 +1096,7 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
         info = zipfile.ZipInfo("META-INF/" + os.path.basename(files[0]))
         with open(files[0], "rb") as fh:
             extracted_meta.append((info, fh.read()))
-    if len(extracted_meta) not in (len(META_EXT), 0):
+    if len(extracted_meta) not in (len(META_EXT), 0) or (extracted_meta and v1_sig):
         raise APKSigCopierError("Unexpected or missing files in metadata_dir")
     if v1_only == YES:
         extracted_v2_sig = None
@@ -1088,13 +1121,12 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
                     error = validate_differences(differences)
                     if error:
                         raise APKSigCopierError(f"Invalid {DIFF_JSON}: {error}")
-    if not extracted_meta and extracted_v2_sig is None:
+    if not (extracted_meta or v1_sig) and extracted_v2_sig is None:
         raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
-              differences=differences, exclude=exclude)
+              differences=differences, exclude=exclude, v1_sig=v1_sig)
 
 
-# FIXME: v1_sig
 def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
             v1_only: NoAutoYesBoolNone = NO, *,
             exclude: Optional[Callable[[str], bool]] = None,
@@ -1111,7 +1143,10 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
     if legacy is None:
         legacy = legacy_v1sigfile
     v1_only = noautoyes(v1_only)
-    extracted_meta = tuple(extract_meta(signed_apk))
+    if legacy:
+        extracted_meta, v1_sig = tuple(extract_meta(signed_apk)), None
+    else:
+        extracted_meta, v1_sig = None, extract_v1_sig(signed_apk)
     differences = None
     if v1_only == YES:
         extracted_v2_sig = None
@@ -1120,10 +1155,9 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
         if extracted_v2_sig is not None and not ignore_differences:
             differences = extract_differences(signed_apk, extracted_meta)
     patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
-              differences=differences, exclude=exclude)
+              differences=differences, exclude=exclude, v1_sig=v1_sig)
 
 
-# FIXME: v1_sig
 def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
                min_sdk_version: Optional[int] = None, *,
                ignore_differences: bool = False, legacy: Optional[bool] = None,
@@ -1135,8 +1169,6 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
     * copying the signature from first_apk to a copy of second_apk
     * checking if the resulting APK verifies
     """
-    if legacy is None:
-        legacy = legacy_v1sigfile
     verify_apk(first_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
     if not unsigned:
         verify_apk(second_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
@@ -1144,7 +1176,7 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
         output_apk = os.path.join(tmpdir, "output.apk")        # FIXME
         exclude = exclude_default if unsigned else exclude_meta
         do_copy(first_apk, second_apk, output_apk, AUTO, exclude=exclude,
-                ignore_differences=ignore_differences)
+                ignore_differences=ignore_differences, legacy=legacy)
         verify_apk(output_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
 
 
