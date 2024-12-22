@@ -123,8 +123,21 @@ jobs:
         apksigcopier extract mastodon-release.apk meta-upstream
         ls -hlA meta-upstream
         cat meta-upstream/differences.json
+        zipinfo -l meta-upstream/v1signature.zip
         apksigcopier patch meta-upstream mastodon-release-unsigned.apk patched-upstream.apk
         apksigcopier copy mastodon-release.apk mastodon-release-unsigned.apk copied-upstream.apk
+    - name: Copy signatures (upstream, legacy)
+      run: |
+        set -x
+        mkdir meta-upstream-legacy
+        apksigcopier extract --legacy mastodon-release.apk meta-upstream-legacy
+        ls -hlA meta-upstream-legacy
+        cat meta-upstream-legacy/differences.json
+        test -e meta-upstream-legacy/MANIFEST.MF
+        apksigcopier patch --legacy meta-upstream-legacy mastodon-release-unsigned.apk \
+          patched-upstream-legacy.apk
+        apksigcopier copy --legacy mastodon-release.apk mastodon-release-unsigned.apk \
+          copied-upstream-legacy.apk
     - name: Compare APKs (dummy)
       run: |
         set -x
@@ -137,6 +150,11 @@ jobs:
         set -x
         cmp mastodon-release.apk patched-upstream.apk
         cmp mastodon-release.apk copied-upstream.apk
+    - name: Compare APKs (upstream, legacy)
+      run: |
+        set -x
+        cmp mastodon-release.apk patched-upstream-legacy.apk
+        cmp mastodon-release.apk copied-upstream-legacy.apk
     - name: Checksums
       run: sha512sum *.apk | sort
     - name: Verify APKs
@@ -161,5 +179,17 @@ jobs:
         # signed with apksigner works, whereas the reverse fails
         ! apksigcopier compare signed-dummy.apk mastodon-release.apk
         ! apksigcopier compare copied-dummy.apk mastodon-release.apk
+    - name: apksigcopier compare (legacy)
+      run: |
+        set -x
+        apksigcopier compare --legacy mastodon-release.apk patched-upstream.apk
+        apksigcopier compare --legacy mastodon-release.apk copied-upstream.apk
+        apksigcopier compare --legacy mastodon-release.apk --unsigned mastodon-release-unsigned.apk
+        apksigcopier compare --legacy mastodon-release.apk signed-dummy.apk
+        apksigcopier compare --legacy mastodon-release.apk copied-dummy.apk
     - name: Test APKs
       run: make test-apks
+    - name: Test APKs (legacy)
+      run: |
+        patch -p1 < test/test-compare-self.out.patch
+        APKSIGCOPIER_LEGACY_V1SIGFILE=1 make test-apks
