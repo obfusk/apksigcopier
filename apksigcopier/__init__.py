@@ -6,11 +6,13 @@
 """
 copy/extract/patch android apk signatures & compare apks
 
-apksigcopier is a tool for copying android APK signatures from a signed APK to
-an unsigned one (in order to verify reproducible builds).
+apksigcopier is a tool that enables using an android APK signature as a build
+input (by copying it from a signed APK to an unsigned one), making it possible
+to create a (bit-by-bit identical) reproducible build from the source code
+without having access to the private key used to create the signature.
 
-It can also be used to compare two APKs with different signatures; this requires
-apksigner.
+It can also be used to verify that two APKs with different signatures are
+otherwise identical; this requires apksigner.
 
 
 CLI
@@ -105,6 +107,7 @@ VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 #
 ################################################################################
 
+# NB: superseded by the new extract_v1_sig() format
 VALID_ZIP_META = dict(
     compresslevel=(9, 1),               # best compression, best speed
     create_system=(0, 3),               # fat, unx
@@ -141,6 +144,7 @@ class ZipError(APKSigCopierError):
     """Something wrong with ZIP file."""
 
 
+# NB: superseded by the new extract_v1_sig() format
 # FIXME: is there a better alternative?
 class ReproducibleZipInfo(zipfile.ZipInfo):
     """Reproducible ZipInfo hack."""
@@ -387,10 +391,9 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
     """
     Copy APK like apksigner would, excluding files matched by exclude_from_copying().
 
-    Adds a zipflinger virtual entry of zfe_size bytes if one is not already
-    present and zfe_size is not None.
-
-    Returns max date_time.
+    Copies a v1 signature if v1_sig is provided; adds a zipflinger virtual entry
+    of zfe_size bytes if one is not already present and zfe_size is not None;
+    returns max date_time.
 
     The following global variables (which default to False), can be set to
     override the default behaviour:
@@ -466,8 +469,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                 # copy extra bytes
                 fho.write(fhi.read(info.header_offset - off_i))
             hdr, n, m = _read_lfh(fhi)
-            skip = exclude(info.filename)
-            if skip:
+            if skip := exclude(info.filename):
                 fhi.seek(info.compress_size, os.SEEK_CUR)
             else:
                 if info.filename in offsets:
@@ -619,6 +621,7 @@ def _eocd(entries: int, eocd_offset: int, cd_offset: int) -> bytes:
 
 def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
                         offsets: Dict[str, int]) -> None:
+    """Copy v1 signature entries."""
     for info in sorted(infos, key=lambda info: info.header_offset):
         if not is_meta(info.filename):
             continue
@@ -635,12 +638,14 @@ def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInf
 
 def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
                            offsets: Dict[str, int]) -> None:
+    """Copy v1 signature CD entries."""
     for info in infos:
         hdr, n, m, k = _read_cdfh(fhi)
         if is_meta(info.filename):
             fho.write(_adjust_offset(hdr, offsets[info.filename]))
 
 
+# NB: superseded by the new extract_v1_sig() format
 def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
     """
     Extract legacy v1 signature metadata files from signed APK.
@@ -782,11 +787,12 @@ def _get_compressed_crc(apkfile: str, info: zipfile.ZipInfo) -> int:
         return zlib.crc32(fh.read(info.compress_size))
 
 
+# NB: superseded by the new extract_v1_sig() format
 def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
                date_time: DateTime = DATETIMEZERO, *,
                differences: Optional[Dict[str, Any]] = None) -> None:
     """
-    Add v1 signature metadata to APK (removes v2 sig block, if any).
+    Add legacy v1 signature metadata to APK (removes v2 sig block, if any).
 
     >>> import apksigcopier as asc
     >>> unsigned_apk = "test/apks/apks/golden-aligned-in.apk"
@@ -931,7 +937,7 @@ def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
     >>> with tempfile.TemporaryDirectory() as tmpdir:
     ...     out = os.path.join(tmpdir, "out.apk")
     ...     date_time = asc.copy_apk(unsigned_apk, out)
-    ...     asc.patch_meta(meta, out, date_time=date_time)
+    ...     asc.patch_meta(meta, out, date_time=date_time)              # legacy format
     ...     asc.extract_v2_sig(out, expected=False) is None
     ...     asc.patch_v2_sig(v2_sig, out)
     ...     asc.extract_v2_sig(out) == v2_sig
@@ -943,7 +949,7 @@ def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
     >>> v1_sig = asc.extract_v1_sig(signed_apk)
     >>> with tempfile.TemporaryDirectory() as tmpdir:
     ...     out = os.path.join(tmpdir, "out.apk")
-    ...     date_time = asc.copy_apk(unsigned_apk, out, v1_sig=v1_sig)
+    ...     date_time = asc.copy_apk(unsigned_apk, out, v1_sig=v1_sig)  # new format
     ...     asc.extract_v2_sig(out, expected=False) is None
     ...     asc.patch_v2_sig(v2_sig, out)
     ...     asc.extract_v2_sig(out) == v2_sig
@@ -1206,7 +1212,8 @@ def main() -> None:
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
     @click.option("--ignore-differences", is_flag=True, help=f"Don't write {DIFF_JSON}.")
-    @click.option("--legacy", is_flag=True, help="Use the legacy v1 signature files format.")
+    @click.option("--legacy/--no-legacy", is_flag=True, default=None,
+                  help="Use the legacy v1 signature files format.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
     def extract(*args: Any, **kwargs: Any) -> None:
@@ -1230,7 +1237,8 @@ def main() -> None:
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
     @click.option("--ignore-differences", is_flag=True, help="Don't copy metadata differences.")
-    @click.option("--legacy", is_flag=True, help="Use the legacy v1 signature files format.")
+    @click.option("--legacy/--no-legacy", is_flag=True, default=None,
+                  help="Use the legacy v1 signature files format.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_apk", type=click.Path(dir_okay=False))
@@ -1246,7 +1254,8 @@ def main() -> None:
     @click.option("--unsigned", is_flag=True, help="Accept unsigned SECOND_APK.")
     @click.option("--min-sdk-version", type=click.INT, help="Passed to apksigner.")
     @click.option("--ignore-differences", is_flag=True, help="Don't copy metadata differences.")
-    @click.option("--legacy", is_flag=True, help="Use the legacy v1 signature files format.")
+    @click.option("--legacy/--no-legacy", is_flag=True, default=None,
+                  help="Use the legacy v1 signature files format.")
     @click.option("--verify-cmd", metavar="COMMAND", help="Command (with arguments) used to "
                   f"verify APKs.  [default: {' '.join(VERIFY_CMD)!r}]")
     @click.argument("first_apk", type=click.Path(exists=True, dir_okay=False))

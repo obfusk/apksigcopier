@@ -42,11 +42,9 @@ identical.  Its command-line tool offers four operations:
 $ mkdir meta
 $ apksigcopier extract signed.apk meta
 $ ls -1 meta
-8BEA2A77.RSA
-8BEA2A77.SF
 APKSigningBlock
 APKSigningBlockOffset
-MANIFEST.MF
+v1signature.zip
 ```
 
 ### Patch
