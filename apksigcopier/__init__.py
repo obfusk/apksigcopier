@@ -107,17 +107,23 @@ VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 #
 ################################################################################
 
+VALID_VERSION_CREATED_SYS = (0, 3)              # fat, unx
+VALID_VERSION_CREATED_VSN = (20, 0)             # 2.0, 0.0
+VALID_VERSION_EXTRACT = (20, 0)                 # 2.0, 0.0
+VALID_FLAGS_MASK = 0x808                        # 0x800 = utf8, 0x08 = data_descriptor
+VALID_EXTERNAL_ATTRS_MASK = 0o100666 << 16      # regular file + mode bits
+
 # NB: superseded by the new extract_v1_sig() format
 VALID_ZIP_META = dict(
-    compresslevel=(9, 1),               # best compression, best speed
-    create_system=(0, 3),               # fat, unx
-    create_version=(20, 0),             # 2.0, 0.0
-    external_attr=(0,                   # N/A
-                   0o100644 << 16,      # regular file rw-r--r--
-                   0o100664 << 16,      # regular file rw-rw-r--
-                   0o100666 << 16),     # regular file rw-rw-rw-
-    extract_version=(20, 0),            # 2.0, 0.0
-    flag_bits=(0x800, 0, 0x08, 0x808),  # 0x800 = utf8, 0x08 = data_descriptor
+    compresslevel=(9, 1),                       # best compression, best speed
+    create_system=VALID_VERSION_CREATED_SYS,    # see above
+    create_version=VALID_VERSION_CREATED_VSN,   # see above
+    external_attr=(0,                           # N/A
+                   0o100644 << 16,              # regular file rw-r--r--
+                   0o100664 << 16,              # regular file rw-rw-r--
+                   0o100666 << 16),             # regular file rw-rw-rw-
+    extract_version=VALID_VERSION_EXTRACT,      # see above
+    flag_bits=(0x800, 0, 0x08, 0x808),          # see above
 )
 
 ZipData = namedtuple("ZipData", ("cd_offset", "eocd_offset", "cd_and_eocd"))
@@ -625,10 +631,12 @@ def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInf
     for info in sorted(infos, key=lambda info: info.header_offset):
         if not is_meta(info.filename):
             continue
-        fhi.seek(info.header_offset)
-        hdr, n, m = _read_lfh(fhi)
         if info.filename in offsets:
             raise ZipError(f"Duplicate ZIP entry: {info.filename!r}")
+        fhi.seek(info.header_offset)
+        hdr, n, m = _read_lfh(fhi)
+        if error := validate_zip_header(hdr):
+            raise APKSigCopierError(f"Unsupported LFH for {info.filename!r}: {error}")
         offsets[info.filename] = fho.tell()
         fho.write(hdr)
         _copy_bytes(fhi, fho, info.compress_size)
@@ -642,7 +650,55 @@ def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.Zip
     for info in infos:
         hdr, n, m, k = _read_cdfh(fhi)
         if is_meta(info.filename):
+            if error := validate_zip_header(hdr):
+                raise APKSigCopierError(f"Unsupported CDFH for {info.filename!r}: {error}")
             fho.write(_adjust_offset(hdr, offsets[info.filename]))
+
+
+def validate_zip_header(hdr: bytes) -> Optional[str]:
+    """
+    Validate ZIP LHF or CDFH.
+
+    Returns None if valid, error otherwise.
+    """
+    if hdr[:4] == b"\x50\x4b\x03\x04":  # LFH
+        (version_extract, flags, compression_method, mtime, mdate, crc32, compressed_size,
+            uncompressed_size, n, m) = struct.unpack("<HHHHHIIIHH", hdr[4:30])
+        filename = hdr[30:30 + n]
+        extra = hdr[30 + n:30 + n + m]
+        version_created = start_disk = internal_attrs = external_attrs = 0
+        comment = b""
+    else:                               # CDFH
+        (version_created, version_extract, flags, compression_method, mtime, mdate, crc32,
+            compressed_size, uncompressed_size, n, m, k, start_disk, internal_attrs,
+            external_attrs, header_offset) = struct.unpack("<HHHHHHIIIHHHHHII", hdr[4:46])
+        filename = hdr[46:46 + n]
+        extra = hdr[46 + n:46 + n + m]
+        comment = hdr[46 + n + m:46 + n + m + k]
+    version_created_sys, version_created_vsn = version_created >> 8, version_created & 0xFF
+    if version_created_sys not in VALID_VERSION_CREATED_SYS:
+        return f"unsupported created system: {version_created_sys}"
+    if version_created_vsn not in VALID_VERSION_CREATED_VSN:
+        return f"unsupported created version: {version_created_vsn}"
+    if version_extract not in VALID_VERSION_EXTRACT:
+        return f"unsupported extract version: {version_extract}"
+    if flags | VALID_FLAGS_MASK != VALID_FLAGS_MASK:
+        return f"unsupported flags: {hex(flags)}"
+    if compression_method not in (0, 8):
+        return f"unsupported compression method: {compression_method}"
+    if start_disk:
+        return "non-zero start disk"
+    if internal_attrs:
+        return "non-zero internal attrs"
+    if external_attrs | VALID_EXTERNAL_ATTRS_MASK != VALID_EXTERNAL_ATTRS_MASK:
+        return f"unsupported external attrs: {hex(external_attrs)}"
+    if b"\x00" in filename:
+        return "null byte in filename"
+    if extra:
+        return "non-empty extra field"
+    if comment:
+        return "non-empty file comment"
+    return None
 
 
 # NB: superseded by the new extract_v1_sig() format
@@ -1124,8 +1180,7 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
                         differences = json.load(fh)
                     except json.JSONDecodeError as e:
                         raise APKSigCopierError(f"Invalid {DIFF_JSON}: {e}")    # pylint: disable=W0707
-                    error = validate_differences(differences)
-                    if error:
+                    if error := validate_differences(differences):
                         raise APKSigCopierError(f"Invalid {DIFF_JSON}: {error}")
     if not (extracted_meta or v1_sig) and extracted_v2_sig is None:
         raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
