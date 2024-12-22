@@ -350,7 +350,7 @@ $ git pull --rebase
 
 ## Dependencies
 
-* Python >= 3.7 + click.
+* Python >= 3.8 + click.
 * The `compare` command also requires `apksigner`.
 
 ### Debian/Ubuntu
