@@ -134,7 +134,7 @@ jobs:
         ls -hlA meta-upstream-legacy
         cat meta-upstream-legacy/differences.json
         test -e meta-upstream-legacy/MANIFEST.MF
-        apksigcopier patch --legacy meta-upstream-legacy mastodon-release-unsigned.apk \
+        apksigcopier patch meta-upstream-legacy mastodon-release-unsigned.apk \
           patched-upstream-legacy.apk
         apksigcopier copy --legacy mastodon-release.apk mastodon-release-unsigned.apk \
           copied-upstream-legacy.apk
