@@ -51,6 +51,7 @@ override the default behaviour:
 """
 
 import glob
+import io
 import json
 import os
 import re
@@ -62,7 +63,7 @@ import zipfile
 import zlib
 
 from collections import namedtuple
-from typing import Any, BinaryIO, Callable, Dict, Iterable, Iterator, Optional, Tuple, Union
+from typing import Any, BinaryIO, Callable, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
 __version__ = "1.1.1"
 NAME = "apksigcopier"
@@ -373,7 +374,6 @@ def detect_zfe(apkfile: str) -> Optional[int]:
 ################################################################################
 
 
-# FIXME: v1sig
 # FIXME: makes certain assumptions and doesn't handle all valid ZIP files!
 # FIXME: support zip64?
 # FIXME: handle utf8 filenames w/o utf8 flag (as produced by zipflinger)?
@@ -382,8 +382,8 @@ def detect_zfe(apkfile: str) -> Optional[int]:
 def copy_apk(unsigned_apk: str, output_apk: str, *,
              copy_extra: Optional[bool] = None,
              exclude: Optional[Callable[[str], bool]] = None,
-             realign: Optional[bool] = None,
-             zfe_size: Optional[int] = None) -> DateTime:
+             realign: Optional[bool] = None, zfe_size: Optional[int] = None,
+             v1_sig: Optional[bytes] = None) -> DateTime:
     """
     Copy APK like apksigner would, excluding files matched by exclude_from_copying().
 
@@ -446,6 +446,10 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         exclude = exclude_from_copying
     if realign is None:
         realign = not skip_realignment
+    if v1_sig:
+        v1_sig_fhi = io.BytesIO(v1_sig)
+        with zipfile.ZipFile(v1_sig_fhi) as zf:
+            v1_infos = zf.infolist()
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
         infos = zf.infolist()
     zdata = zip_data(unsigned_apk)
@@ -461,11 +465,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
             if info.header_offset > off_i:
                 # copy extra bytes
                 fho.write(fhi.read(info.header_offset - off_i))
-            hdr = fhi.read(30)
-            if hdr[:4] != b"\x50\x4b\x03\x04":
-                raise ZipError("Expected local file header signature")
-            n, m = struct.unpack("<HH", hdr[26:30])
-            hdr += fhi.read(n + m)
+            hdr, n, m = _read_lfh(fhi)
             skip = exclude(info.filename)
             if skip:
                 fhi.seek(info.compress_size, os.SEEK_CUR)
@@ -478,12 +478,11 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                                              pad_like_apksigner=not zfe_size)
                 fho.write(hdr)
                 _copy_bytes(fhi, fho, info.compress_size)
-            if info.flag_bits & 0x08:
-                data_descriptor = fhi.read(12)
-                if data_descriptor[:4] == b"\x50\x4b\x07\x08":
-                    data_descriptor += fhi.read(4)
-                if not skip:
-                    fho.write(data_descriptor)
+            if (data_descriptor := _read_data_descriptor(fhi, info)) and not skip:
+                fho.write(data_descriptor)
+        date_time = max(info.date_time for info in infos if info.filename in offsets)
+        if v1_sig:
+            copy_v1_sig_entries(v1_sig_fhi, fho, v1_infos, offsets)
         extra_bytes = zdata.cd_offset - fhi.tell()
         if copy_extra:
             _copy_bytes(fhi, fho, extra_bytes)
@@ -491,21 +490,47 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
             fhi.seek(extra_bytes, os.SEEK_CUR)
         cd_offset = fho.tell()
         for info in infos:
-            hdr = fhi.read(46)
-            if hdr[:4] != b"\x50\x4b\x01\x02":
-                raise ZipError("Expected central directory file header signature")
-            n, m, k = struct.unpack("<HHH", hdr[28:34])
-            hdr += fhi.read(n + m + k)
+            hdr, n, m, k = _read_cdfh(fhi)
             if not exclude(info.filename):
-                off = int.to_bytes(offsets[info.filename], 4, "little")
-                hdr = hdr[:42] + off + hdr[46:]
-                fho.write(hdr)
+                fho.write(_adjust_offset(hdr, offsets[info.filename]))
+        if v1_sig:
+            v1_sig_fhi.seek(_zip_data(v1_sig_fhi).cd_offset)
+            copy_v1_sig_cd_entries(v1_sig_fhi, fho, v1_infos, offsets)
         eocd_offset = fho.tell()
         fho.write(zdata.cd_and_eocd[zdata.eocd_offset - zdata.cd_offset:])
         fho.seek(eocd_offset + 8)
         fho.write(struct.pack("<HHLL", len(offsets), len(offsets),
                               eocd_offset - cd_offset, cd_offset))
-    return max(info.date_time for info in infos if info.filename in offsets)
+    return date_time
+
+
+def _read_lfh(fh: BinaryIO) -> Tuple[bytes, int, int]:
+    hdr = fh.read(30)
+    if hdr[:4] != b"\x50\x4b\x03\x04":
+        raise ZipError("Expected local file header signature")
+    n, m = struct.unpack("<HH", hdr[26:30])
+    return hdr + fh.read(n + m), n, m
+
+
+def _read_cdfh(fh: BinaryIO) -> Tuple[bytes, int, int, int]:
+    hdr = fh.read(46)
+    if hdr[:4] != b"\x50\x4b\x01\x02":
+        raise ZipError("Expected central directory file header signature")
+    n, m, k = struct.unpack("<HHH", hdr[28:34])
+    return hdr + fh.read(n + m + k), n, m, k
+
+
+def _adjust_offset(hdr: bytes, offset: int) -> bytes:
+    return hdr[:42] + int.to_bytes(offset, 4, "little") + hdr[46:]
+
+
+def _read_data_descriptor(fh: BinaryIO, info: zipfile.ZipInfo) -> Optional[bytes]:
+    if info.flag_bits & 0x08:
+        data_descriptor = fh.read(12)
+        if data_descriptor[:4] == b"\x50\x4b\x07\x08":
+            data_descriptor += fh.read(4)
+        return data_descriptor
+    return None
 
 
 # NB: doesn't sync local & CD headers!
@@ -550,7 +575,72 @@ def _copy_bytes(fhi: BinaryIO, fho: BinaryIO, size: int, blocksize: int = 4096) 
         raise ZipError("Unexpected EOF")
 
 
-# FIXME: v1sig
+def extract_v1_sig(apkfile: str) -> Optional[bytes]:
+    """
+    Extract v1 signature data as ZIP file data.
+
+    >>> import io
+    >>> from apksigcopier import extract_v1_sig
+    >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
+    >>> v1_sig = extract_v1_sig(apk)
+    >>> zf = zipfile.ZipFile(io.BytesIO(v1_sig))
+    >>> [ x.filename for x in zf.infolist() ]
+    ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
+    >>> for line in zf.read("META-INF/RSA-2048.SF").splitlines()[:4]:
+    ...     print(line.decode())
+    Signature-Version: 1.0
+    Created-By: 1.0 (Android)
+    SHA-256-Digest-Manifest: hz7AxDJU9Namxoou/kc4Z2GVRS9anCGI+M52tbCsXT0=
+    X-Android-APK-Signed: 2, 3
+    >>> for line in zf.read("META-INF/MANIFEST.MF").splitlines()[:2]:
+    ...     print(line.decode())
+    Manifest-Version: 1.0
+    Created-By: 1.8.0_45-internal (Oracle Corporation)
+
+    """
+    with zipfile.ZipFile(apkfile, "r") as zf:
+        infos = zf.infolist()
+    offsets: Dict[str, int] = {}
+    fho = io.BytesIO()
+    with open(apkfile, "rb") as fhi:
+        copy_v1_sig_entries(fhi, fho, infos, offsets)
+        cd_offset = fho.tell()
+        fhi.seek(_zip_data(fhi).cd_offset)
+        copy_v1_sig_cd_entries(fhi, fho, infos, offsets)
+        eocd_offset = fho.tell()
+        fho.write(_eocd(len(offsets), eocd_offset, cd_offset))
+    return fho.getvalue() or None
+
+
+def _eocd(entries: int, eocd_offset: int, cd_offset: int) -> bytes:
+    return b"\x50\x4b\x05\x06" + struct.pack(
+        "<HHHHLLH", 0, 0, entries, entries, eocd_offset - cd_offset, cd_offset, 0)
+
+
+def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
+                        offsets: Dict[str, int]) -> None:
+    for info in sorted(infos, key=lambda info: info.header_offset):
+        if not is_meta(info.filename):
+            continue
+        fhi.seek(info.header_offset)
+        hdr, n, m = _read_lfh(fhi)
+        if info.filename in offsets:
+            raise ZipError(f"Duplicate ZIP entry: {info.filename!r}")
+        offsets[info.filename] = fho.tell()
+        fho.write(hdr)
+        _copy_bytes(fhi, fho, info.compress_size)
+        if data_descriptor := _read_data_descriptor(fhi, info):
+            fho.write(data_descriptor)
+
+
+def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
+                           offsets: Dict[str, int]) -> None:
+    for info in infos:
+        hdr, n, m, k = _read_cdfh(fhi)
+        if is_meta(info.filename):
+            fho.write(_adjust_offset(hdr, offsets[info.filename]))
+
+
 def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
     """
     Extract legacy v1 signature metadata files from signed APK.
@@ -692,7 +782,6 @@ def _get_compressed_crc(apkfile: str, info: zipfile.ZipInfo) -> int:
         return zlib.crc32(fh.read(info.compress_size))
 
 
-# FIXME: v1sig
 def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
                date_time: DateTime = DATETIMEZERO, *,
                differences: Optional[Dict[str, Any]] = None) -> None:
@@ -811,17 +900,21 @@ def zip_data(apkfile: str, count: int = 1024) -> ZipData:
 
     """
     with open(apkfile, "rb") as fh:
-        fh.seek(-count, os.SEEK_END)
-        data = fh.read()
-        pos = data.rfind(b"\x50\x4b\x05\x06")
-        if pos == -1:
-            raise ZipError("Expected end of central directory record (EOCD)")
-        fh.seek(pos - len(data), os.SEEK_CUR)
-        eocd_offset = fh.tell()
-        fh.seek(16, os.SEEK_CUR)
-        cd_offset = int.from_bytes(fh.read(4), "little")
-        fh.seek(cd_offset)
-        cd_and_eocd = fh.read()
+        return _zip_data(fh, count)
+
+
+def _zip_data(fh: BinaryIO, count: int = 1024) -> ZipData:
+    fh.seek(-count, os.SEEK_END)
+    data = fh.read()
+    pos = data.rfind(b"\x50\x4b\x05\x06")
+    if pos == -1:
+        raise ZipError("Expected end of central directory record (EOCD)")
+    fh.seek(pos - len(data), os.SEEK_CUR)
+    eocd_offset = fh.tell()
+    fh.seek(16, os.SEEK_CUR)
+    cd_offset = int.from_bytes(fh.read(4), "little")
+    fh.seek(cd_offset)
+    cd_and_eocd = fh.read()
     return ZipData(cd_offset, eocd_offset, cd_and_eocd)
 
 
@@ -864,7 +957,7 @@ def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
         fh.write(int.to_bytes(data_out.cd_offset + offset, 4, "little"))
 
 
-# FIXME: v1sig
+# FIXME: v1_sig
 def patch_apk(extracted_meta: ZipInfoDataPairs, extracted_v2_sig: Optional[Tuple[int, bytes]],
               unsigned_apk: str, output_apk: str, *,
               differences: Optional[Dict[str, Any]] = None,
@@ -898,7 +991,7 @@ def verify_apk(apk: str, min_sdk_version: Optional[int] = None,
         raise APKSigCopierError(f"{args[0]} command not found")     # pylint: disable=W0707
 
 
-# FIXME: v1sig
+# FIXME: v1_sig
 # FIXME: support multiple signers?
 def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO,
                *, ignore_differences: bool = False, legacy: Optional[bool] = None) -> None:
@@ -944,7 +1037,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
                 fh.write("\n")
 
 
-# FIXME: v1sig
+# FIXME: v1_sig
 # FIXME: support multiple signers?
 def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
              v1_only: NoAutoYesBoolNone = NO, *,
@@ -1001,7 +1094,7 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
               differences=differences, exclude=exclude)
 
 
-# FIXME: v1sig
+# FIXME: v1_sig
 def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
             v1_only: NoAutoYesBoolNone = NO, *,
             exclude: Optional[Callable[[str], bool]] = None,
@@ -1030,7 +1123,7 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
               differences=differences, exclude=exclude)
 
 
-# FIXME: v1sig
+# FIXME: v1_sig
 def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
                min_sdk_version: Optional[int] = None, *,
                ignore_differences: bool = False, legacy: Optional[bool] = None,
