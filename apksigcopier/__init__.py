@@ -617,7 +617,7 @@ def extract_v1_sig(apkfile: str, check_at_end: bool = True) -> Optional[bytes]:
         copy_v1_sig_cd_entries(fhi, fho, infos, offsets, check_at_end=check_at_end)
         eocd_offset = fho.tell()
         fho.write(_eocd(len(offsets), eocd_offset, cd_offset))
-    return fho.getvalue() or None
+    return fho.getvalue() if offsets else None
 
 
 def _eocd(entries: int, eocd_offset: int, cd_offset: int) -> bytes:
