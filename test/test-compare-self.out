@@ -480,10 +480,7 @@ apksigner: not verified
 
 apks/apks/v1-only-with-nul-in-entry-name.apk
 apksigner: verified
-DOES NOT VERIFY
-ERROR: test.txt  entry referenced by META-INF/MANIFEST.MF not found in the APK
-Error: failed to verify /tmp/.../output.apk.
-apksigcopier: failure
+apksigcopier: success
 
 apks/apks/v1-only-with-rsa-1024-cert-not-der.apk
 apksigner: verified
