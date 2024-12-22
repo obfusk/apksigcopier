@@ -91,6 +91,7 @@ The following environment variables can be set to `1`, `yes`, or
 * set `APKSIGCOPIER_EXCLUDE_ALL_META=1` to exclude all metadata files
 * set `APKSIGCOPIER_COPY_EXTRA_BYTES=1` to copy extra bytes after data (e.g. a v2 sig)
 * set `APKSIGCOPIER_SKIP_REALIGNMENT=1` to skip realignment of ZIP entries
+* set `APKSIGCOPIER_LEGACY_V1SIGFILE=1` to use the legacy v1 signature files format
 
 ## Python API
 
@@ -111,6 +112,7 @@ to override the default behaviour:
 * set `exclude_all_meta=True` to exclude all metadata files
 * set `copy_extra_bytes=True` to copy extra bytes after data (e.g. a v2 sig)
 * set `skip_realignment=True` to skip realignment of ZIP entries
+* set `legacy_v1sigfile=True` to use the legacy v1 signature files format
 
 ## FAQ
 
@@ -151,15 +153,19 @@ It should also support v4, since these are stored in a separate file
 (and require a complementary v2/v3 signature).
 
 When using the `extract` command, the v2/v3 signature is saved as
-`APKSigningBlock` + `APKSigningBlockOffset`.
+`APKSigningBlock` + `APKSigningBlockOffset`; the v1 signature is currently saved
+as `v1signature.zip` to preserve all the ZIP metadata; the legacy v1 signature
+files format (still supported for patching and available with `--legacy` for
+extracting and copying) extracted the v1 signature files individually instead.
 
 ### How does patching work?
 
 First it copies the APK exactly like `apksigner` would when signing it,
 including re-aligning ZIP entries and skipping existing v1 signature files.
 
-Then it adds the extracted v1 signature files (`.SF`, `.RSA`/`.DSA`/`.EC`,
-`MANIFEST.MF`) to the APK, using the correct ZIP metadata (either the same
+Then it adds the v1 signature files (`.SF`, `.RSA`/`.DSA`/`.EC`, `MANIFEST.MF`)
+to the APK, using the correct ZIP metadata (when using the legacy v1 signature
+files format that does not preserve the ZIP metadata directly, either the same
 metadata as `apksigner` would, or from `differences.json`).
 
 And lastly it inserts the extracted APK Signing Block at the correct offset
@@ -189,10 +195,11 @@ to an unsigned APK.
 
 ### What about signatures made by apksigner from build-tools >= 35.0.0-rc1?
 
-Since `build-tools` >= 35.0.0-rc1, backwards-incompatible changes to `apksigner`
-break `apksigcopier` as it now by default forcibly replaces existing alignment
-padding and changed the default page alignment from 4k to 16k (same as Android
-Gradle Plugin >= 8.3, so the latter is only an issue when using older AGP).
+Since `build-tools` >= 35.0.0-rc1, [backwards-incompatible changes to
+`apksigner`](https://issuetracker.google.com/issues/351408623) break
+`apksigcopier` as it now by default forcibly replaces existing alignment padding
+and changed the default page alignment from 4k to 16k (same as Android Gradle
+Plugin >= 8.3, so the latter is only an issue when using older AGP).
 
 Unlike `zipalign` and Android Gradle Plugin, which use zero padding, `apksigner`
 uses a `0xd935` "Android ZIP Alignment Extra Field" which stores the alignment
@@ -228,12 +235,14 @@ Compared to APKs signed by `apksigner`, APKs signed with a v1 signature by
 `zipflinger`/`signflinger` (e.g. using `gradle`) have different ZIP metadata --
 `create_system`, `create_version`, `external_attr`, `extract_version`,
 `flag_bits` -- and `compresslevel` for the v1 signature files (`.SF`,
-`.RSA`/`.DSA`/`.EC`, `MANIFEST.MF`); they also usually have a 132-byte virtual
-entry at the start as well.
+`.RSA`/`.DSA`/`.EC`, `MANIFEST.MF`); they also used to have a 132-byte virtual
+entry at the start (before this [was fixed in AGP
+8.1](https://issuetracker.google.com/issues/268071371)).
 
-Recent versions of `apksigcopier` will detect these ZIP metadata differences and
-the virtual entry (if any); `extract` will save them in a `differences.json`
-file (if they exist), which `patch` will read (if it exists); `copy` and
+Recent versions of `apksigcopier` will handle these differences and the virtual
+entry (if any) as the `v1signature.zip` saved by `extract` simply preserves all
+the ZIP metadata; the legacy v1 signature files format saves differing metadata
+in a `differences.json` file, which `patch` will read (if it exists); `copy` and
 `compare` simply pass the same information along internally.
 
 #### CAVEAT for compare
@@ -259,11 +268,11 @@ When `zipflinger` deletes an entry it leaves a "hole" in the archive when there
 remain non-deleted entries after it.  It later fills these "holes" with virtual
 entries.
 
-There is usually a 132-byte virtual entry at the start of an APK signed with a
-v1 signature by `signflinger`/`zipflinger`; almost certainly this is a default
-manifest ZIP entry created at initialisation, deleted (from the central
-directory but not from the file) during v1 signing, and eventually replaced by a
-virtual entry.
+Before Android Gradle Plugin 8.1 (see the section on `gradle` above) there used
+to be a 132-byte virtual entry at the start of an APK signed with a v1 signature
+by `signflinger`/`zipflinger`; this is a default manifest ZIP entry created at
+initialisation, deleted (from the central directory but not from the file)
+during v1 signing, and eventually replaced by a virtual entry.
 
 Depending on what value of `Created-By` and `Built-By` were used for the default
 manifest, this virtual entry may be a different size; `apksigcopier` supports
