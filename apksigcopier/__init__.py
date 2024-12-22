@@ -83,12 +83,18 @@ ZipInfoDataPairs = Iterable[Tuple[zipfile.ZipInfo, bytes]]
 SIGBLOCK, SIGOFFSET = "APKSigningBlock", "APKSigningBlockOffset"
 V1SIGZIP = "v1signature.zip"
 DIFF_JSON = "differences.json"
+
+ANDROID_MANIFEST = "AndroidManifest.xml"
+AFTER_MANIFEST = b"after_manifest"
+
 NOAUTOYES: Tuple[NoAutoYes, NoAutoYes, NoAutoYes] = ("no", "auto", "yes")
 NO, AUTO, YES = NOAUTOYES
+
 APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)$")
 META_EXT: Tuple[str, ...] = ("SF", "RSA|DSA|EC", "MF")
 COPY_EXCLUDE: Tuple[str, ...] = ("META-INF/MANIFEST.MF",)
 DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
+
 VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 
 ################################################################################
@@ -459,6 +465,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         v1_sig_fhi = io.BytesIO(v1_sig)
         with zipfile.ZipFile(v1_sig_fhi) as zf:
             v1_infos = zf.infolist()
+            after_manifest = AFTER_MANIFEST in zf.comment.split(b",")
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
         infos = zf.infolist()
     zdata = zip_data(unsigned_apk)
@@ -488,8 +495,10 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                 _copy_bytes(fhi, fho, info.compress_size)
             if (data_descriptor := _read_data_descriptor(fhi, info)) and not skip:
                 fho.write(data_descriptor)
+            if v1_sig and after_manifest and info.filename == ANDROID_MANIFEST:
+                copy_v1_sig_entries(v1_sig_fhi, fho, v1_infos, offsets)
         date_time = max(info.date_time for info in infos if info.filename in offsets)
-        if v1_sig:
+        if v1_sig and not after_manifest:
             copy_v1_sig_entries(v1_sig_fhi, fho, v1_infos, offsets)
         extra_bytes = zdata.cd_offset - fhi.tell()
         if copy_extra:
@@ -501,8 +510,11 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
             hdr, n, m, k = _read_cdfh(fhi)
             if not exclude(info.filename):
                 fho.write(_adjust_offset(hdr, offsets[info.filename]))
-        if v1_sig:
-            v1_sig_fhi.seek(_zip_data(v1_sig_fhi).cd_offset)
+            if v1_sig and after_manifest and info.filename == ANDROID_MANIFEST:
+                v1_sig_fhi.seek(_zip_data(v1_sig_fhi, count=min(1024, len(v1_sig))).cd_offset)
+                copy_v1_sig_cd_entries(v1_sig_fhi, fho, v1_infos, offsets)
+        if v1_sig and not after_manifest:
+            v1_sig_fhi.seek(_zip_data(v1_sig_fhi, count=min(1024, len(v1_sig))).cd_offset)
             copy_v1_sig_cd_entries(v1_sig_fhi, fho, v1_infos, offsets)
         eocd_offset = fho.tell()
         fho.write(zdata.cd_and_eocd[zdata.eocd_offset - zdata.cd_offset:])
@@ -611,30 +623,32 @@ def extract_v1_sig(apkfile: str, check_at_end: bool = True) -> Optional[bytes]:
     offsets: Dict[str, int] = {}
     fho = io.BytesIO()
     with open(apkfile, "rb") as fhi:
-        copy_v1_sig_entries(fhi, fho, infos, offsets, check_at_end=check_at_end)
+        comment = copy_v1_sig_entries(fhi, fho, infos, offsets, check_at_end=check_at_end)
         cd_offset = fho.tell()
         fhi.seek(_zip_data(fhi).cd_offset)
-        copy_v1_sig_cd_entries(fhi, fho, infos, offsets, check_at_end=check_at_end)
+        copy_v1_sig_cd_entries(fhi, fho, infos, offsets, check_at_end=check_at_end and not comment)
         eocd_offset = fho.tell()
-        fho.write(_eocd(len(offsets), eocd_offset, cd_offset))
+        fho.write(_eocd(len(offsets), eocd_offset, cd_offset, comment))
     return fho.getvalue() if offsets else None
 
 
-def _eocd(entries: int, eocd_offset: int, cd_offset: int) -> bytes:
-    return b"\x50\x4b\x05\x06" + struct.pack(
-        "<HHHHLLH", 0, 0, entries, entries, eocd_offset - cd_offset, cd_offset, 0)
+def _eocd(entries: int, eocd_offset: int, cd_offset: int, comment: Optional[bytes] = None) -> bytes:
+    data = struct.pack("<HHHHLLH", 0, 0, entries, entries, eocd_offset - cd_offset,
+                       cd_offset, len(comment or b""))
+    return b"\x50\x4b\x05\x06" + data + (comment or b"")
 
 
 def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
-                        offsets: Dict[str, int], check_at_end: bool = False) -> None:
+                        offsets: Dict[str, int], check_at_end: bool = False) -> Optional[bytes]:
     """Copy v1 signature entries."""
-    meta_header_offsets = set()
+    meta_header_offsets = {}
     last_non_meta_header_offset = -1
-    for info in sorted(infos, key=lambda info: info.header_offset):
+    sorted_infos = sorted(infos, key=lambda info: info.header_offset)
+    for info in sorted_infos:
         if not is_meta(info.filename):
             last_non_meta_header_offset = info.header_offset
             continue
-        meta_header_offsets.add(info.header_offset)
+        meta_header_offsets[info.filename] = info.header_offset
         if info.filename in offsets:
             raise ZipError(f"Duplicate ZIP entry: {info.filename!r}")
         fhi.seek(info.header_offset)
@@ -646,8 +660,15 @@ def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInf
         _copy_bytes(fhi, fho, info.compress_size)
         if data_descriptor := _read_data_descriptor(fhi, info):
             fho.write(data_descriptor)
-    if check_at_end and any(i < last_non_meta_header_offset for i in meta_header_offsets):
+    if check_at_end and any(i < last_non_meta_header_offset for i in meta_header_offsets.values()):
+        for i, info in enumerate(sorted_infos):
+            if info.filename == ANDROID_MANIFEST:
+                after = sorted_infos[i + 1:i + 1 + len(meta_header_offsets)]
+                if [info.filename for info in after] == list(meta_header_offsets):
+                    return AFTER_MANIFEST
+                break
         raise APKSigCopierError("Expected v1 signature entries at end of archive")
+    return None
 
 
 def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
