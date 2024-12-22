@@ -108,7 +108,7 @@ VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 ################################################################################
 
 VALID_VERSION_CREATED_SYS = (0, 3)              # fat, unx
-VALID_VERSION_CREATED_VSN = (20, 0)             # 2.0, 0.0
+VALID_VERSION_CREATED_VSN = (20, 0, 24)         # 2.0, 0.0, 2.4
 VALID_VERSION_EXTRACT = (20, 0)                 # 2.0, 0.0
 VALID_FLAGS_MASK = 0x808                        # 0x800 = utf8, 0x08 = data_descriptor
 VALID_EXTERNAL_ATTRS_MASK = 0o100666 << 16      # regular file + mode bits
@@ -234,7 +234,7 @@ def is_meta(filename: str) -> bool:
     False
 
     """
-    return APK_META.fullmatch(filename) is not None
+    return bool(APK_META.fullmatch(filename))
 
 
 def exclude_from_copying(filename: str) -> bool:
@@ -583,7 +583,7 @@ def _copy_bytes(fhi: BinaryIO, fho: BinaryIO, size: int, blocksize: int = 4096) 
         raise ZipError("Unexpected EOF")
 
 
-def extract_v1_sig(apkfile: str) -> Optional[bytes]:
+def extract_v1_sig(apkfile: str, check_at_end: bool = True) -> Optional[bytes]:
     """
     Extract v1 signature data as ZIP file data.
 
@@ -611,10 +611,10 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     offsets: Dict[str, int] = {}
     fho = io.BytesIO()
     with open(apkfile, "rb") as fhi:
-        copy_v1_sig_entries(fhi, fho, infos, offsets)
+        copy_v1_sig_entries(fhi, fho, infos, offsets, check_at_end=check_at_end)
         cd_offset = fho.tell()
         fhi.seek(_zip_data(fhi).cd_offset)
-        copy_v1_sig_cd_entries(fhi, fho, infos, offsets)
+        copy_v1_sig_cd_entries(fhi, fho, infos, offsets, check_at_end=check_at_end)
         eocd_offset = fho.tell()
         fho.write(_eocd(len(offsets), eocd_offset, cd_offset))
     return fho.getvalue() or None
@@ -626,7 +626,7 @@ def _eocd(entries: int, eocd_offset: int, cd_offset: int) -> bytes:
 
 
 def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
-                        offsets: Dict[str, int]) -> None:
+                        offsets: Dict[str, int], check_at_end: bool = False) -> None:
     """Copy v1 signature entries."""
     meta_header_offsets = set()
     last_non_meta_header_offset = -1
@@ -646,12 +646,12 @@ def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInf
         _copy_bytes(fhi, fho, info.compress_size)
         if data_descriptor := _read_data_descriptor(fhi, info):
             fho.write(data_descriptor)
-    if any(i < last_non_meta_header_offset for i in meta_header_offsets):
+    if check_at_end and any(i < last_non_meta_header_offset for i in meta_header_offsets):
         raise APKSigCopierError("Expected v1 signature entries at end of archive")
 
 
 def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
-                           offsets: Dict[str, int]) -> None:
+                           offsets: Dict[str, int], check_at_end: bool = False) -> None:
     """Copy v1 signature CD entries."""
     meta_indices = set()
     last_non_meta_index = -1
@@ -664,7 +664,7 @@ def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.Zip
         if error := validate_zip_header(hdr):
             raise APKSigCopierError(f"Unsupported CDFH for {info.filename!r}: {error}")
         fho.write(_adjust_offset(hdr, offsets[info.filename]))
-    if any(i < last_non_meta_index for i in meta_indices):
+    if check_at_end and any(i < last_non_meta_index for i in meta_indices):
         raise APKSigCopierError("Expected v1 signature CD entries at end of archive")
 
 
@@ -1073,7 +1073,7 @@ def patch_apk(extracted_meta: Union[ZipInfoDataPairs, bytes, None],
     date_time = copy_apk(unsigned_apk, output_apk, exclude=exclude, zfe_size=zfe_size, v1_sig=v1_sig)
     if extracted_meta:
         patch_meta(extracted_meta, output_apk, date_time=date_time, differences=differences)
-    if extracted_v2_sig is not None:
+    if extracted_v2_sig:
         patch_v2_sig(extracted_v2_sig, output_apk)
 
 
@@ -1107,6 +1107,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
     if legacy is None:
         legacy = legacy_v1sigfile
     v1_only = noautoyes(v1_only)
+    v2_sig = extract_v2_sig(signed_apk, expected=v1_only == NO) if v1_only != YES else None
     if legacy:
         extracted_meta, v1_sig = tuple(extract_meta(signed_apk)), None
         if len(extracted_meta) not in (len(META_EXT), 0):
@@ -1116,21 +1117,16 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
             with open(os.path.join(output_dir, name), "wb") as fh:
                 fh.write(data)
     else:
-        extracted_meta, v1_sig = None, extract_v1_sig(signed_apk)
+        extracted_meta, v1_sig = None, extract_v1_sig(signed_apk, check_at_end=bool(v2_sig))
         if v1_sig:
             with open(os.path.join(output_dir, V1SIGZIP), "wb") as fh:
                 fh.write(v1_sig)
-    if v1_only == YES:
+    if not v2_sig:
         if not (extracted_meta or v1_sig):
-            raise APKSigCopierError("Expected v1 signature")
+            what = "v1 signature" if v1_only == YES else "v1 and/or v2/v3 signature, found neither"
+            raise APKSigCopierError(f"Expected {what}")
         return
-    expected = v1_only == NO
-    extracted_v2_sig = extract_v2_sig(signed_apk, expected=expected)
-    if extracted_v2_sig is None:
-        if not (extracted_meta or v1_sig):
-            raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
-        return
-    signed_sb_offset, signed_sb = extracted_v2_sig
+    signed_sb_offset, signed_sb = v2_sig
     with open(os.path.join(output_dir, SIGOFFSET), "w") as fh:
         fh.write(str(signed_sb_offset) + "\n")
     with open(os.path.join(output_dir, SIGBLOCK), "wb") as fh:
@@ -1174,18 +1170,18 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
     if len(extracted_meta) not in (len(META_EXT), 0) or (extracted_meta and v1_sig):
         raise APKSigCopierError("Unexpected or missing files in metadata_dir")
     if v1_only == YES:
-        extracted_v2_sig = None
+        v2_sig = None
     else:
         sigoffset_file = os.path.join(metadata_dir, SIGOFFSET)
         sigblock_file = os.path.join(metadata_dir, SIGBLOCK)
         if v1_only == AUTO and not os.path.exists(sigblock_file):
-            extracted_v2_sig = None
+            v2_sig = None
         else:
             with open(sigoffset_file, "r") as fh:
                 signed_sb_offset = int(fh.read())
             with open(sigblock_file, "rb") as fh:
                 signed_sb = fh.read()
-            extracted_v2_sig = signed_sb_offset, signed_sb
+            v2_sig = signed_sb_offset, signed_sb
             differences_file = os.path.join(metadata_dir, DIFF_JSON)
             if not ignore_differences and os.path.exists(differences_file):
                 with open(differences_file, "r") as fh:
@@ -1195,10 +1191,10 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
                         raise APKSigCopierError(f"Invalid {DIFF_JSON}: {e}")    # pylint: disable=W0707
                     if error := validate_differences(differences):
                         raise APKSigCopierError(f"Invalid {DIFF_JSON}: {error}")
-    if not (extracted_meta or v1_sig) and extracted_v2_sig is None:
+    if not (extracted_meta or v1_sig) and not v2_sig:
         raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
-    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
-              differences=differences, exclude=exclude, v1_sig=v1_sig)
+    patch_apk(extracted_meta, v2_sig, unsigned_apk, output_apk, differences=differences,
+              exclude=exclude, v1_sig=v1_sig)
 
 
 def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
@@ -1217,19 +1213,14 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
     if legacy is None:
         legacy = legacy_v1sigfile
     v1_only = noautoyes(v1_only)
+    v2_sig = extract_v2_sig(signed_apk, expected=v1_only == NO) if v1_only != YES else None
     if legacy:
         extracted_meta, v1_sig = tuple(extract_meta(signed_apk)), None
     else:
-        extracted_meta, v1_sig = None, extract_v1_sig(signed_apk)
-    differences = None
-    if v1_only == YES:
-        extracted_v2_sig = None
-    else:
-        extracted_v2_sig = extract_v2_sig(signed_apk, expected=v1_only == NO)
-        if extracted_v2_sig is not None and not ignore_differences:
-            differences = extract_differences(signed_apk, extracted_meta)
-    patch_apk(extracted_meta, extracted_v2_sig, unsigned_apk, output_apk,
-              differences=differences, exclude=exclude, v1_sig=v1_sig)
+        extracted_meta, v1_sig = None, extract_v1_sig(signed_apk, check_at_end=bool(v2_sig))
+    differences = extract_differences(signed_apk, extracted_meta) if v2_sig and not ignore_differences else None
+    patch_apk(extracted_meta, v2_sig, unsigned_apk, output_apk, differences=differences,
+              exclude=exclude, v1_sig=v1_sig)
 
 
 def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
