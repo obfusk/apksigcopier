@@ -1207,7 +1207,9 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
     else:
         sigoffset_file = os.path.join(metadata_dir, SIGOFFSET)
         sigblock_file = os.path.join(metadata_dir, SIGBLOCK)
-        if v1_only == AUTO and not os.path.exists(sigblock_file):
+        if not os.path.exists(sigblock_file):
+            if v1_only == NO:
+                raise APKSigCopierError("Expected v2/v3 signature")
             v2_sig = None
         else:
             with open(sigoffset_file, "r") as fh:
@@ -1225,7 +1227,8 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
                     if error := validate_differences(differences):
                         raise APKSigCopierError(f"Invalid {DIFF_JSON}: {error}")
     if not (extracted_meta or v1_sig) and not v2_sig:
-        raise APKSigCopierError("Expected v1 and/or v2/v3 signature, found neither")
+        what = "v1 signature" if v1_only == YES else "v1 and/or v2/v3 signature, found neither"
+        raise APKSigCopierError(f"Expected {what}")
     patch_apk(extracted_meta, v2_sig, unsigned_apk, output_apk, differences=differences,
               exclude=exclude, v1_sig=v1_sig)
 
