@@ -518,10 +518,10 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
             if not exclude(info.filename):
                 fho.write(_adjust_offset(hdr, offsets[info.filename]))
             if v1_sig and after_manifest and info.filename == ANDROID_MANIFEST:
-                v1_sig_fhi.seek(_zip_data(v1_sig_fhi, count=min(1024, len(v1_sig))).cd_offset)
+                v1_sig_fhi.seek(_zip_data(v1_sig_fhi, count=min(65536, len(v1_sig))).cd_offset)
                 copy_v1_sig_cd_entries(v1_sig_fhi, fho, v1_infos, offsets)
         if v1_sig and not after_manifest:
-            v1_sig_fhi.seek(_zip_data(v1_sig_fhi, count=min(1024, len(v1_sig))).cd_offset)
+            v1_sig_fhi.seek(_zip_data(v1_sig_fhi, count=min(65536, len(v1_sig))).cd_offset)
             copy_v1_sig_cd_entries(v1_sig_fhi, fho, v1_infos, offsets)
         eocd_offset = fho.tell()
         fho.write(zdata.cd_and_eocd[zdata.eocd_offset - zdata.cd_offset:])
