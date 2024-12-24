@@ -37,6 +37,14 @@ identical.  Its command-line tool offers four operations:
 * patch previously extracted signatures onto an unsigned APK
 * compare two APKs with different signatures
 
+NB: `apksigcopier` tries to validate the data it processes to some extent, but
+is fundamentally a tool to *copy* signature data only; it should never copy any
+data that cannot be part of a signature but it cannot validate APKs or ensure
+the signature data does not contain any kind of payload as data can often be
+added to signatures without invalidating them and part of the signature data may
+not be verified under certain conditions (e.g. v1 signature data may not be
+verified at all depending on minimum/target SDK version etc.).
+
 ### Extract
 
 ```bash
