@@ -1450,8 +1450,7 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
         do_copy(first_apk, second_apk, output_apk, v1_only=AUTO, exclude=exclude,
                 ignore_differences=ignore_differences, legacy=legacy)
         if check_signature:
-            if min_sdk_version is None:
-                min_sdk_version = 23 if has_v1_signature(output_apk) else 24
+            min_sdk_version = 23 if has_v1_signature(output_apk) else 24
             verify_apk(output_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
         sha256_output = sha256_file(output_apk)
         if sha256_first != sha256_output:
