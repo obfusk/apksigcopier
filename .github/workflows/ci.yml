@@ -82,6 +82,13 @@ jobs:
         [ -e mastodon-release.apk ] || wget -O mastodon-release.apk -- \
           https://github.com/mastodon/mastodon-android/releases/download/v1.1.3/mastodon-release.apk
         sha256sum -c <<< '1ec636336a79ada1a3526323c90bb9fbfe5dc32b2984bb724998b5f47c822165  mastodon-release.apk'
+    - name: Download build-tools
+      run: |
+        set -x
+        wget -O build-tools.zip -- https://dl.google.com/android/repository/build-tools_r35_linux.zip
+        sha256sum -c <<< 'bd3a4966912eb8b30ed0d00b0cda6b6543b949d5ffe00bea54c04c81e1561d88  build-tools.zip'
+        unzip -q build-tools.zip
+        mv android-15 build-tools
     - name: Copy APK
       run: |
         set -x
@@ -182,6 +189,16 @@ jobs:
         # signed with apksigner works, whereas the reverse fails
         ! apksigcopier compare signed-dummy.apk mastodon-release.apk
         ! apksigcopier compare copied-dummy.apk mastodon-release.apk
+    - name: apksigcopier compare (build-tools)
+      run: |
+        set -x
+        export PATH="${PWD}/build-tools:${PATH}"
+        test "$( command -v apksigner )" = "${PWD}/build-tools/apksigner"
+        apksigcopier compare mastodon-release.apk patched-upstream.apk
+        apksigcopier compare mastodon-release.apk copied-upstream.apk
+        apksigcopier compare mastodon-release.apk --unsigned mastodon-release-unsigned.apk
+        apksigcopier compare mastodon-release.apk signed-dummy.apk
+        apksigcopier compare mastodon-release.apk copied-dummy.apk
     - name: apksigcopier compare (legacy)
       run: |
         set -x
@@ -192,6 +209,11 @@ jobs:
         apksigcopier compare --legacy mastodon-release.apk copied-dummy.apk
     - name: Test APKs
       run: make test-apks
+    - name: Test APKs (build-tools)
+      run: |
+        export PATH="${PWD}/build-tools:${PATH}"
+        test "$( command -v apksigner )" = "${PWD}/build-tools/apksigner"
+        make test-apks
     - name: Test APKs (legacy)
       run: |
         patch -p1 < test/test-compare-self.out.patch
