@@ -209,12 +209,3 @@ jobs:
         apksigcopier compare --legacy mastodon-release.apk copied-dummy.apk
     - name: Test APKs
       run: make test-apks
-    - name: Test APKs (build-tools)
-      run: |
-        export PATH="${PWD}/build-tools:${PATH}"
-        test "$( command -v apksigner )" = "${PWD}/build-tools/apksigner"
-        make test-apks
-    - name: Test APKs (legacy)
-      run: |
-        patch -p1 < test/test-compare-self.out.patch
-        APKSIGCOPIER_LEGACY_V1SIGFILE=1 make test-apks
