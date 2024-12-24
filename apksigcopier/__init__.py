@@ -730,8 +730,18 @@ def validate_zip_header(hdr: bytes, info: zipfile.ZipInfo, datas: Dict[str, byte
         return f"unsupported extract version: {version_extract}"
     if flags | VALID_FLAGS_MASK != VALID_FLAGS_MASK:
         return f"unsupported flags: {hex(flags)}"
+    if flags != info.flag_bits:
+        return "flags mismatch"
     if compression_method not in (0, 8):
         return f"unsupported compression method: {compression_method}"
+    if compression_method != info.compress_type:
+        return "compression method mismatch"
+    if crc32 != info.CRC:
+        return "crc32 mismatch"
+    if compressed_size != info.compress_size:
+        return "compressed size mismatch"
+    if uncompressed_size != len(datas[info.filename]):
+        return "uncompressed size mismatch"
     if start_disk:
         return "non-zero start disk"
     if internal_attrs:
@@ -744,12 +754,6 @@ def validate_zip_header(hdr: bytes, info: zipfile.ZipInfo, datas: Dict[str, byte
         return "non-empty extra field"
     if comment:
         return "non-empty file comment"
-    if compressed_size != info.compress_size:
-        return "compressed size mismatch"
-    if uncompressed_size != len(datas[info.filename]):
-        return "uncompressed size mismatch"
-    if crc32 != info.CRC:
-        return "crc32 mismatch"
     return None
 
 
