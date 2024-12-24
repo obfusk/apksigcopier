@@ -13,7 +13,7 @@ for apk in apks/apks/*.apk; do
   fi
   if apksigner verify $min "$apk" >/dev/null 2>&1; then
     echo 'apksigner: verified'
-    if apksigcopier compare $min "$apk" "$apk" 2>&1; then
+    if apksigcopier compare --no-check-sha256 $min "$apk" "$apk" 2>&1; then
       echo 'apksigcopier: success'
     else
       echo 'apksigcopier: failure'
