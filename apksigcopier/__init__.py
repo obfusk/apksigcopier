@@ -89,13 +89,13 @@ DIFF_JSON = "differences.json"
 NOAUTOYES: Tuple[NoAutoYes, NoAutoYes, NoAutoYes] = ("no", "auto", "yes")
 NO, AUTO, YES = NOAUTOYES
 
-APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)$")
-META_EXT: Tuple[str, ...] = ("SF", "RSA|DSA|EC", "MF")
-COPY_EXCLUDE: Tuple[str, ...] = ("META-INF/MANIFEST.MF",)
-DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
-
 JAR_MANIFEST = "META-INF/MANIFEST.MF"
 JAR_SBF_EXTS = ("RSA", "DSA", "EC")
+
+APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)$")
+META_EXT: Tuple[str, ...] = ("SF", "|".join(JAR_SBF_EXTS), "MF")
+COPY_EXCLUDE: Tuple[str, ...] = (JAR_MANIFEST,)
+DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
 
 VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 
@@ -646,7 +646,8 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     """
     with zipfile.ZipFile(apkfile, "r") as zf:
         infos = zf.infolist()
-        datas = {info.filename: zf.read(info.filename) for info in infos if is_meta(info.filename)}
+        metas = [info for info in infos if is_meta(info.filename)]
+        datas = {info.filename: zf.read(info.filename) for info in metas}
         coffs = [[i, info.header_offset] for i, info in enumerate(infos) if is_meta(info.filename)]
     comment_data: Dict[str, Any] = dict(offsets=coffs)
     if zfe_size := detect_zfe(apkfile):
@@ -661,6 +662,8 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
         copy_v1_sig_cd_entries(fhi, fho, infos, datas, offsets)
         eocd_offset = fho.tell()
         fho.write(_eocd(len(offsets), eocd_offset, cd_offset, comment))
+    if offsets and (error := validate_v1_sig(metas, datas)):
+        raise APKSigCopierError(f"Invalid v1_sig: {error}")
     return fho.getvalue() if offsets else None
 
 
@@ -810,12 +813,26 @@ def validate_v1_sig_data(data: Dict[str, Any], n_infos: int) -> Optional[str]:
 
 def validate_v1_sig(infos: List[zipfile.ZipInfo], datas: Dict[str, bytes],
                     output_zf: Optional[zipfile.ZipFile] = None) -> Optional[str]:
-    """
+    r"""
     Validate data from v1_sig.
 
     NB: does not validate the signature (files)!
 
     Returns None if valid, error otherwise.
+
+    >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
+    >>> infos, datas, _ = extract_v1_sig_data(io.BytesIO(extract_v1_sig(apk)))
+    >>> [ x.filename for x in infos ]
+    ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
+    >>> validate_v1_sig(infos, datas) is None
+    True
+    >>> validate_v1_sig(infos[1:], {})
+    'signature file missing'
+    >>> validate_v1_sig([infos[0], infos[2]], {})
+    'signature block file mismatch'
+    >>> validate_v1_sig(infos + [zipfile.ZipInfo("META-INF/RSA-2048.EC")], {})
+    'signature block file mismatch'
+
     """
     filenames = set(info.filename for info in infos)
     if JAR_MANIFEST not in filenames:
