@@ -200,7 +200,6 @@ def noautoyes(value: NoAutoYesBoolNone) -> NoAutoYes:
     r"""
     Turns False into NO, None into AUTO, and True into YES.
 
-    >>> from apksigcopier import noautoyes, NO, AUTO, YES
     >>> noautoyes(False) == NO == noautoyes(NO)
     True
     >>> noautoyes(None) == AUTO == noautoyes(AUTO)
@@ -226,7 +225,6 @@ def is_meta(filename: str) -> bool:
 
     See https://docs.oracle.com/javase/tutorial/deployment/jar/intro.html
 
-    >>> from apksigcopier import is_meta
     >>> is_meta("classes.dex")
     False
     >>> is_meta("META-INF/CERT.SF")
@@ -252,8 +250,6 @@ def exclude_from_copying(filename: str) -> bool:
 
     Directories are always excluded.
 
-    >>> import apksigcopier
-    >>> from apksigcopier import exclude_from_copying
     >>> exclude_from_copying("classes.dex")
     False
     >>> exclude_from_copying("foo/")
@@ -267,16 +263,17 @@ def exclude_from_copying(filename: str) -> bool:
     >>> exclude_from_copying("META-INF/OOPS")
     False
 
-    >>> apksigcopier.exclude_all_meta = True
-    >>> exclude_from_copying("classes.dex")
+    >>> import apksigcopier as asc
+    >>> asc.exclude_all_meta = True
+    >>> asc.exclude_from_copying("classes.dex")
     False
-    >>> exclude_from_copying("META-INF/")
+    >>> asc.exclude_from_copying("META-INF/")
     True
-    >>> exclude_from_copying("META-INF/MANIFEST.MF")
+    >>> asc.exclude_from_copying("META-INF/MANIFEST.MF")
     True
-    >>> exclude_from_copying("META-INF/CERT.SF")
+    >>> asc.exclude_from_copying("META-INF/CERT.SF")
     True
-    >>> exclude_from_copying("META-INF/OOPS")
+    >>> asc.exclude_from_copying("META-INF/OOPS")
     False
 
     """
@@ -418,13 +415,12 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
     variables when not None.  NB: exclude is a callable, not a bool; realign is
     the inverse of skip_realignment.
 
-    >>> import apksigcopier, os, zipfile
     >>> apk = "test/apks/apks/golden-aligned-in.apk"
     >>> with zipfile.ZipFile(apk, "r") as zf:
     ...     infos_in = zf.infolist()
     >>> with tempfile.TemporaryDirectory() as tmpdir:
     ...     out = os.path.join(tmpdir, "out.apk")
-    ...     apksigcopier.copy_apk(apk, out)
+    ...     copy_apk(apk, out)
     ...     with zipfile.ZipFile(out, "r") as zf:
     ...         infos_out = zf.infolist()
     (2017, 5, 15, 11, 28, 40)
@@ -616,8 +612,6 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     r"""
     Extract v1 signature data as ZIP file data.
 
-    >>> import io
-    >>> from apksigcopier import extract_v1_sig
     >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
     >>> v1_sig = extract_v1_sig(apk)
     >>> fh = io.BytesIO(v1_sig)
@@ -812,7 +806,6 @@ def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
 
     Yields (ZipInfo, data) pairs.
 
-    >>> from apksigcopier import extract_meta
     >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
     >>> meta = tuple(extract_meta(apk))
     >>> [ x.filename for x, _ in meta ]
@@ -840,12 +833,12 @@ def extract_differences(signed_apk: str, extracted_meta: Optional[ZipInfoDataPai
     r"""
     Extract ZIP metadata differences from signed APK.
 
-    >>> import apksigcopier as asc, pprint
+    >>> import pprint
     >>> apk = "test/apks/apks/debuggable-boolean.apk"
-    >>> meta = tuple(asc.extract_meta(apk))
+    >>> meta = tuple(extract_meta(apk))
     >>> [ x.filename for x, _ in meta ]
     ['META-INF/CERT.SF', 'META-INF/CERT.RSA', 'META-INF/MANIFEST.MF']
-    >>> diff = asc.extract_differences(apk, meta)
+    >>> diff = extract_differences(apk, meta)
     >>> pprint.pprint(diff)
     {'files': {'META-INF/CERT.RSA': {'flag_bits': 2056},
                'META-INF/CERT.SF': {'flag_bits': 2056},
@@ -853,22 +846,22 @@ def extract_differences(signed_apk: str, extracted_meta: Optional[ZipInfoDataPai
 
     >>> meta[2][0].extract_version = 42
     >>> try:
-    ...     asc.extract_differences(apk, meta)
-    ... except asc.ZipError as e:
+    ...     extract_differences(apk, meta)
+    ... except ZipError as e:
     ...     print(e)
     Unsupported extract_version
 
-    >>> asc.validate_differences(diff) is None
+    >>> validate_differences(diff) is None
     True
     >>> diff["files"]["META-INF/OOPS"] = {}
-    >>> asc.validate_differences(diff)
+    >>> validate_differences(diff)
     ".files key 'META-INF/OOPS' is not a metadata file"
     >>> del diff["files"]["META-INF/OOPS"]
     >>> diff["files"]["META-INF/CERT.RSA"]["compresslevel"] = 42
-    >>> asc.validate_differences(diff)
+    >>> validate_differences(diff)
     ".files['META-INF/CERT.RSA'].compresslevel has an unexpected value"
     >>> diff["oops"] = 42
-    >>> asc.validate_differences(diff)
+    >>> validate_differences(diff)
     'contains unknown key(s)'
 
     """
@@ -953,18 +946,17 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
     r"""
     Add legacy v1 signature metadata to APK (removes v2 sig block, if any).
 
-    >>> import apksigcopier as asc
     >>> unsigned_apk = "test/apks/apks/golden-aligned-in.apk"
     >>> signed_apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
-    >>> meta = tuple(asc.extract_meta(signed_apk))
+    >>> meta = tuple(extract_meta(signed_apk))
     >>> [ x.filename for x, _ in meta ]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> with zipfile.ZipFile(unsigned_apk, "r") as zf:
     ...     infos_in = zf.infolist()
     >>> with tempfile.TemporaryDirectory() as tmpdir:
     ...     out = os.path.join(tmpdir, "out.apk")
-    ...     asc.copy_apk(unsigned_apk, out)
-    ...     asc.patch_meta(meta, out)
+    ...     copy_apk(unsigned_apk, out)
+    ...     patch_meta(meta, out)
     ...     with zipfile.ZipFile(out, "r") as zf:
     ...         infos_out = zf.infolist()
     (2017, 5, 15, 11, 28, 40)
@@ -1013,9 +1005,8 @@ def extract_v2_sig(apkfile: str, expected: bool = True) -> Optional[Tuple[int, b
     When successful, returns (sb_offset, sig_block); otherwise raises
     NoAPKSigningBlock when expected is True, else returns None.
 
-    >>> import apksigcopier as asc
     >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
-    >>> sb_offset, sig_block = asc.extract_v2_sig(apk)
+    >>> sb_offset, sig_block = extract_v2_sig(apk)
     >>> sb_offset
     8192
     >>> len(sig_block)
@@ -1023,8 +1014,8 @@ def extract_v2_sig(apkfile: str, expected: bool = True) -> Optional[Tuple[int, b
 
     >>> apk = "test/apks/apks/golden-aligned-in.apk"
     >>> try:
-    ...     asc.extract_v2_sig(apk)
-    ... except asc.NoAPKSigningBlock as e:
+    ...     extract_v2_sig(apk)
+    ... except NoAPKSigningBlock as e:
     ...     print(e)
     No APK Signing Block
 
@@ -1055,9 +1046,8 @@ def zip_data(apkfile: str, count: int = 1024) -> ZipData:
 
     Returns ZipData.
 
-    >>> import apksigcopier
     >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
-    >>> data = apksigcopier.zip_data(apk)
+    >>> data = zip_data(apk)
     >>> data.cd_offset, data.eocd_offset
     (12288, 12843)
     >>> len(data.cd_and_eocd)
@@ -1088,30 +1078,29 @@ def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
     r"""
     Implant extracted v2/v3 signature into APK.
 
-    >>> import apksigcopier as asc
     >>> unsigned_apk = "test/apks/apks/golden-aligned-in.apk"
     >>> signed_apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
-    >>> v2_sig = asc.extract_v2_sig(signed_apk)
-    >>> meta = tuple(asc.extract_meta(signed_apk))
+    >>> v2_sig = extract_v2_sig(signed_apk)
+    >>> meta = tuple(extract_meta(signed_apk))
     >>> with tempfile.TemporaryDirectory() as tmpdir:
     ...     out = os.path.join(tmpdir, "out.apk")
-    ...     date_time = asc.copy_apk(unsigned_apk, out)
-    ...     asc.patch_meta(meta, out, date_time=date_time)              # legacy format
-    ...     asc.extract_v2_sig(out, expected=False) is None
-    ...     asc.patch_v2_sig(v2_sig, out)
-    ...     asc.extract_v2_sig(out) == v2_sig
+    ...     date_time = copy_apk(unsigned_apk, out)
+    ...     patch_meta(meta, out, date_time=date_time)              # legacy format
+    ...     extract_v2_sig(out, expected=False) is None
+    ...     patch_v2_sig(v2_sig, out)
+    ...     extract_v2_sig(out) == v2_sig
     ...     with open(signed_apk, "rb") as a, open(out, "rb") as b:
     ...         a.read() == b.read()
     True
     True
     True
-    >>> v1_sig = asc.extract_v1_sig(signed_apk)
+    >>> v1_sig = extract_v1_sig(signed_apk)
     >>> with tempfile.TemporaryDirectory() as tmpdir:
     ...     out = os.path.join(tmpdir, "out.apk")
-    ...     date_time = asc.copy_apk(unsigned_apk, out, v1_sig=v1_sig)  # new format
-    ...     asc.extract_v2_sig(out, expected=False) is None
-    ...     asc.patch_v2_sig(v2_sig, out)
-    ...     asc.extract_v2_sig(out) == v2_sig
+    ...     date_time = copy_apk(unsigned_apk, out, v1_sig=v1_sig)  # new format
+    ...     extract_v2_sig(out, expected=False) is None
+    ...     patch_v2_sig(v2_sig, out)
+    ...     extract_v2_sig(out) == v2_sig
     ...     with open(signed_apk, "rb") as a, open(out, "rb") as b:
     ...         a.read() == b.read()
     True
