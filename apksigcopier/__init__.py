@@ -621,7 +621,7 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     >>> v1_sig = extract_v1_sig(apk)
     >>> fh = io.BytesIO(v1_sig)
     >>> zf = zipfile.ZipFile(fh, "r")
-    >>> [ x.filename for x in zf.infolist() ]
+    >>> [x.filename for x in zf.infolist()]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> for line in zf.read("META-INF/RSA-2048.SF").splitlines()[:4]:
     ...     print(line.decode())
@@ -636,9 +636,9 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     >>> zf.comment
     b'{"offsets":[[6,5109],[7,5595],[8,6706]]}'
     >>> v1_infos, v1_datas, v1_comment_data = extract_v1_sig_data(fh)
-    >>> [ x.filename for x in v1_infos ]
+    >>> [x.filename for x in v1_infos]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
-    >>> [ (k, len(v)) for k, v in v1_datas.items() ]
+    >>> [(k, len(v)) for k, v in v1_datas.items()]
     [('META-INF/RSA-2048.SF', 664), ('META-INF/RSA-2048.RSA', 1160), ('META-INF/MANIFEST.MF', 589)]
     >>> v1_comment_data
     {'offsets': [[6, 5109], [7, 5595], [8, 6706]]}
@@ -786,7 +786,8 @@ def validate_v1_sig_data(data: Dict[str, Any], n_infos: int) -> Optional[str]:
 
     Returns None if valid, error otherwise.
 
-    >>> validate_v1_sig_data(dict(offsets=[[0, 128], [1, 256]], zfe_size=132), 2)
+    >>> validate_v1_sig_data(dict(offsets=[[0, 128], [1, 256]], zfe_size=132), 2) is None
+    True
     >>> validate_v1_sig_data(dict(offsets=[[1, 2], [3]]), 2)
     '.offsets[1] is not a list of 2 ints'
 
@@ -822,7 +823,7 @@ def validate_v1_sig(infos: List[zipfile.ZipInfo], datas: Dict[str, bytes],
 
     >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
     >>> infos, datas, _ = extract_v1_sig_data(io.BytesIO(extract_v1_sig(apk)))
-    >>> [ x.filename for x in infos ]
+    >>> [x.filename for x in infos]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> validate_v1_sig(infos, datas) is None
     True
@@ -860,7 +861,7 @@ def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
 
     >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
     >>> meta = tuple(extract_meta(apk))
-    >>> [ x.filename for x, _ in meta ]
+    >>> [x.filename for x, _ in meta]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> for line in meta[0][1].splitlines()[:4]:
     ...     print(line.decode())
@@ -888,7 +889,7 @@ def extract_differences(signed_apk: str, extracted_meta: Optional[ZipInfoDataPai
     >>> import pprint
     >>> apk = "test/apks/apks/debuggable-boolean.apk"
     >>> meta = tuple(extract_meta(apk))
-    >>> [ x.filename for x, _ in meta ]
+    >>> [x.filename for x, _ in meta]
     ['META-INF/CERT.SF', 'META-INF/CERT.RSA', 'META-INF/MANIFEST.MF']
     >>> diff = extract_differences(apk, meta)
     >>> pprint.pprint(diff)
@@ -1001,7 +1002,7 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
     >>> unsigned_apk = "test/apks/apks/golden-aligned-in.apk"
     >>> signed_apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
     >>> meta = tuple(extract_meta(signed_apk))
-    >>> [ x.filename for x, _ in meta ]
+    >>> [x.filename for x, _ in meta]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> with zipfile.ZipFile(unsigned_apk, "r") as zf:
     ...     infos_in = zf.infolist()
