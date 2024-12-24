@@ -844,10 +844,12 @@ apksigner: verified
 apksigcopier: success
 
 apks/apks/v1-sha1-sha256-manifest-and-sf-with-sha1-wrong-in-manifest.apk
-apksigner: not verified
+apksigner: verified
+apksigcopier: success
 
 apks/apks/v1-sha1-sha256-manifest-and-sf-with-sha1-wrong-in-sf.apk
-apksigner: not verified
+apksigner: verified
+apksigcopier: success
 
 apks/apks/v1-sha1-sha256-manifest-and-sf-with-sha256-wrong-in-manifest.apk
 apksigner: not verified
