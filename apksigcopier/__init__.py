@@ -196,7 +196,7 @@ class APKZipInfo(ReproducibleZipInfo):
 
 
 def noautoyes(value: NoAutoYesBoolNone) -> NoAutoYes:
-    """
+    r"""
     Turns False into NO, None into AUTO, and True into YES.
 
     >>> from apksigcopier import noautoyes, NO, AUTO, YES
@@ -219,7 +219,7 @@ def noautoyes(value: NoAutoYesBoolNone) -> NoAutoYes:
 
 
 def is_meta(filename: str) -> bool:
-    """
+    r"""
     Returns whether filename is a v1 (JAR) signature file (.SF), signature block
     file (.RSA, .DSA, or .EC), or manifest (MANIFEST.MF).
 
@@ -242,7 +242,7 @@ def is_meta(filename: str) -> bool:
 
 
 def exclude_from_copying(filename: str) -> bool:
-    """
+    r"""
     Returns whether to exclude a file during copy_apk().
 
     Excludes filenames in COPY_EXCLUDE (i.e. MANIFEST.MF) by default; when
@@ -398,7 +398,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
              exclude: Optional[Callable[[str], bool]] = None,
              realign: Optional[bool] = None, zfe_size: Optional[int] = None,
              v1_sig: Optional[bytes] = None) -> DateTime:
-    """
+    r"""
     Copy APK like apksigner would, excluding files matched by exclude_from_copying().
 
     Copies a v1 signature if v1_sig is provided; adds a zipflinger virtual entry
@@ -612,7 +612,7 @@ def _copy_bytes(fhi: BinaryIO, fho: BinaryIO, size: int, blocksize: int = 4096) 
 
 
 def extract_v1_sig(apkfile: str) -> Optional[bytes]:
-    """
+    r"""
     Extract v1 signature data as ZIP file data.
 
     >>> import io
@@ -774,7 +774,7 @@ def extract_v1_sig_data(fhi: BinaryIO) -> Tuple[List[zipfile.ZipInfo], Dict[str,
 
 
 def validate_v1_sig_data(data: Dict[str, Any], n_infos: int) -> Optional[str]:
-    """
+    r"""
     Validate data from v1_sig comment.
 
     Returns None if valid, error otherwise.
@@ -806,7 +806,7 @@ def validate_v1_sig_data(data: Dict[str, Any], n_infos: int) -> Optional[str]:
 
 # NB: superseded by the new extract_v1_sig() format
 def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
-    """
+    r"""
     Extract legacy v1 signature metadata files from signed APK.
 
     Yields (ZipInfo, data) pairs.
@@ -836,7 +836,7 @@ def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
 
 def extract_differences(signed_apk: str, extracted_meta: Optional[ZipInfoDataPairs]) \
         -> Optional[Dict[str, Any]]:
-    """
+    r"""
     Extract ZIP metadata differences from signed APK.
 
     >>> import apksigcopier as asc, pprint
@@ -949,7 +949,7 @@ def _get_compressed_crc(apkfile: str, info: zipfile.ZipInfo) -> int:
 def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
                date_time: DateTime = DATETIMEZERO, *,
                differences: Optional[Dict[str, Any]] = None) -> None:
-    """
+    r"""
     Add legacy v1 signature metadata to APK (removes v2 sig block, if any).
 
     >>> import apksigcopier as asc
@@ -1006,7 +1006,7 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
 
 
 def extract_v2_sig(apkfile: str, expected: bool = True) -> Optional[Tuple[int, bytes]]:
-    """
+    r"""
     Extract APK Signing Block and offset from APK.
 
     When successful, returns (sb_offset, sig_block); otherwise raises
@@ -1049,7 +1049,7 @@ def extract_v2_sig(apkfile: str, expected: bool = True) -> Optional[Tuple[int, b
 
 # FIXME: OSError for APKs < 1024 bytes [wontfix]
 def zip_data(apkfile: str, count: int = 1024) -> ZipData:
-    """
+    r"""
     Extract central directory, EOCD, and offsets from ZIP.
 
     Returns ZipData.
@@ -1084,7 +1084,7 @@ def _zip_data(fh: BinaryIO, count: int = 1024) -> ZipData:
 
 # FIXME: can we determine signed_sb_offset?
 def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
-    """
+    r"""
     Implant extracted v2/v3 signature into APK.
 
     >>> import apksigcopier as asc
