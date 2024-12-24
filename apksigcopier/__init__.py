@@ -157,7 +157,7 @@ class ZipError(APKSigCopierError):
 # NB: superseded by the new extract_v1_sig() format
 # FIXME: is there a better alternative?
 class ReproducibleZipInfo(zipfile.ZipInfo):
-    """Reproducible ZipInfo hack."""
+    """Reproducible ZipInfo hack (legacy)."""
 
     _override: Dict[str, Any] = {}
 
@@ -180,7 +180,7 @@ class ReproducibleZipInfo(zipfile.ZipInfo):
 
 # See VALID_ZIP_META
 class APKZipInfo(ReproducibleZipInfo):
-    """Reproducible ZipInfo for APK files."""
+    """Reproducible ZipInfo for APK files (legacy)."""
 
     COMPRESSLEVEL = 9
 
