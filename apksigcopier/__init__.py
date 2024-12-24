@@ -55,6 +55,7 @@ override the default behaviour:
 import glob
 import io
 import json
+import hashlib
 import os
 import re
 import struct
@@ -1181,6 +1182,25 @@ def verify_apk(apk: str, min_sdk_version: Optional[int] = None,
         raise APKSigCopierError(f"{args[0]} command not found")     # pylint: disable=W0707
 
 
+def sha256_file(filename: str) -> str:
+    r"""
+    Calculate SHA-256 checksum of file.
+
+    >>> sha256_file("/dev/null")
+    'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+    >>> sha256_file("test/apks/apks/golden-aligned-in.apk")
+    '0e896ce038fb093e1342f65e815ffe45c121ea0a61ebc46bdc48b775866a6185'
+    >>> sha256_file("test/apks/apks/golden-aligned-v1v2v3-out.apk")
+    'ba7828ba42a3b68bd3acff78773e41d6a62aabe6317538671441c568748d9cd7'
+
+    """
+    with open(filename, "rb") as fh:
+        sha = hashlib.sha256()
+        while chunk := fh.read(4096):
+            sha.update(chunk)
+        return sha.hexdigest()
+
+
 # FIXME: support multiple signers?
 def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO,
                *, ignore_differences: bool = False, legacy: Optional[bool] = None) -> None:
@@ -1320,24 +1340,52 @@ def do_copy(signed_apk: str, unsigned_apk: str, output_apk: str,
 
 def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
                min_sdk_version: Optional[int] = None, *,
+               check_signature: bool = True, check_sha256: bool = True,
                ignore_differences: bool = False, legacy: Optional[bool] = None,
                verify_cmd: Optional[Tuple[str, ...]] = None) -> None:
-    """
+    r"""
     Compare first_apk to second_apk by:
     * using apksigner to check if the first APK verifies
     * checking if the second APK also verifies (unless unsigned is True)
     * copying the signature from first_apk to a copy of second_apk
     * checking if the resulting APK verifies
+    * checking if the SHA-256 hash of the resulting APK is identical to that of the original
+
+    You can disable the apksigner signature verification and SHA-256 checks (but
+    not both) by setting check_signature=False or check_sha256=False,
+    respectively; disabling the SHA-256 check will still print a warning on
+    mismatch.
+
+    >>> first_apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
+    >>> second_apk = "test/apks/apks/golden-aligned-in.apk"
+    >>> do_compare(first_apk, second_apk, unsigned=True, check_signature=False)
+    >>> try:
+    ...     do_compare(first_apk, "test/apks/apks/debuggable-boolean.apk", check_signature=False)
+    ... except APKSigCopierError as e:
+    ...     print(e)
+    SHA-256 mismatch: expected 'ba7828ba42a3b68bd3acff78773e41d6a62aabe6317538671441c568748d9cd7', actual '506ced930918475beb19d003206b6c1a77ff5b67bbe6c4fa47dac648ee615e16'
+
     """
-    verify_apk(first_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
-    if not unsigned:
-        verify_apk(second_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
+    if not (check_signature or check_sha256):
+        raise ValueError("Expected either check_signature or check_sha256")
+    sha256_first = sha256_file(first_apk)
+    if check_signature:
+        verify_apk(first_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
+        if not unsigned:
+            verify_apk(second_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
     with tempfile.TemporaryDirectory() as tmpdir:
         output_apk = os.path.join(tmpdir, "output.apk")        # FIXME
         exclude = exclude_default if unsigned else exclude_meta
-        do_copy(first_apk, second_apk, output_apk, AUTO, exclude=exclude,
+        do_copy(first_apk, second_apk, output_apk, v1_only=AUTO, exclude=exclude,
                 ignore_differences=ignore_differences, legacy=legacy)
-        verify_apk(output_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
+        if check_signature:
+            verify_apk(output_apk, min_sdk_version=min_sdk_version, verify_cmd=verify_cmd)
+        sha256_output = sha256_file(output_apk)
+        if sha256_first != sha256_output:
+            error = f"SHA-256 mismatch: expected {sha256_first!r}, actual {sha256_output!r}"
+            if check_sha256:
+                raise APKSigCopierError(error)
+            print(f"Warning: {error}.", file=sys.stderr)
 
 
 def main() -> None:
@@ -1401,10 +1449,16 @@ def main() -> None:
 
     @cli.command(help="""
         Compare two APKs by copying the signature from the first to a copy of
-        the second and checking if the resulting APK verifies.
+        the second and checking if the resulting APK verifies.  Also checks if
+        the SHA-256 hash of the resulting APK is identical to that of the
+        original (only warns when --no-check-sha256 is used).
 
-        This command requires apksigner.
+        This command requires apksigner (unless --no-check-signature is used).
     """)
+    @click.option("--no-check-signature", "check_signature", flag_value=False, default=True,
+                  help="Don't verify signature with apksigner.")
+    @click.option("--no-check-sha256", "check_sha256", flag_value=False, default=True,
+                  help="Don't check for identical SHA-256.")
     @click.option("--unsigned", is_flag=True, help="Accept unsigned SECOND_APK.")
     @click.option("--min-sdk-version", type=click.INT, help="Passed to apksigner.")
     @click.option("--ignore-differences", is_flag=True, help="Don't copy metadata differences.")
@@ -1414,7 +1468,11 @@ def main() -> None:
                   f"verify APKs.  [default: {' '.join(VERIFY_CMD)!r}]")
     @click.argument("first_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("second_apk", type=click.Path(exists=True, dir_okay=False))
-    def compare(*args: Any, **kwargs: Any) -> None:
+    @click.pass_context
+    def compare(ctx: click.Context, /, *args: Any, **kwargs: Any) -> None:
+        if not (kwargs["check_signature"] or kwargs["check_sha256"]):
+            raise click.exceptions.BadParameter(
+                "Conflicting options: --no-check-signature and --no-check-sha256", ctx)
         if kwargs["verify_cmd"] is not None:
             kwargs["verify_cmd"] = tuple(kwargs["verify_cmd"].split())
         do_compare(*args, **kwargs)

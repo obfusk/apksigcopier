@@ -62,9 +62,11 @@ $ apksigcopier copy signed.apk unsigned.apk out.apk
 ### Compare (Copy & Verify)
 
 Compare two APKs by copying the signature from the first to a copy of the second
-and checking if the resulting APK verifies.
+and checking if the resulting APK verifies.  Also checks if the SHA-256 hash of
+the resulting APK is identical to that of the original (only warns when
+`--no-check-sha256` is used).
 
-This command requires `apksigner`.
+This command requires `apksigner` (unless `--no-check-signature` is used).
 
 ```bash
 $ apksigcopier compare foo-from-fdroid.apk foo-built-locally.apk
