@@ -4,7 +4,8 @@
 [![GitHub Release](https://img.shields.io/github/release/obfusk/apksigcopier.svg?logo=github)](https://github.com/obfusk/apksigcopier/releases)
 [![PyPI Version](https://img.shields.io/pypi/v/apksigcopier.svg)](https://pypi.python.org/pypi/apksigcopier)
 [![Python Versions](https://img.shields.io/pypi/pyversions/apksigcopier.svg)](https://pypi.python.org/pypi/apksigcopier)
-[![CI](https://github.com/obfusk/apksigcopier/workflows/CI/badge.svg)](https://github.com/obfusk/apksigcopier/actions?query=workflow%3ACI)
+[![CI](https://github.com/obfusk/apksigcopier/actions/workflows/ci.yml/badge.svg)](https://github.com/obfusk/apksigcopier/actions/workflows/ci.yml)
+[![CI (more)](https://github.com/obfusk/apksigcopier/actions/workflows/ci-more.yml/badge.svg)](https://github.com/obfusk/apksigcopier/actions/workflows/ci-more.yml)
 [![GPLv3+](https://img.shields.io/badge/license-GPLv3+-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 
 <a href="https://repology.org/project/apksigcopier/versions">
