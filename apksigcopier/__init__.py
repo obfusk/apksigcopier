@@ -1242,6 +1242,35 @@ def sha256_file(filename: str) -> str:
         return sha.hexdigest()
 
 
+def has_v1_signature(apkfile: str) -> bool:
+    r"""
+    Check for signature (block) files indicating a v1 signature.
+
+    NB: intentionally skips MANIFEST.MF and returns True for unpaired files!
+
+    >>> has_v1_signature("test/apks/apks/golden-aligned-in.apk")
+    False
+    >>> has_v1_signature("test/apks/apks/golden-aligned-v1v2v3-out.apk")
+    True
+    >>> has_v1_signature("test/apks/apks/golden-aligned-v2v3-out.apk")
+    False
+    >>> with tempfile.TemporaryDirectory() as tmpdir:
+    ...     out = os.path.join(tmpdir, "out.apk")
+    ...     with zipfile.ZipFile(out, "w") as zf:
+    ...         zf.writestr(JAR_MANIFEST, "")
+    ...     has_v1_signature(out)
+    ...     with zipfile.ZipFile(out, "w") as zf:
+    ...         zf.writestr("META-INF/CERT.SF", "")
+    ...     has_v1_signature(out)
+    False
+    True
+
+    """
+    with zipfile.ZipFile(apkfile, "r") as zf:
+        infos = zf.infolist()
+    return any(is_meta(info.filename) and info.filename != JAR_MANIFEST for info in infos)
+
+
 # FIXME: support multiple signers?
 def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO,
                *, ignore_differences: bool = False, legacy: Optional[bool] = None) -> None:
