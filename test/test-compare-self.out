@@ -165,7 +165,8 @@ apksigcopier: success
 
 apks/apks/mismatched-compression-method.apk
 apksigner: verified
-apksigcopier: success
+Error: Unsupported LFH for 'META-INF/CERT.RSA': compression method mismatch.
+apksigcopier: failure
 
 apks/apks/original-with-stamp-file.apk
 apksigner: verified
