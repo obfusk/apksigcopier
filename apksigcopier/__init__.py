@@ -94,6 +94,9 @@ META_EXT: Tuple[str, ...] = ("SF", "RSA|DSA|EC", "MF")
 COPY_EXCLUDE: Tuple[str, ...] = ("META-INF/MANIFEST.MF",)
 DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
 
+JAR_MANIFEST = "META-INF/MANIFEST.MF"
+JAR_SBF_EXTS = ("RSA", "DSA", "EC")
+
 VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 
 ################################################################################
@@ -466,6 +469,8 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         v1_cd_offset = _zip_data(v1_sig_fhi, count=min(65536, len(v1_sig))).cd_offset
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
         infos = zf.infolist()
+        if v1_sig and (error := validate_v1_sig(v1_infos, v1_datas, zf)):
+            raise APKSigCopierError(f"Invalid v1_sig: {error}")
     zdata = zip_data(unsigned_apk)
     offsets: Dict[str, int] = {}
     with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
@@ -800,6 +805,32 @@ def validate_v1_sig_data(data: Dict[str, Any], n_infos: int) -> Optional[str]:
             return ".zfe_size is not an int"
         if not (30 <= data["zfe_size"] <= 4096):
             return ".zfe_size is < 30 or > 4096"
+    return None
+
+
+def validate_v1_sig(infos: List[zipfile.ZipInfo], datas: Dict[str, bytes],
+                    output_zf: Optional[zipfile.ZipFile] = None) -> Optional[str]:
+    """
+    Validate data from v1_sig.
+
+    NB: does not validate the signature (files)!
+
+    Returns None if valid, error otherwise.
+    """
+    filenames = set(info.filename for info in infos)
+    if JAR_MANIFEST not in filenames:
+        return "missing manifest"
+    for info in infos:
+        base = info.filename.rsplit(".", 1)[0]
+        if info.filename.endswith(".SF"):
+            if sum(1 for ext in JAR_SBF_EXTS if f"{base}.{ext}" in filenames) != 1:
+                return "signature block file mismatch"
+        elif any(info.filename.endswith(f".{ext}") for ext in JAR_SBF_EXTS):
+            if f"{base}.SF" not in filenames:
+                return "signature file missing"
+    if len(filenames) == 1 and output_zf:
+        if output_zf.read(JAR_MANIFEST) != datas[JAR_MANIFEST]:
+            return "manifest data mismatch"
     return None
 
 
