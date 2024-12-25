@@ -2,23 +2,11 @@
 # encoding: utf-8
 
 import glob
-import hashlib
 import os
 import tempfile
 import zipfile
 
 import apksigcopier
-
-
-def shasum(filename: str) -> str:
-    m = hashlib.sha256()
-    with open(filename, "rb") as fh:
-        while True:
-            data = fh.read(4096)
-            if not data:
-                break
-            m.update(data)
-    return m.hexdigest()
 
 
 with tempfile.TemporaryDirectory() as tmpdir:
@@ -37,7 +25,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
         except (apksigcopier.APKSigCopierError, zipfile.BadZipFile) as e:
             print(f"copy failed: {e}")
         else:
-            expected, got = shasum(apk), shasum(output_apk)
+            expected, got = apksigcopier.sha256_file(apk), apksigcopier.sha256_file(output_apk)
             if expected == got:
                 print("checksum OK")
             else:
