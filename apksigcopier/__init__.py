@@ -719,8 +719,12 @@ def validate_zip_header(hdr: bytes, info: zipfile.ZipInfo, datas: Dict[str, byte
         filename = hdr[30:30 + n]
         extra = hdr[30 + n:30 + n + m]
         if data_descriptor:
-            # FIXME: check old values are zero or equal?
-            crc32, compressed_size, uncompressed_size = struct.unpack("<III", data_descriptor[-12:])
+            old = crc32, compressed_size, uncompressed_size
+            new = struct.unpack("<III", data_descriptor[-12:])
+            crc32, compressed_size, uncompressed_size = new
+            for a, b in zip(old, new):
+                if a not in (0, b):
+                    return "data descriptor mismatch"
         version_created = start_disk = internal_attrs = external_attrs = 0
         comment = b""
     else:                               # CDFH
@@ -745,7 +749,7 @@ def validate_zip_header(hdr: bytes, info: zipfile.ZipInfo, datas: Dict[str, byte
         return f"unsupported compression method: {compression_method}"
     if compression_method != info.compress_type:
         return "compression method mismatch"
-    if crc32 != info.CRC:
+    if crc32 != zlib.crc32(datas[info.filename]):
         return "crc32 mismatch"
     if compressed_size != info.compress_size:
         return "compressed size mismatch"
