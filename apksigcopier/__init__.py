@@ -655,10 +655,11 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     comment = json.dumps(comment_data, separators=(",", ":"), sort_keys=True).encode()
     offsets: Dict[str, int] = {}
     fho = io.BytesIO()
+    cd_offset_in = zip_data(apkfile).cd_offset
     with open(apkfile, "rb") as fhi:
         copy_v1_sig_entries(fhi, fho, infos, datas, offsets)
         cd_offset = fho.tell()
-        fhi.seek(_zip_data(fhi).cd_offset)
+        fhi.seek(cd_offset_in)
         copy_v1_sig_cd_entries(fhi, fho, infos, datas, offsets)
         eocd_offset = fho.tell()
         fho.write(_eocd(len(offsets), eocd_offset, cd_offset, comment))
@@ -1092,8 +1093,7 @@ def extract_v2_sig(apkfile: str, expected: bool = True) -> Optional[Tuple[int, b
     return sb_offset, sig_block
 
 
-# FIXME: OSError for APKs < 1024 bytes [wontfix]
-def zip_data(apkfile: str, count: int = 1024) -> ZipData:
+def zip_data(apkfile: str, count: int = 65536) -> ZipData:
     r"""
     Extract central directory, EOCD, and offsets from ZIP.
 
@@ -1108,10 +1108,10 @@ def zip_data(apkfile: str, count: int = 1024) -> ZipData:
 
     """
     with open(apkfile, "rb") as fh:
-        return _zip_data(fh, count)
+        return _zip_data(fh, count=min(os.path.getsize(apkfile), count))
 
 
-def _zip_data(fh: BinaryIO, count: int = 1024) -> ZipData:
+def _zip_data(fh: BinaryIO, count: int = 65536) -> ZipData:
     fh.seek(-count, os.SEEK_END)
     data = fh.read()
     pos = data.rfind(b"\x50\x4b\x05\x06")
