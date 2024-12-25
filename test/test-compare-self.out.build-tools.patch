@@ -1,0 +1,42 @@
+--- a/test/test-compare-self.out
++++ b/test/test-compare-self.out
+@@ -342,8 +342,7 @@ apksigner: verified
+ apksigcopier: success
+ 
+ apks/apks/v1-only-11-signers.apk
+-apksigner: verified
+-apksigcopier: success
++apksigner: not verified
+ 
+ apks/apks/v1-only-max-sized-eocd-comment.apk
+ apksigner: verified
+@@ -997,8 +996,7 @@ apksigner: verified
+ apksigcopier: success
+ 
+ apks/apks/v2-only-11-signers.apk
+-apksigner: verified
+-apksigcopier: success
++apksigner: not verified
+ 
+ apks/apks/v2-only-apk-sig-block-size-mismatch.apk
+ apksigner: not verified
+@@ -1371,8 +1369,7 @@ apks/apks/v31-2elem-lineage-incorrect-digest.apk
+ apksigner: not verified
+ 
+ apks/apks/v31-block-stripped-v3-attr-value-33.apk
+-apksigner: verified
+-apksigcopier: success
++apksigner: not verified
+ 
+ apks/apks/v31-ec-p256-2-tgt-33-1-tgt-28-targetSdk-30.apk
+ apksigner: verified
+@@ -1406,8 +1403,7 @@ apks/apks/v31-tgt-33-no-v3-block.apk
+ apksigner: not verified
+ 
+ apks/apks/v31-tgt-34-v3-attr-value-33.apk
+-apksigner: verified
+-apksigcopier: success
++apksigner: not verified
+ 
+ apks/apks/v41-digest-mismatched-with-v31.apk
+ apksigner: verified
