@@ -1307,14 +1307,14 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
             raise APKSigCopierError(f"Expected {what}")
         return
     signed_sb_offset, signed_sb = v2_sig
-    with open(os.path.join(output_dir, SIGOFFSET), "w") as fh:
+    with open(os.path.join(output_dir, SIGOFFSET), "w", encoding="utf-8") as fh:
         fh.write(str(signed_sb_offset) + "\n")
     with open(os.path.join(output_dir, SIGBLOCK), "wb") as fh:
         fh.write(signed_sb)
     if not (ignore_differences or v1_sig):
         differences = extract_differences(signed_apk, extracted_meta)
         if differences:
-            with open(os.path.join(output_dir, DIFF_JSON), "w") as fh:
+            with open(os.path.join(output_dir, DIFF_JSON), "w", encoding="utf-8") as fh:
                 json.dump(differences, fh, sort_keys=True, indent=2)
                 fh.write("\n")
 
@@ -1359,14 +1359,14 @@ def do_patch(metadata_dir: str, unsigned_apk: str, output_apk: str,
                 raise APKSigCopierError("Expected v2/v3 signature")
             v2_sig = None
         else:
-            with open(sigoffset_file, "r") as fh:
+            with open(sigoffset_file, "r", encoding="utf-8") as fh:
                 signed_sb_offset = int(fh.read())
             with open(sigblock_file, "rb") as fh:
                 signed_sb = fh.read()
             v2_sig = signed_sb_offset, signed_sb
             differences_file = os.path.join(metadata_dir, DIFF_JSON)
             if not ignore_differences and os.path.exists(differences_file):
-                with open(differences_file, "r") as fh:
+                with open(differences_file, "r", encoding="utf-8") as fh:
                     try:
                         differences = json.load(fh)
                     except json.JSONDecodeError as e:
