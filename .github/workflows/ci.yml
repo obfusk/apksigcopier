@@ -209,3 +209,15 @@ jobs:
         apksigcopier compare --legacy mastodon-release.apk copied-dummy.apk
     - name: Test APKs
       run: make test-apks
+    - name: Test more APKs
+      run: |
+        set -x
+        _dir="${PWD}"
+        git clone https://github.com/obfusk/test-apks-more.git
+        cd test-apks-more
+        git checkout 48d260325fe4c393c4851711348481d2cc024940
+        git clone -b v0.3.0 https://github.com/obfusk/reproducible-apk-tools.git
+        ./test.sh
+        export PATH="${_dir}/build-tools:${PATH}"
+        test "$( command -v apksigner )" = "${_dir}/build-tools/apksigner"
+        ./test.sh
