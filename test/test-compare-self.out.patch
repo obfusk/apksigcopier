@@ -1,6 +1,6 @@
 --- a/test/test-compare-self.out
 +++ b/test/test-compare-self.out
-@@ -165,8 +165,8 @@ apksigcopier: success
+@@ -211,8 +211,8 @@ apksigner: not verified
  
  apks/apks/mismatched-compression-method.apk
  apksigner: verified
@@ -9,9 +9,9 @@
 +Warning: SHA-256 mismatch: expected 'a6f454f39765817f0569a52cf545f5898495e6ccfc3b0bde202f84509c60ae75', actual '82fd84f6a9423cb33d7aad6f54ac6661c13debf733afc88fa095f76d4a1986c5'.
 +apksigcopier: success
  
- apks/apks/original-with-stamp-file.apk
+ apks/apks/original-minSdk32.apk
  apksigner: verified
-@@ -250,10 +250,12 @@ apksigcopier: failure
+@@ -352,10 +352,12 @@ apksigcopier: failure
  
  apks/apks/v1-only-no-uses-sdk.apk
  apksigner: verified
@@ -24,7 +24,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-targetSandboxVersion-2.apk
-@@ -261,6 +263,7 @@ apksigner: not verified
+@@ -363,6 +365,7 @@ apksigner: not verified
  
  apks/apks/v1-only-two-signers.apk
  apksigner: verified
@@ -32,7 +32,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-with-cr-in-entry-name.apk
-@@ -268,74 +271,92 @@ apksigner: not verified
+@@ -370,74 +373,92 @@ apksigner: not verified
  
  apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.1-1024.apk
  apksigner: verified
@@ -125,7 +125,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-with-dsa-sha384-2.16.840.1.101.3.4.3.3-1024.apk
-@@ -358,122 +379,152 @@ apksigner: not verified
+@@ -460,122 +481,152 @@ apksigner: not verified
  
  apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.2.1-p256.apk
  apksigner: verified
@@ -278,7 +278,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-with-lf-in-entry-name.apk
-@@ -481,18 +532,24 @@ apksigner: not verified
+@@ -583,18 +634,24 @@ apksigner: not verified
  
  apks/apks/v1-only-with-nul-in-entry-name.apk
  apksigner: verified
@@ -304,7 +304,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-with-rsa-2048.apk
-@@ -501,26 +558,32 @@ apksigcopier: success
+@@ -603,26 +660,32 @@ apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-1024.apk
  apksigner: verified
@@ -337,7 +337,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.4-1024.apk
-@@ -549,26 +612,32 @@ apksigcopier: success
+@@ -651,26 +714,32 @@ apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-1024.apk
  apksigner: verified
@@ -370,7 +370,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.5-1024.apk
-@@ -597,26 +666,32 @@ apksigcopier: success
+@@ -699,26 +768,32 @@ apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-1024.apk
  apksigner: verified
@@ -403,7 +403,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.14-1024.apk
-@@ -645,26 +720,32 @@ apksigcopier: success
+@@ -747,26 +822,32 @@ apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-1024.apk
  apksigner: verified
@@ -436,7 +436,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.11-1024.apk
-@@ -693,26 +774,32 @@ apksigcopier: success
+@@ -795,26 +876,32 @@ apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-1024.apk
  apksigner: verified
@@ -469,7 +469,7 @@
  apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.12-1024.apk
-@@ -741,26 +828,32 @@ apksigcopier: success
+@@ -843,26 +930,32 @@ apksigcopier: success
  
  apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-1024.apk
  apksigner: verified
