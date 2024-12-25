@@ -25,6 +25,10 @@ apks/apks/golden-aligned-v1v2v3-lineage-out.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/golden-aligned-v1v2v3-lineage-out_v2.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/golden-aligned-v1v2v3-out.apk
 apksigner: verified
 apksigcopier: success
@@ -37,6 +41,10 @@ apks/apks/golden-aligned-v2v3-lineage-out.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/golden-aligned-v2v3-lineage-out_v2.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/golden-aligned-v2v3-out.apk
 apksigner: verified
 apksigcopier: success
@@ -45,7 +53,15 @@ apks/apks/golden-aligned-v3-lineage-out.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/golden-aligned-v3-lineage-out_v2.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/golden-aligned-v3-out.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/golden-file-size-aligned.apk
 apksigner: verified
 apksigcopier: success
 
@@ -68,6 +84,10 @@ apks/apks/golden-legacy-aligned-v1v2v3-lineage-out.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/golden-legacy-aligned-v1v2v3-lineage-out_v2.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/golden-legacy-aligned-v1v2v3-out.apk
 apksigner: verified
 apksigcopier: success
@@ -80,11 +100,19 @@ apks/apks/golden-legacy-aligned-v2v3-lineage-out.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/golden-legacy-aligned-v2v3-lineage-out_v2.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/golden-legacy-aligned-v2v3-out.apk
 apksigner: verified
 apksigcopier: success
 
 apks/apks/golden-legacy-aligned-v3-lineage-out.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/golden-legacy-aligned-v3-lineage-out_v2.apk
 apksigner: verified
 apksigcopier: success
 
@@ -139,6 +167,10 @@ apks/apks/golden-unaligned-v1v2v3-lineage-out.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/golden-unaligned-v1v2v3-lineage-out_v2.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/golden-unaligned-v1v2v3-out.apk
 apksigner: verified
 apksigcopier: success
@@ -151,6 +183,10 @@ apks/apks/golden-unaligned-v2v3-lineage-out.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/golden-unaligned-v2v3-lineage-out_v2.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/golden-unaligned-v2v3-out.apk
 apksigner: verified
 apksigcopier: success
@@ -159,14 +195,32 @@ apks/apks/golden-unaligned-v3-lineage-out.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/golden-unaligned-v3-lineage-out_v2.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/golden-unaligned-v3-out.apk
 apksigner: verified
 apksigcopier: success
+
+apks/apks/incorrect-manifest-size.apk
+apksigner: not verified
+
+apks/apks/invalid_manifest.apk
+apksigner: not verified
 
 apks/apks/mismatched-compression-method.apk
 apksigner: verified
 Error: Unsupported LFH for 'META-INF/CERT.RSA': compression method mismatch.
 apksigcopier: failure
+
+apks/apks/original-minSdk32.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/original-minSdk33.apk
+apksigner: verified
+apksigcopier: success
 
 apks/apks/original-with-stamp-file.apk
 apksigner: verified
@@ -203,6 +257,18 @@ apks/apks/stamp-certificate-mismatch.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/stamp-int-timestamp-value.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/stamp-invalid-timestamp-value-less-than-zero.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/stamp-invalid-timestamp-value-zero.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/stamp-lineage-invalid.apk
 apksigner: verified
 apksigcopier: success
@@ -216,6 +282,34 @@ apksigner: verified
 apksigcopier: success
 
 apks/apks/stamp-malformed-signature.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/stamp-only-unknown-sigs.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/stamp-timestamp-in-last-8-of-16-byte-buffer.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/stamp-unknown-attr.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/stamp-unknown-sig.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/stamp-valid-timestamp-16-byte-buffer.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/stamp-valid-timestamp-value-modified.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/stamp-valid-timestamp-value.apk
 apksigner: verified
 apksigcopier: success
 
@@ -242,6 +336,14 @@ apksigner: not verified
 
 apks/apks/v1-ec-p256-targetSdk-30.apk
 apksigner: not verified
+
+apks/apks/v1-only-10-signers.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v1-only-11-signers.apk
+apksigner: verified
+apksigcopier: success
 
 apks/apks/v1-only-max-sized-eocd-comment.apk
 apksigner: verified
@@ -890,6 +992,14 @@ apks/apks/v2-ec-p256-targetSdk-30.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/v2-only-10-signers.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v2-only-11-signers.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/v2-only-apk-sig-block-size-mismatch.apk
 apksigner: not verified
 
@@ -1247,8 +1357,61 @@ apks/apks/v3-only-with-stamp.apk
 apksigner: verified
 apksigcopier: success
 
+apks/apks/v3-rsa-2048_2-tgt-dev-release.apk
+apksigner: verified
+apksigcopier: success
+
 apks/apks/v3-stripped.apk
 apksigner: not verified
+
+apks/apks/v31-2elem-incorrect-lineage.apk
+apksigner: not verified
+
+apks/apks/v31-2elem-lineage-incorrect-digest.apk
+apksigner: not verified
+
+apks/apks/v31-block-stripped-v3-attr-value-33.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v31-ec-p256-2-tgt-33-1-tgt-28-targetSdk-30.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v31-rsa-2048_2-tgt-10000-1-tgt-28.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v31-rsa-2048_2-tgt-10000-dev-release.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v31-rsa-2048_2-tgt-33-1-tgt-28.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v31-rsa-2048_2-tgt-34-1-tgt-28.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v31-rsa-2048_2-tgt-34-dev-release.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v31-tgt-33-no-v3-attr.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v31-tgt-33-no-v3-block.apk
+apksigner: not verified
+
+apks/apks/v31-tgt-34-v3-attr-value-33.apk
+apksigner: verified
+apksigcopier: success
+
+apks/apks/v41-digest-mismatched-with-v31.apk
+apksigner: verified
+apksigcopier: success
 
 apks/apks/valid-stamp.apk
 apksigner: verified
