@@ -461,9 +461,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         realign = not skip_realignment
     if v1_sig:
         v1_sig_fhi = io.BytesIO(v1_sig)
-        v1_infos, v1_datas, v1_comment_data = extract_v1_sig_data(v1_sig_fhi)
-        v1_indices = {idx: i for i, (idx, _) in enumerate(v1_comment_data["offsets"])}
-        v1_offsets = {off: i for i, (_, off) in enumerate(v1_comment_data["offsets"])}
+        v1_infos, v1_datas, v1_comment_data, v1_indices, v1_offsets = extract_v1_sig_data(v1_sig_fhi)
         if "zfe_size" in v1_comment_data and not zfe_size:
             zfe_size = int(v1_comment_data["zfe_size"])
         v1_cd_offset = _zip_data(v1_sig_fhi, count=min(65536, len(v1_sig))).cd_offset
@@ -635,13 +633,17 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     Created-By: 1.8.0_45-internal (Oracle Corporation)
     >>> zf.comment
     b'{"offsets":[[6,5109],[7,5595],[8,6706]]}'
-    >>> v1_infos, v1_datas, v1_comment_data = extract_v1_sig_data(fh)
-    >>> [x.filename for x in v1_infos]
+    >>> infos, datas, comment_data, indices, offsets = extract_v1_sig_data(fh)
+    >>> [x.filename for x in infos]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
-    >>> [(k, len(v)) for k, v in v1_datas.items()]
+    >>> [(k, len(v)) for k, v in datas.items()]
     [('META-INF/RSA-2048.SF', 664), ('META-INF/RSA-2048.RSA', 1160), ('META-INF/MANIFEST.MF', 589)]
-    >>> v1_comment_data
+    >>> comment_data
     {'offsets': [[6, 5109], [7, 5595], [8, 6706]]}
+    >>> indices
+    {6: 0, 7: 1, 8: 2}
+    >>> offsets
+    {5109: 0, 5595: 1, 6706: 2}
 
     """
     with zipfile.ZipFile(apkfile, "r") as zf:
@@ -770,9 +772,14 @@ def validate_zip_header(hdr: bytes, info: zipfile.ZipInfo, datas: Dict[str, byte
     return None
 
 
-def extract_v1_sig_data(fhi: BinaryIO) -> Tuple[List[zipfile.ZipInfo], Dict[str, bytes],
-                                                Dict[str, Any]]:
-    """Extract data from v1_sig comment."""
+def extract_v1_sig_data(fhi: BinaryIO) -> Tuple[
+        List[zipfile.ZipInfo], Dict[str, bytes], Dict[str, Any],
+        Dict[int, int], Dict[int, int]]:
+    """
+    Extract validated data from v1_sig comment.
+
+    Returns (infos, datas, comment_data, indices, offsets).
+    """
     with zipfile.ZipFile(fhi, "r") as zf:
         infos = zf.infolist()
         datas = {info.filename: zf.read(info.filename) for info in infos}
@@ -782,7 +789,9 @@ def extract_v1_sig_data(fhi: BinaryIO) -> Tuple[List[zipfile.ZipInfo], Dict[str,
             raise APKSigCopierError(f"Invalid {V1SIGZIP} comment: {e}")     # pylint: disable=W0707
         if error := validate_v1_sig_data(comment_data, len(infos)):
             raise APKSigCopierError(f"Invalid {V1SIGZIP} comment: {error}")
-    return infos, datas, comment_data
+    indices = {idx: i for i, (idx, _) in enumerate(comment_data["offsets"])}
+    offsets = {off: i for i, (_, off) in enumerate(comment_data["offsets"])}
+    return infos, datas, comment_data, indices, offsets
 
 
 def validate_v1_sig_data(data: Dict[str, Any], n_infos: int) -> Optional[str]:
@@ -795,6 +804,10 @@ def validate_v1_sig_data(data: Dict[str, Any], n_infos: int) -> Optional[str]:
     True
     >>> validate_v1_sig_data(dict(offsets=[[1, 2], [3]]), 2)
     '.offsets[1] is not a list of 2 ints'
+    >>> validate_v1_sig_data(dict(offsets=[[0, 42], [1, 42]]), 2)
+    '.offsets contains duplicates'
+    >>> validate_v1_sig_data(dict(offsets=[[0, 37], [0, 42]]), 2)
+    '.offsets contains duplicates'
 
     """
     if set(data) - {"offsets", "zfe_size"}:
@@ -809,6 +822,12 @@ def validate_v1_sig_data(data: Dict[str, Any], n_infos: int) -> Optional[str]:
         if not isinstance(pair, list) or len(pair) != 2 or \
                 not all(type(x) is int for x in pair):
             return f".offsets[{i}] is not a list of 2 ints"
+    indices = set(idx for idx, _ in data["offsets"])
+    offsets = set(off for _, off in data["offsets"])
+    if len(indices) != n_infos or len(offsets) != n_infos:
+        return ".offsets contains duplicates"
+    if any(idx < 0 for idx in indices) or any(off < 0 for off in offsets):
+        return ".offsets contains negative values"
     if "zfe_size" in data:
         if type(data["zfe_size"]) is not int:
             return ".zfe_size is not an int"
@@ -827,7 +846,7 @@ def validate_v1_sig(infos: List[zipfile.ZipInfo], datas: Dict[str, bytes],
     Returns None if valid, error otherwise.
 
     >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
-    >>> infos, datas, _ = extract_v1_sig_data(io.BytesIO(extract_v1_sig(apk)))
+    >>> infos, datas, _, _, _ = extract_v1_sig_data(io.BytesIO(extract_v1_sig(apk)))
     >>> [x.filename for x in infos]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> validate_v1_sig(infos, datas) is None
