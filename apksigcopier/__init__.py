@@ -1186,10 +1186,13 @@ def patch_v2_sig(extracted_v2_sig: Tuple[int, bytes], output_apk: str) -> None:
     """
     signed_sb_offset, signed_sb = extracted_v2_sig
     data_out = zip_data(output_apk)
-    if signed_sb_offset < data_out.cd_offset:
+    len_padding = signed_sb_offset - data_out.cd_offset
+    if len_padding < 0:
         raise APKSigningBlockError("APK Signing Block offset < central directory offset")
-    padding = b"\x00" * (signed_sb_offset - data_out.cd_offset)
-    offset = len(signed_sb) + len(padding)
+    if len_padding > 65536:
+        raise APKSigningBlockError("APK Signing Block offset requires more than 64k padding")
+    padding = b"\x00" * len_padding
+    offset = len(signed_sb) + len_padding
     with open(output_apk, "r+b") as fh:
         fh.seek(data_out.cd_offset)
         fh.write(padding)
