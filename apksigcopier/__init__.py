@@ -92,7 +92,7 @@ NO, AUTO, YES = NOAUTOYES
 JAR_MANIFEST = "META-INF/MANIFEST.MF"
 JAR_SBF_EXTS = ("RSA", "DSA", "EC")
 
-APK_META = re.compile(r"^META-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)$")
+APK_META = re.compile(r"\AMETA-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)\Z")
 META_EXT: Tuple[str, ...] = ("SF", "|".join(JAR_SBF_EXTS), "MF")
 COPY_EXCLUDE: Tuple[str, ...] = (JAR_MANIFEST,)
 DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
