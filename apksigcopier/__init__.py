@@ -1490,7 +1490,7 @@ def main() -> None:
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
     @click.option("--ignore-differences", is_flag=True, help=f"Don't write {DIFF_JSON}.")
-    @click.option("--legacy/--no-legacy", is_flag=True, default=None,
+    @click.option("--legacy/--no-legacy", default=None,
                   help="Use the legacy v1 signature files format.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("output_dir", type=click.Path(exists=True, file_okay=False))
@@ -1515,7 +1515,7 @@ def main() -> None:
     @click.option("--v1-only", type=NAY, default=NO, show_default=True,
                   envvar="APKSIGCOPIER_V1_ONLY", help="Expect only a v1 signature.")
     @click.option("--ignore-differences", is_flag=True, help="Don't copy metadata differences.")
-    @click.option("--legacy/--no-legacy", is_flag=True, default=None,
+    @click.option("--legacy/--no-legacy", default=None,
                   help="Use the legacy v1 signature files format.")
     @click.argument("signed_apk", type=click.Path(exists=True, dir_okay=False))
     @click.argument("unsigned_apk", type=click.Path(exists=True, dir_okay=False))
@@ -1538,7 +1538,7 @@ def main() -> None:
     @click.option("--unsigned", is_flag=True, help="Accept unsigned SECOND_APK.")
     @click.option("--min-sdk-version", type=click.INT, help="Passed to apksigner.")
     @click.option("--ignore-differences", is_flag=True, help="Don't copy metadata differences.")
-    @click.option("--legacy/--no-legacy", is_flag=True, default=None,
+    @click.option("--legacy/--no-legacy", default=None,
                   help="Use the legacy v1 signature files format.")
     @click.option("--verify-cmd", metavar="COMMAND", help="Command (with arguments) used to "
                   f"verify APKs.  [default: {' '.join(VERIFY_CMD)!r}]")
