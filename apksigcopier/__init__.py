@@ -92,11 +92,15 @@ NO, AUTO, YES = NOAUTOYES
 JAR_MANIFEST = "META-INF/MANIFEST.MF"
 JAR_SBF_EXTS = ("RSA", "DSA", "EC")
 
-APK_META = re.compile(r"\AMETA-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)\Z")
+# NB: subdirectories should be skipped per the spec but android doesn't
+APK_META = re.compile(r"\AMETA-INF/((?s:.)*\.(SF|RSA|DSA|EC)|MANIFEST\.MF)\Z")
+APK_META_STRICT = re.compile(r"\AMETA-INF/([0-9A-Za-z_-]+\.(SF|RSA|DSA|EC)|MANIFEST\.MF)\Z")
+
 META_EXT: Tuple[str, ...] = ("SF", "|".join(JAR_SBF_EXTS), "MF")
 COPY_EXCLUDE: Tuple[str, ...] = (JAR_MANIFEST,)
-DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
 
+DATETIMEZERO: DateTime = (1980, 0, 0, 0, 0, 0)
+MAX_SIGNERS = 10
 VERIFY_CMD: Tuple[str, ...] = ("apksigner", "verify")
 
 ################################################################################
@@ -221,12 +225,16 @@ def noautoyes(value: NoAutoYesBoolNone) -> NoAutoYes:
         raise ValueError("expected False, None, or True")   # pylint: disable=W0707
 
 
-def is_meta(filename: str) -> bool:
+def is_meta(filename: str, strict: bool = False) -> bool:
     r"""
     Returns whether filename is a v1 (JAR) signature file (.SF), signature block
     file (.RSA, .DSA, or .EC), or manifest (MANIFEST.MF).
 
     See https://docs.oracle.com/javase/tutorial/deployment/jar/intro.html
+
+    NB: if strict=True doesn't match signature (block) files in subdirectories
+    like android does and only considers file names valid if they are
+    alphanumeric ASCII.
 
     >>> is_meta("classes.dex")
     False
@@ -238,9 +246,17 @@ def is_meta(filename: str) -> bool:
     True
     >>> is_meta("META-INF/OOPS")
     False
+    >>> is_meta("META-INF/oops/CERT.RSA")
+    True
+    >>> is_meta("META-INF/oops/CERT.RSA", strict=True)
+    False
+    >>> is_meta("META-INF/猫\n.RSA")
+    True
+    >>> is_meta("META-INF/猫\n.RSA", strict=True)
+    False
 
     """
-    return bool(APK_META.fullmatch(filename))
+    return bool((APK_META_STRICT if strict else APK_META).fullmatch(filename))
 
 
 def exclude_from_copying(filename: str) -> bool:
@@ -469,6 +485,8 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         infos = zf.infolist()
         if v1_sig and (error := validate_v1_sig(v1_infos, v1_datas, zf)):
             raise APKSigCopierError(f"Invalid v1_sig: {error}")
+    if v1_sig and any(is_meta(info.filename) and not exclude(info.filename) for info in infos):
+        raise APKSigCopierError("Unexcluded metadata file(s)")
     zdata = zip_data(unsigned_apk)
     offsets: Dict[str, int] = {}
     with open(unsigned_apk, "rb") as fhi, open(output_apk, "w+b") as fho:
@@ -852,32 +870,38 @@ def validate_v1_sig(infos: List[zipfile.ZipInfo], datas: Dict[str, bytes],
     >>> validate_v1_sig(infos, datas) is None
     True
     >>> validate_v1_sig(infos[1:], {})
-    'signature file missing'
+    "signature file missing for 'META-INF/RSA-2048.RSA'"
     >>> validate_v1_sig([infos[0], infos[2]], {})
-    'signature block file mismatch'
+    "signature block file mismatch for 'META-INF/RSA-2048.SF'"
     >>> validate_v1_sig(infos + [zipfile.ZipInfo("META-INF/RSA-2048.EC")], {})
-    'signature block file mismatch'
+    "signature block file mismatch for 'META-INF/RSA-2048.SF'"
 
     """
     filenames = set(info.filename for info in infos)
+    if len(filenames) != len(infos):
+        return "duplicate entries"
     if JAR_MANIFEST not in filenames:
         return "missing manifest"
     for info in infos:
         base = info.filename.rsplit(".", 1)[0]
+        if not is_meta(info.filename, strict=True):
+            return f"not a (proper) metadata file: {info.filename!r}"
         if info.filename.endswith(".SF"):
             if sum(1 for ext in JAR_SBF_EXTS if f"{base}.{ext}" in filenames) != 1:
-                return "signature block file mismatch"
+                return f"signature block file mismatch for {info.filename!r}"
         elif any(info.filename.endswith(f".{ext}") for ext in JAR_SBF_EXTS):
             if f"{base}.SF" not in filenames:
-                return "signature file missing"
+                return f"signature file missing for {info.filename!r}"
     if len(filenames) == 1 and output_zf:
         if output_zf.read(JAR_MANIFEST) != datas[JAR_MANIFEST]:
             return "manifest data mismatch"
+    if len(filenames) > MAX_SIGNERS * 2 + 1:
+        return "too many signers"
     return None
 
 
 # NB: superseded by the new extract_v1_sig() format
-def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
+def extract_meta(signed_apk: str, strict: bool = True) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
     r"""
     Extract legacy v1 signature metadata files from signed APK.
 
@@ -901,7 +925,7 @@ def extract_meta(signed_apk: str) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
     """
     with zipfile.ZipFile(signed_apk, "r") as zf_sig:
         for info in zf_sig.infolist():
-            if is_meta(info.filename):
+            if is_meta(info.filename, strict=strict):
                 yield info, zf_sig.read(info.filename)
 
 
@@ -982,7 +1006,7 @@ def validate_differences(differences: Dict[str, Any]) -> Optional[str]:
         if not isinstance(differences["files"], dict):
             return ".files is not a dict"
         for name, info in differences["files"].items():
-            if not is_meta(name):
+            if not is_meta(name, strict=True):
                 return f".files key {name!r} is not a metadata file"
             if not isinstance(info, dict):
                 return f".files[{name!r}] is not a dict"
