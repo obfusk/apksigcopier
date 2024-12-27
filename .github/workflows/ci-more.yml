@@ -34,5 +34,5 @@ jobs:
       run: |
         export PATH="${PWD}/build-tools:${PATH}"
         test "$( command -v apksigner )" = "${PWD}/build-tools/apksigner"
-        patch -p1 < test/test-compare-self.out.legacy.patch
+        patch -p1 < test/test-compare-self.out.build-tools.legacy.patch
         APKSIGCOPIER_LEGACY_V1SIGFILE=1 make test-apks
