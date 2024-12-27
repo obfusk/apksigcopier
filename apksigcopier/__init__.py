@@ -230,7 +230,7 @@ def is_meta(filename: str, strict: bool = False) -> bool:
     Returns whether filename is a v1 (JAR) signature file (.SF), signature block
     file (.RSA, .DSA, or .EC), or manifest (MANIFEST.MF).
 
-    See https://docs.oracle.com/javase/tutorial/deployment/jar/intro.html
+    See https://docs.oracle.com/en/java/javase/21/docs/specs/jar/jar.html
 
     NB: if strict=True doesn't match signature (block) files in subdirectories
     like android does and only considers file names valid if they are
