@@ -343,7 +343,8 @@ apksigcopier: success
 
 apks/apks/v1-only-11-signers.apk
 apksigner: verified
-apksigcopier: success
+Error: Invalid v1_sig: too many signers.
+apksigcopier: failure
 
 apks/apks/v1-only-max-sized-eocd-comment.apk
 apksigner: verified
