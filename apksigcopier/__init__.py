@@ -781,8 +781,10 @@ def validate_zip_header(hdr: bytes, info: zipfile.ZipInfo, datas: Dict[str, byte
         return "non-zero internal attrs"
     if external_attrs | VALID_EXTERNAL_ATTRS_MASK != VALID_EXTERNAL_ATTRS_MASK:
         return f"unsupported external attrs: {hex(external_attrs)}"
-    if b"\x00" in filename:
-        return "null byte in filename"
+    if any(c in filename for c in b"\x00\n\r"):
+        return "NUL, LF, or CR in filename"
+    if filename.decode() != info.filename:
+        return "decoded filename mismatch"
     if extra:
         return "non-empty extra field"
     if comment:
