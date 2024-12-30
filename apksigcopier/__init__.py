@@ -905,7 +905,7 @@ def validate_v1_sig(infos: List[zipfile.ZipInfo], datas: Dict[str, bytes],
 
 
 # NB: superseded by the new extract_v1_sig() format
-def extract_meta(signed_apk: str, strict: bool = True) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
+def extract_meta(signed_apk: str, *, strict: bool = True) -> Iterator[Tuple[zipfile.ZipInfo, bytes]]:
     r"""
     Extract legacy v1 signature metadata files from signed APK.
 
