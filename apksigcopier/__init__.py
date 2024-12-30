@@ -444,7 +444,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
     ...         infos_out = zf.infolist()
     (2017, 5, 15, 11, 28, 40)
     >>> for i in infos_in:
-    ...     print(i.filename)
+    ...     print(i.orig_filename)
     META-INF/
     META-INF/MANIFEST.MF
     AndroidManifest.xml
@@ -454,7 +454,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
     resources.arsc
     temp2.txt
     >>> for i in infos_out:
-    ...     print(i.filename)
+    ...     print(i.orig_filename)
     AndroidManifest.xml
     classes.dex
     temp.txt
@@ -485,7 +485,8 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         infos = zf.infolist()
         if v1_sig and (error := validate_v1_sig(v1_infos, v1_datas, zf)):
             raise APKSigCopierError(f"Invalid v1_sig: {error}")
-    if v1_sig and any(is_meta(info.filename) and not exclude(info.filename) for info in infos):
+    if v1_sig and any((is_meta(info.orig_filename) or is_meta(info.filename))
+                      and not exclude(info.orig_filename) for info in infos):   # noqa: W503
         raise APKSigCopierError("Unexcluded metadata file(s)")
     zdata = zip_data(unsigned_apk)
     offsets: Dict[str, int] = {}
@@ -509,12 +510,12 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                 del v1_offsets[off_o]
                 off_o = fho.tell()
             hdr, n, m = _read_lfh(fhi)
-            if skip := exclude(info.filename):
+            if skip := exclude(info.orig_filename):
                 fhi.seek(info.compress_size, os.SEEK_CUR)
             else:
-                if info.filename in offsets:
-                    raise ZipError(f"Duplicate ZIP entry: {info.filename!r}")
-                offsets[info.filename] = off_o
+                if info.orig_filename in offsets:
+                    raise ZipError(f"Duplicate ZIP entry: {info.orig_filename!r}")
+                offsets[info.orig_filename] = off_o
                 if realign and info.compress_type == 0 and off_o != info.header_offset:
                     hdr = _realign_zip_entry(info, hdr, n, m, off_o,
                                              pad_like_apksigner=not zfe_size)
@@ -542,8 +543,8 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                 del v1_indices[idx_o]
                 idx_o += 1
             hdr, n, m, k = _read_cdfh(fhi)
-            if not exclude(info.filename):
-                fho.write(_adjust_offset(hdr, offsets[info.filename]))
+            if not exclude(info.orig_filename):
+                fho.write(_adjust_offset(hdr, offsets[info.orig_filename]))
                 idx_o += 1
         if v1_sig and v1_indices:
             # copy (remaining) entries at the end
@@ -555,7 +556,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         fho.seek(eocd_offset + 8)
         fho.write(struct.pack("<HHLL", len(offsets), len(offsets),
                               eocd_offset - cd_offset, cd_offset))
-    return max(info.date_time for info in infos if not exclude(info.filename))
+    return max(info.date_time for info in infos if not exclude(info.orig_filename))
 
 
 def _read_lfh(fh: BinaryIO) -> Tuple[bytes, int, int]:
@@ -590,7 +591,7 @@ def _read_data_descriptor(fh: BinaryIO, info: zipfile.ZipInfo) -> Optional[bytes
 # NB: doesn't sync local & CD headers!
 def _realign_zip_entry(info: zipfile.ZipInfo, hdr: bytes, n: int, m: int,
                        off_o: int, pad_like_apksigner: bool = True) -> bytes:
-    align = 4096 if info.filename.endswith(".so") else 4
+    align = 4096 if info.orig_filename.endswith(".so") else 4
     old_off = 30 + n + m + info.header_offset
     new_off = 30 + n + m + off_o
     old_xtr = hdr[30 + n:30 + n + m]
@@ -637,7 +638,7 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     >>> v1_sig = extract_v1_sig(apk)
     >>> fh = io.BytesIO(v1_sig)
     >>> zf = zipfile.ZipFile(fh, "r")
-    >>> [x.filename for x in zf.infolist()]
+    >>> [x.orig_filename for x in zf.infolist()]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> for line in zf.read("META-INF/RSA-2048.SF").splitlines()[:4]:
     ...     print(line.decode())
@@ -652,7 +653,7 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     >>> zf.comment
     b'{"offsets":[[6,5109],[7,5595],[8,6706]]}'
     >>> infos, datas, comment_data, indices, offsets = extract_v1_sig_data(fh)
-    >>> [x.filename for x in infos]
+    >>> [x.orig_filename for x in infos]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> [(k, len(v)) for k, v in datas.items()]
     [('META-INF/RSA-2048.SF', 664), ('META-INF/RSA-2048.RSA', 1160), ('META-INF/MANIFEST.MF', 589)]
@@ -666,9 +667,9 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     """
     with zipfile.ZipFile(apkfile, "r") as zf:
         infos = zf.infolist()
-        metas = [info for info in infos if is_meta(info.filename)]
-        datas = {info.filename: zf.read(info.filename) for info in metas}
-        coffs = [[i, info.header_offset] for i, info in enumerate(infos) if is_meta(info.filename)]
+        metas = [info for info in infos if is_meta(info.orig_filename)]
+        datas = {info.orig_filename: zf.read(info) for info in metas}
+        coffs = [[i, info.header_offset] for i, info in enumerate(infos) if is_meta(info.orig_filename)]
     comment_data: Dict[str, Any] = dict(offsets=coffs)
     if zfe_size := detect_zfe(apkfile):
         comment_data["zfe_size"] = zfe_size
@@ -698,19 +699,19 @@ def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInf
                         datas: Dict[str, bytes], offsets: Dict[str, int]) -> None:
     """Copy v1 signature entries."""
     for info in sorted(infos, key=lambda info: info.header_offset):
-        if not is_meta(info.filename):
+        if not is_meta(info.orig_filename):
             continue
-        if info.filename in offsets:
-            raise ZipError(f"Duplicate ZIP entry: {info.filename!r}")
+        if info.orig_filename in offsets:
+            raise ZipError(f"Duplicate ZIP entry: {info.orig_filename!r}")
         fhi.seek(info.header_offset)
         hdr, n, m = _read_lfh(fhi)
-        offsets[info.filename] = fho.tell()
+        offsets[info.orig_filename] = fho.tell()
         fho.write(hdr)
         _copy_bytes(fhi, fho, info.compress_size)
         if data_descriptor := _read_data_descriptor(fhi, info):
             fho.write(data_descriptor)
         if error := validate_zip_header(hdr, info, datas, data_descriptor):
-            raise ZipError(f"Unsupported LFH for {info.filename!r}: {error}")
+            raise ZipError(f"Unsupported LFH for {info.orig_filename!r}: {error}")
 
 
 def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
@@ -719,11 +720,11 @@ def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.Zip
     """Copy v1 signature CD entries."""
     for i, info in enumerate(infos):
         hdr, n, m, k = _read_cdfh(fhi)
-        if not is_meta(info.filename) or (only is not None and i not in only):
+        if not is_meta(info.orig_filename) or (only is not None and i not in only):
             continue
         if error := validate_zip_header(hdr, info, datas):
-            raise ZipError(f"Unsupported CDFH for {info.filename!r}: {error}")
-        fho.write(_adjust_offset(hdr, offsets[info.filename]))
+            raise ZipError(f"Unsupported CDFH for {info.orig_filename!r}: {error}")
+        fho.write(_adjust_offset(hdr, offsets[info.orig_filename]))
 
 
 def validate_zip_header(hdr: bytes, info: zipfile.ZipInfo, datas: Dict[str, bytes],
@@ -769,11 +770,11 @@ def validate_zip_header(hdr: bytes, info: zipfile.ZipInfo, datas: Dict[str, byte
         return f"unsupported compression method: {compression_method}"
     if compression_method != info.compress_type:
         return "compression method mismatch"
-    if crc32 != zlib.crc32(datas[info.filename]):
+    if crc32 != zlib.crc32(datas[info.orig_filename]):
         return "crc32 mismatch"
     if compressed_size != info.compress_size:
         return "compressed size mismatch"
-    if uncompressed_size != len(datas[info.filename]):
+    if uncompressed_size != len(datas[info.orig_filename]):
         return "uncompressed size mismatch"
     if start_disk:
         return "non-zero start disk"
@@ -783,7 +784,7 @@ def validate_zip_header(hdr: bytes, info: zipfile.ZipInfo, datas: Dict[str, byte
         return f"unsupported external attrs: {hex(external_attrs)}"
     if any(c in filename for c in b"\x00\n\r"):
         return "NUL, LF, or CR in filename"
-    if filename.decode() != info.filename:
+    if filename.decode() != info.orig_filename:
         return "decoded filename mismatch"
     if extra:
         return "non-empty extra field"
@@ -802,7 +803,7 @@ def extract_v1_sig_data(fhi: BinaryIO) -> Tuple[
     """
     with zipfile.ZipFile(fhi, "r") as zf:
         infos = zf.infolist()
-        datas = {info.filename: zf.read(info.filename) for info in infos}
+        datas = {info.orig_filename: zf.read(info) for info in infos}
         try:
             comment_data = json.loads(zf.comment.decode())
         except (UnicodeDecodeError, json.JSONDecodeError) as e:
@@ -867,7 +868,7 @@ def validate_v1_sig(infos: List[zipfile.ZipInfo], datas: Dict[str, bytes],
 
     >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
     >>> infos, datas, _, _, _ = extract_v1_sig_data(io.BytesIO(extract_v1_sig(apk)))
-    >>> [x.filename for x in infos]
+    >>> [x.orig_filename for x in infos]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> validate_v1_sig(infos, datas) is None
     True
@@ -879,24 +880,25 @@ def validate_v1_sig(infos: List[zipfile.ZipInfo], datas: Dict[str, bytes],
     "signature block file mismatch for 'META-INF/RSA-2048.SF'"
 
     """
-    filenames = set(info.filename for info in infos)
+    filenames = set(info.orig_filename for info in infos)
     if len(filenames) != len(infos):
         return "duplicate entries"
     if JAR_MANIFEST not in filenames:
         return "missing manifest"
     for info in infos:
-        base = info.filename.rsplit(".", 1)[0]
-        if not is_meta(info.filename, strict=True):
-            return f"not a (proper) metadata file: {info.filename!r}"
-        if info.filename.endswith(".SF"):
+        base = info.orig_filename.rsplit(".", 1)[0]
+        if not is_meta(info.orig_filename, strict=True):
+            return f"not a (proper) metadata file: {info.orig_filename!r}"
+        if info.orig_filename.endswith(".SF"):
             if sum(1 for ext in JAR_SBF_EXTS if f"{base}.{ext}" in filenames) != 1:
-                return f"signature block file mismatch for {info.filename!r}"
-        elif any(info.filename.endswith(f".{ext}") for ext in JAR_SBF_EXTS):
+                return f"signature block file mismatch for {info.orig_filename!r}"
+        elif any(info.orig_filename.endswith(f".{ext}") for ext in JAR_SBF_EXTS):
             if f"{base}.SF" not in filenames:
-                return f"signature file missing for {info.filename!r}"
+                return f"signature file missing for {info.orig_filename!r}"
     if len(filenames) == 1 and output_zf:
-        if output_zf.read(JAR_MANIFEST) != datas[JAR_MANIFEST]:
-            return "manifest data mismatch"
+        for info in output_zf.infolist():
+            if info.orig_filename == JAR_MANIFEST and output_zf.read(info) != datas[JAR_MANIFEST]:
+                return "manifest data mismatch"
     if len(filenames) > MAX_SIGNERS * 2 + 1:
         return "too many signers"
     return None
@@ -911,7 +913,7 @@ def extract_meta(signed_apk: str, strict: bool = True) -> Iterator[Tuple[zipfile
 
     >>> apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
     >>> meta = tuple(extract_meta(apk))
-    >>> [x.filename for x, _ in meta]
+    >>> [x.orig_filename for x, _ in meta]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> for line in meta[0][1].splitlines()[:4]:
     ...     print(line.decode())
@@ -927,8 +929,8 @@ def extract_meta(signed_apk: str, strict: bool = True) -> Iterator[Tuple[zipfile
     """
     with zipfile.ZipFile(signed_apk, "r") as zf_sig:
         for info in zf_sig.infolist():
-            if is_meta(info.filename, strict=strict):
-                yield info, zf_sig.read(info.filename)
+            if is_meta(info.orig_filename, strict=strict):
+                yield info, zf_sig.read(info)
 
 
 def extract_differences(signed_apk: str, extracted_meta: Optional[ZipInfoDataPairs]) \
@@ -939,7 +941,7 @@ def extract_differences(signed_apk: str, extracted_meta: Optional[ZipInfoDataPai
     >>> import pprint
     >>> apk = "test/apks/apks/debuggable-boolean.apk"
     >>> meta = tuple(extract_meta(apk))
-    >>> [x.filename for x, _ in meta]
+    >>> [x.orig_filename for x, _ in meta]
     ['META-INF/CERT.SF', 'META-INF/CERT.RSA', 'META-INF/MANIFEST.MF']
     >>> diff = extract_differences(apk, meta)
     >>> pprint.pprint(diff)
@@ -983,7 +985,7 @@ def extract_differences(signed_apk: str, extracted_meta: Optional[ZipInfoDataPai
         if level != APKZipInfo.COMPRESSLEVEL:
             diffs["compresslevel"] = level
         if diffs:
-            files[info.filename] = diffs
+            files[info.orig_filename] = diffs
     if files:
         differences["files"] = files
     if zfe_size := detect_zfe(signed_apk):
@@ -1052,7 +1054,7 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
     >>> unsigned_apk = "test/apks/apks/golden-aligned-in.apk"
     >>> signed_apk = "test/apks/apks/golden-aligned-v1v2v3-out.apk"
     >>> meta = tuple(extract_meta(signed_apk))
-    >>> [x.filename for x, _ in meta]
+    >>> [x.orig_filename for x, _ in meta]
     ['META-INF/RSA-2048.SF', 'META-INF/RSA-2048.RSA', 'META-INF/MANIFEST.MF']
     >>> with zipfile.ZipFile(unsigned_apk, "r") as zf:
     ...     infos_in = zf.infolist()
@@ -1064,7 +1066,7 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
     ...         infos_out = zf.infolist()
     (2017, 5, 15, 11, 28, 40)
     >>> for i in infos_in:
-    ...     print(i.filename)
+    ...     print(i.orig_filename)
     META-INF/
     META-INF/MANIFEST.MF
     AndroidManifest.xml
@@ -1074,7 +1076,7 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
     resources.arsc
     temp2.txt
     >>> for i in infos_out:
-    ...     print(i.filename)
+    ...     print(i.orig_filename)
     AndroidManifest.xml
     classes.dex
     temp.txt
@@ -1088,12 +1090,12 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
     """
     with zipfile.ZipFile(output_apk, "r") as zf_out:
         for info in zf_out.infolist():
-            if is_meta(info.filename):
+            if is_meta(info.orig_filename) or is_meta(info.filename):
                 raise ZipError("Unexpected metadata")
     with zipfile.ZipFile(output_apk, "a") as zf_out:
         for info, data in extracted_meta:
             if differences and "files" in differences:
-                more = differences["files"].get(info.filename, {}).copy()
+                more = differences["files"].get(info.orig_filename, {}).copy()
             else:
                 more = {}
             level = more.pop("compresslevel", APKZipInfo.COMPRESSLEVEL)
@@ -1321,7 +1323,7 @@ def has_v1_signature(apkfile: str) -> bool:
     """
     with zipfile.ZipFile(apkfile, "r") as zf:
         infos = zf.infolist()
-    return any(is_meta(info.filename) and info.filename != JAR_MANIFEST for info in infos)
+    return any(is_meta(info.orig_filename) and info.orig_filename != JAR_MANIFEST for info in infos)
 
 
 # FIXME: support multiple signers?
@@ -1345,7 +1347,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
         if len(extracted_meta) not in (len(META_EXT), 0):
             raise APKSigCopierError("Unexpected or missing metadata files in signed_apk")
         for info, data in extracted_meta:
-            name = os.path.basename(info.filename)
+            name = os.path.basename(info.orig_filename)
             with open(os.path.join(output_dir, name), "wb") as fh:
                 fh.write(data)
     else:
