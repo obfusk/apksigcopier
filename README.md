@@ -78,7 +78,7 @@ the resulting APK is identical to that of the original (only warns when
 This command requires `apksigner` (unless `--no-check-signature` is used).
 
 ```bash
-$ apksigcopier compare foo-from-fdroid.apk foo-built-locally.apk
+$ apksigcopier compare foo-from-upstream.apk foo-from-rbtlog.apk
 $ apksigcopier compare --unsigned foo.apk foo-unsigned.apk
 ```
 

@@ -127,7 +127,7 @@ $ apksigcopier copy signed.apk unsigned.apk out.apk
 ## compare
 
 ```bash
-$ apksigcopier compare foo-from-fdroid.apk foo-built-locally.apk
+$ apksigcopier compare foo-from-upstream.apk foo-from-rbtlog.apk
 $ apksigcopier compare foo.apk --unsigned foo-unsigned.apk
 ```
 
