@@ -485,7 +485,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         infos = zf.infolist()
         if v1_sig and (error := validate_v1_sig(v1_infos, v1_datas, zf)):
             raise APKSigCopierError(f"Invalid v1_sig: {error}")
-    if v1_sig and any((is_meta(info.orig_filename) or is_meta(info.filename))
+    if v1_sig and any((is_meta(info.orig_filename) or is_meta(info.orig_filename.split("\x00", 1)[0]))
                       and not exclude(info.orig_filename) for info in infos):   # noqa: W503
         raise APKSigCopierError("Unexcluded metadata file(s)")
     zdata = zip_data(unsigned_apk)
@@ -1090,7 +1090,7 @@ def patch_meta(extracted_meta: ZipInfoDataPairs, output_apk: str,
     """
     with zipfile.ZipFile(output_apk, "r") as zf_out:
         for info in zf_out.infolist():
-            if is_meta(info.orig_filename) or is_meta(info.filename):
+            if is_meta(info.orig_filename) or is_meta(info.orig_filename.split("\x00", 1)[0]):
                 raise ZipError("Unexpected metadata")
     with zipfile.ZipFile(output_apk, "a") as zf_out:
         for info, data in extracted_meta:
