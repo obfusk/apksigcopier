@@ -1366,8 +1366,7 @@ def do_extract(signed_apk: str, output_dir: str, v1_only: NoAutoYesBoolNone = NO
     with open(os.path.join(output_dir, SIGBLOCK), "wb") as fh:
         fh.write(signed_sb)
     if not (ignore_differences or v1_sig):
-        differences = extract_differences(signed_apk, extracted_meta)
-        if differences:
+        if differences := extract_differences(signed_apk, extracted_meta):
             with open(os.path.join(output_dir, DIFF_JSON), "w", encoding="utf-8") as fh:
                 json.dump(differences, fh, sort_keys=True, indent=2)
                 fh.write("\n")
