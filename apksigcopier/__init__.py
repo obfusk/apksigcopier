@@ -30,6 +30,7 @@ override the default behaviour:
 * set APKSIGCOPIER_COPY_EXTRA_BYTES=1 to copy extra bytes after data (e.g. a v2 sig)
 * set APKSIGCOPIER_SKIP_REALIGNMENT=1 to skip realignment of ZIP entries
 * set APKSIGCOPIER_LEGACY_V1SIGFILE=1 to use the legacy v1 signature files format
+* set APKSIGCOPIER_SKIP_V1SIG_CHECK=1 to skip v1 signature validation checks
 
 
 API
@@ -50,6 +51,7 @@ override the default behaviour:
 * set copy_extra_bytes=True to copy extra bytes after data (e.g. a v2 sig)
 * set skip_realignment=True to skip realignment of ZIP entries
 * set legacy_v1sigfile=True to use the legacy v1 signature files format
+* set skip_v1sig_check=True to skip v1 signature validation checks
 """
 
 import glob
@@ -144,6 +146,7 @@ exclude_all_meta = False    # exclude all metadata files in copy_apk()
 copy_extra_bytes = False    # copy extra bytes after data in copy_apk()
 skip_realignment = False    # skip realignment of ZIP entries in copy_apk()
 legacy_v1sigfile = False    # use the legacy v1 signature files format
+skip_v1sig_check = False    # skip v1 signature validation checks
 
 
 class APKSigCopierError(Exception):
@@ -410,11 +413,10 @@ def detect_zfe(apkfile: str) -> Optional[int]:
 # FIXME: handle utf8 filenames w/o utf8 flag (as produced by zipflinger)?
 # https://android.googlesource.com/platform/tools/apksig
 #   src/main/java/com/android/apksig/ApkSigner.java
-def copy_apk(unsigned_apk: str, output_apk: str, *,
-             copy_extra: Optional[bool] = None,
-             exclude: Optional[Callable[[str], bool]] = None,
-             realign: Optional[bool] = None, zfe_size: Optional[int] = None,
-             v1_sig: Optional[bytes] = None) -> DateTime:
+def copy_apk(unsigned_apk: str, output_apk: str, *, copy_extra: Optional[bool] = None,
+             exclude: Optional[Callable[[str], bool]] = None, realign: Optional[bool] = None,
+             zfe_size: Optional[int] = None, v1_sig: Optional[bytes] = None,
+             v1sig_check: Optional[bool] = None) -> DateTime:
     r"""
     Copy APK like apksigner would, excluding files matched by exclude_from_copying().
 
@@ -475,6 +477,8 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         exclude = exclude_from_copying
     if realign is None:
         realign = not skip_realignment
+    if v1sig_check is None:
+        v1sig_check = not skip_v1sig_check
     if v1_sig:
         v1_sig_fhi = io.BytesIO(v1_sig)
         v1_infos, v1_datas, v1_comment_data, v1_indices, v1_offsets = extract_v1_sig_data(v1_sig_fhi)
@@ -483,10 +487,11 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         v1_cd_offset = _zip_data(v1_sig_fhi, count=min(65536, len(v1_sig))).cd_offset
     with zipfile.ZipFile(unsigned_apk, "r") as zf:
         infos = zf.infolist()
-        if v1_sig and (error := validate_v1_sig(v1_infos, v1_datas, zf)):
+        if v1_sig and v1sig_check and (error := validate_v1_sig(v1_infos, v1_datas, zf)):
             raise APKSigCopierError(f"Invalid v1_sig: {error}")
-    if v1_sig and any((is_meta(info.orig_filename) or is_meta(info.orig_filename.split("\x00", 1)[0]))
-                      and not exclude(info.orig_filename) for info in infos):   # noqa: W503
+    if v1_sig and v1sig_check and any(
+            (is_meta(info.orig_filename) or is_meta(info.orig_filename.split("\x00", 1)[0]))
+            and not exclude(info.orig_filename) for info in infos):     # noqa: W503
         raise APKSigCopierError("Unexcluded metadata file(s)")
     zdata = zip_data(unsigned_apk)
     offsets: Dict[str, int] = {}
@@ -506,7 +511,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                 # FIXME: can these be STORED and need alignment?
                 # try to match original header offsets (for entries not at the end)
                 copy_v1_sig_entries(v1_sig_fhi, fho, [v1_infos[v1_offsets[off_o]]],
-                                    v1_datas, offsets)
+                                    v1_datas, offsets, check=v1sig_check)
                 del v1_offsets[off_o]
                 off_o = fho.tell()
             hdr, n, m = _read_lfh(fhi)
@@ -526,7 +531,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
         if v1_sig and v1_offsets:
             # copy (remaining) entries at the end
             copy_v1_sig_entries(v1_sig_fhi, fho, [v1_infos[i] for i in v1_offsets.values()],
-                                v1_datas, offsets)
+                                v1_datas, offsets, check=v1sig_check)
         extra_bytes = zdata.cd_offset - fhi.tell()
         if copy_extra:
             _copy_bytes(fhi, fho, extra_bytes)
@@ -539,7 +544,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
                 # try to match original CD position (for entries not at the end)
                 v1_sig_fhi.seek(v1_cd_offset)
                 copy_v1_sig_cd_entries(v1_sig_fhi, fho, v1_infos, v1_datas, offsets,
-                                       only={v1_indices[idx_o]})
+                                       check=v1sig_check, only={v1_indices[idx_o]})
                 del v1_indices[idx_o]
                 idx_o += 1
             hdr, n, m, k = _read_cdfh(fhi)
@@ -550,7 +555,7 @@ def copy_apk(unsigned_apk: str, output_apk: str, *,
             # copy (remaining) entries at the end
             v1_sig_fhi.seek(v1_cd_offset)
             copy_v1_sig_cd_entries(v1_sig_fhi, fho, v1_infos, v1_datas, offsets,
-                                   only=set(v1_indices.values()))
+                                   check=v1sig_check, only=set(v1_indices.values()))
         eocd_offset = fho.tell()
         fho.write(zdata.cd_and_eocd[zdata.eocd_offset - zdata.cd_offset:])
         fho.seek(eocd_offset + 8)
@@ -630,7 +635,7 @@ def _copy_bytes(fhi: BinaryIO, fho: BinaryIO, size: int, blocksize: int = 4096) 
         raise ZipError("Unexpected EOF")
 
 
-def extract_v1_sig(apkfile: str) -> Optional[bytes]:
+def extract_v1_sig(apkfile: str, *, check: Optional[bool] = None) -> Optional[bytes]:
     r"""
     Extract v1 signature data as ZIP file data.
 
@@ -665,6 +670,8 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     {5109: 0, 5595: 1, 6706: 2}
 
     """
+    if check is None:
+        check = not skip_v1sig_check
     with zipfile.ZipFile(apkfile, "r") as zf:
         infos = zf.infolist()
         metas = [info for info in infos if is_meta(info.orig_filename)]
@@ -678,13 +685,13 @@ def extract_v1_sig(apkfile: str) -> Optional[bytes]:
     fho = io.BytesIO()
     cd_offset_in = zip_data(apkfile).cd_offset
     with open(apkfile, "rb") as fhi:
-        copy_v1_sig_entries(fhi, fho, infos, datas, offsets)
+        copy_v1_sig_entries(fhi, fho, infos, datas, offsets, check=check)
         cd_offset = fho.tell()
         fhi.seek(cd_offset_in)
-        copy_v1_sig_cd_entries(fhi, fho, infos, datas, offsets)
+        copy_v1_sig_cd_entries(fhi, fho, infos, datas, offsets, check=check)
         eocd_offset = fho.tell()
         fho.write(_eocd(len(offsets), eocd_offset, cd_offset, comment))
-    if offsets and (error := validate_v1_sig(metas, datas)):
+    if offsets and check and (error := validate_v1_sig(metas, datas)):
         raise APKSigCopierError(f"Invalid v1_sig: {error}")
     return fho.getvalue() if offsets else None
 
@@ -696,7 +703,8 @@ def _eocd(entries: int, eocd_offset: int, cd_offset: int, comment: bytes = b"") 
 
 
 def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
-                        datas: Dict[str, bytes], offsets: Dict[str, int]) -> None:
+                        datas: Dict[str, bytes], offsets: Dict[str, int], *,
+                        check: bool = True) -> None:
     """Copy v1 signature entries."""
     for info in sorted(infos, key=lambda info: info.header_offset):
         if not is_meta(info.orig_filename):
@@ -710,19 +718,19 @@ def copy_v1_sig_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInf
         _copy_bytes(fhi, fho, info.compress_size)
         if data_descriptor := _read_data_descriptor(fhi, info):
             fho.write(data_descriptor)
-        if error := validate_zip_header(hdr, info, datas, data_descriptor):
+        if check and (error := validate_zip_header(hdr, info, datas, data_descriptor)):
             raise ZipError(f"Unsupported LFH for {info.orig_filename!r}: {error}")
 
 
 def copy_v1_sig_cd_entries(fhi: BinaryIO, fho: BinaryIO, infos: List[zipfile.ZipInfo],
-                           datas: Dict[str, bytes], offsets: Dict[str, int],
-                           *, only: Optional[Set[int]] = None) -> None:
+                           datas: Dict[str, bytes], offsets: Dict[str, int], *,
+                           check: bool = True, only: Optional[Set[int]] = None) -> None:
     """Copy v1 signature CD entries."""
     for i, info in enumerate(infos):
         hdr, n, m, k = _read_cdfh(fhi)
         if not is_meta(info.orig_filename) or (only is not None and i not in only):
             continue
-        if error := validate_zip_header(hdr, info, datas):
+        if check and (error := validate_zip_header(hdr, info, datas)):
             raise ZipError(f"Unsupported CDFH for {info.orig_filename!r}: {error}")
         fho.write(_adjust_offset(hdr, offsets[info.orig_filename]))
 
@@ -1516,11 +1524,12 @@ def do_compare(first_apk: str, second_apk: str, unsigned: bool = False,
 def main() -> None:
     """CLI; requires click."""
 
-    global exclude_all_meta, copy_extra_bytes, skip_realignment, legacy_v1sigfile
+    global exclude_all_meta, copy_extra_bytes, skip_realignment, legacy_v1sigfile, skip_v1sig_check
     exclude_all_meta = os.environ.get("APKSIGCOPIER_EXCLUDE_ALL_META") in ("1", "yes", "true")
     copy_extra_bytes = os.environ.get("APKSIGCOPIER_COPY_EXTRA_BYTES") in ("1", "yes", "true")
     skip_realignment = os.environ.get("APKSIGCOPIER_SKIP_REALIGNMENT") in ("1", "yes", "true")
     legacy_v1sigfile = os.environ.get("APKSIGCOPIER_LEGACY_V1SIGFILE") in ("1", "yes", "true")
+    skip_v1sig_check = os.environ.get("APKSIGCOPIER_SKIP_V1SIG_CHECK") in ("1", "yes", "true")
 
     import click
 

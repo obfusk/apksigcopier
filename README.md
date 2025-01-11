@@ -103,6 +103,7 @@ The following environment variables can be set to `1`, `yes`, or
 * set `APKSIGCOPIER_COPY_EXTRA_BYTES=1` to copy extra bytes after data (e.g. a v2 sig)
 * set `APKSIGCOPIER_SKIP_REALIGNMENT=1` to skip realignment of ZIP entries
 * set `APKSIGCOPIER_LEGACY_V1SIGFILE=1` to use the legacy v1 signature files format
+* set `APKSIGCOPIER_SKIP_V1SIG_CHECK=1` to skip v1 signature validation checks
 
 ## Python API
 
@@ -124,6 +125,7 @@ to override the default behaviour:
 * set `copy_extra_bytes=True` to copy extra bytes after data (e.g. a v2 sig)
 * set `skip_realignment=True` to skip realignment of ZIP entries
 * set `legacy_v1sigfile=True` to use the legacy v1 signature files format
+* set `skip_v1sig_check=True` to skip v1 signature validation checks
 
 ## FAQ
 
