@@ -1,4 +1,4 @@
-<!-- SPDX-FileCopyrightText: 2024 FC (Fay) Stegerman <flx@obfusk.net> -->
+<!-- SPDX-FileCopyrightText: 2025 FC (Fay) Stegerman <flx@obfusk.net> -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
 [![GitHub Release](https://img.shields.io/github/release/obfusk/apksigcopier.svg?logo=github)](https://github.com/obfusk/apksigcopier/releases)
