@@ -7,13 +7,13 @@ for apk in apks/apks/*.apk; do
   [[ "$apk" != *weird-compression-method* ]] || continue
   echo "$apk"
   if unzip -l "$apk" 2>/dev/null | grep -qF META-INF/MANIFEST.MF; then
-    min=
+    min=23
   else
-    min=--min-sdk-version=24
+    min=24
   fi
-  if apksigner verify $min "$apk" >/dev/null 2>&1; then
+  if apksigner verify --min-sdk-version=$min "$apk" >/dev/null 2>&1; then
     echo 'apksigner: verified'
-    if apksigcopier compare $min "$apk" "$apk" 2>&1; then
+    if apksigcopier compare --no-check-sha256 --min-sdk-version=$min "$apk" "$apk" 2>&1; then
       echo 'apksigcopier: success'
     else
       echo 'apksigcopier: failure'

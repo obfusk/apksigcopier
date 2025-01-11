@@ -28,7 +28,6 @@ setuptools.setup(
         "Operating System :: POSIX",
         "Operating System :: Unix",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
@@ -45,6 +44,6 @@ setuptools.setup(
     entry_points      = dict(console_scripts = ["apksigcopier = apksigcopier:main"]),
     packages          = ["apksigcopier"],
     package_data      = dict(apksigcopier = ["py.typed"]),
-    python_requires   = ">=3.7",
+    python_requires   = ">=3.8",
     install_requires  = ["click>=6.0"],
 )

@@ -1,0 +1,38 @@
+name: CI (more)
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+        submodules: true
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    - name: Install dependencies
+      run: python3 -m pip install --upgrade pip
+    - name: Install
+      run: make install
+    - name: Download build-tools
+      run: |
+        set -x
+        wget -O build-tools.zip -- https://dl.google.com/android/repository/build-tools_r35_linux.zip
+        sha256sum -c <<< 'bd3a4966912eb8b30ed0d00b0cda6b6543b949d5ffe00bea54c04c81e1561d88  build-tools.zip'
+        unzip -q build-tools.zip
+        mv android-15 build-tools
+    - name: Test APKs (build-tools)
+      run: |
+        export PATH="${PWD}/build-tools:${PATH}"
+        test "$( command -v apksigner )" = "${PWD}/build-tools/apksigner"
+        patch -p1 < test/test-compare-self.out.build-tools.patch
+        make test-apks
+    - name: Test APKs (build-tools, legacy)
+      run: |
+        export PATH="${PWD}/build-tools:${PATH}"
+        test "$( command -v apksigner )" = "${PWD}/build-tools/apksigner"
+        patch -p1 < test/test-compare-self.out.build-tools.legacy.patch
+        APKSIGCOPIER_LEGACY_V1SIGFILE=1 make test-apks

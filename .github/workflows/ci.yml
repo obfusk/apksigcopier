@@ -6,7 +6,6 @@ jobs:
     strategy:
       matrix:
         python-version:
-        - '3.7'
         - '3.8'
         - '3.9'
         - '3.10'
@@ -14,7 +13,6 @@ jobs:
         - '3.12'
         - '3.13'
       # - '3.14.0-alpha - 3.14'
-        - pypy3.7
         - pypy3.8
         - pypy3.9
         - pypy3.10
@@ -84,6 +82,13 @@ jobs:
         [ -e mastodon-release.apk ] || wget -O mastodon-release.apk -- \
           https://github.com/mastodon/mastodon-android/releases/download/v1.1.3/mastodon-release.apk
         sha256sum -c <<< '1ec636336a79ada1a3526323c90bb9fbfe5dc32b2984bb724998b5f47c822165  mastodon-release.apk'
+    - name: Download build-tools
+      run: |
+        set -x
+        wget -O build-tools.zip -- https://dl.google.com/android/repository/build-tools_r35_linux.zip
+        sha256sum -c <<< 'bd3a4966912eb8b30ed0d00b0cda6b6543b949d5ffe00bea54c04c81e1561d88  build-tools.zip'
+        unzip -q build-tools.zip
+        mv android-15 build-tools
     - name: Copy APK
       run: |
         set -x
@@ -124,9 +129,25 @@ jobs:
         mkdir meta-upstream
         apksigcopier extract mastodon-release.apk meta-upstream
         ls -hlA meta-upstream
-        cat meta-upstream/differences.json
+        ! test -e meta-upstream/differences.json
+        ! test -e meta-upstream/MANIFEST.MF
+        zipinfo -l meta-upstream/v1signature.zip
+        zipinfo -v meta-upstream/v1signature.zip | head
         apksigcopier patch meta-upstream mastodon-release-unsigned.apk patched-upstream.apk
         apksigcopier copy mastodon-release.apk mastodon-release-unsigned.apk copied-upstream.apk
+    - name: Copy signatures (upstream, legacy)
+      run: |
+        set -x
+        mkdir meta-upstream-legacy
+        apksigcopier extract --legacy mastodon-release.apk meta-upstream-legacy
+        ls -hlA meta-upstream-legacy
+        cat meta-upstream-legacy/differences.json
+        test -e meta-upstream-legacy/MANIFEST.MF
+        ! test -e meta-upstream-legacy/v1signature.zip
+        apksigcopier patch meta-upstream-legacy mastodon-release-unsigned.apk \
+          patched-upstream-legacy.apk
+        apksigcopier copy --legacy mastodon-release.apk mastodon-release-unsigned.apk \
+          copied-upstream-legacy.apk
     - name: Compare APKs (dummy)
       run: |
         set -x
@@ -139,6 +160,11 @@ jobs:
         set -x
         cmp mastodon-release.apk patched-upstream.apk
         cmp mastodon-release.apk copied-upstream.apk
+    - name: Compare APKs (upstream, legacy)
+      run: |
+        set -x
+        cmp mastodon-release.apk patched-upstream-legacy.apk
+        cmp mastodon-release.apk copied-upstream-legacy.apk
     - name: Checksums
       run: sha512sum *.apk | sort
     - name: Verify APKs
@@ -163,5 +189,35 @@ jobs:
         # signed with apksigner works, whereas the reverse fails
         ! apksigcopier compare signed-dummy.apk mastodon-release.apk
         ! apksigcopier compare copied-dummy.apk mastodon-release.apk
+    - name: apksigcopier compare (build-tools)
+      run: |
+        set -x
+        export PATH="${PWD}/build-tools:${PATH}"
+        test "$( command -v apksigner )" = "${PWD}/build-tools/apksigner"
+        apksigcopier compare mastodon-release.apk patched-upstream.apk
+        apksigcopier compare mastodon-release.apk copied-upstream.apk
+        apksigcopier compare mastodon-release.apk --unsigned mastodon-release-unsigned.apk
+        apksigcopier compare mastodon-release.apk signed-dummy.apk
+        apksigcopier compare mastodon-release.apk copied-dummy.apk
+    - name: apksigcopier compare (legacy)
+      run: |
+        set -x
+        apksigcopier compare --legacy mastodon-release.apk patched-upstream.apk
+        apksigcopier compare --legacy mastodon-release.apk copied-upstream.apk
+        apksigcopier compare --legacy mastodon-release.apk --unsigned mastodon-release-unsigned.apk
+        apksigcopier compare --legacy mastodon-release.apk signed-dummy.apk
+        apksigcopier compare --legacy mastodon-release.apk copied-dummy.apk
     - name: Test APKs
       run: make test-apks
+    - name: Test more APKs
+      run: |
+        set -x
+        _dir="${PWD}"
+        git clone https://github.com/obfusk/test-apks-more.git
+        cd test-apks-more
+        git checkout 48d260325fe4c393c4851711348481d2cc024940
+        git clone -b v0.3.0 https://github.com/obfusk/reproducible-apk-tools.git
+        ./test.sh
+        export PATH="${_dir}/build-tools:${PATH}"
+        test "$( command -v apksigner )" = "${_dir}/build-tools/apksigner"
+        ./test.sh

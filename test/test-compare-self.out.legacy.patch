@@ -1,0 +1,514 @@
+--- a/test/test-compare-self.out
++++ b/test/test-compare-self.out
+@@ -211,8 +211,8 @@ apksigner: not verified
+ 
+ apks/apks/mismatched-compression-method.apk
+ apksigner: verified
+-Error: Unsupported LFH for 'META-INF/CERT.RSA': compression method mismatch.
+-apksigcopier: failure
++Warning: SHA-256 mismatch: expected 'a6f454f39765817f0569a52cf545f5898495e6ccfc3b0bde202f84509c60ae75', actual '82fd84f6a9423cb33d7aad6f54ac6661c13debf733afc88fa095f76d4a1986c5'.
++apksigcopier: success
+ 
+ apks/apks/original-minSdk32.apk
+ apksigner: verified
+@@ -343,8 +343,7 @@ apksigcopier: success
+ 
+ apks/apks/v1-only-11-signers.apk
+ apksigner: verified
+-Error: Invalid v1_sig: too many signers.
+-apksigcopier: failure
++apksigcopier: success
+ 
+ apks/apks/v1-only-max-sized-eocd-comment.apk
+ apksigner: verified
+@@ -353,10 +352,12 @@ apksigcopier: failure
+ 
+ apks/apks/v1-only-no-uses-sdk.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '3f35f83665183381b8409fdde357146924383b462c696c9749292f6b7356feaf', actual 'e67f9564bf245b8885438cfb5ba2a123ce922162bab91d2573e168f4bdae9be1'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-pkcs7-cert-bag-first-cert-not-used.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '6a15ec8e6be6d1402b11adb48463ed5fd4b6c422932a8b0f13b38741f269f886', actual '921a8654dc0e870aed3eb9b4e2fc5be0dd9a36ddd1e1e906dddc8139c0f05dfd'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-targetSandboxVersion-2.apk
+@@ -364,6 +365,7 @@ apksigner: not verified
+ 
+ apks/apks/v1-only-two-signers.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'f753f6d42052d12997e3650750e9d96f4a45b3cf31e650ec3c90ba6375233162', actual '5cc0bb9924ccc86544cbbd61b46388070e06fd362565aa7a9fc25b1f21c4691f'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-cr-in-entry-name.apk
+@@ -371,74 +373,92 @@ apksigner: not verified
+ 
+ apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '2db6e476d65bdedaabcb39c727bcd7d669a199d7e658d057349a38bb404a0665', actual 'f4d3f468173f2f25cf143164d6b1480371bd4862f24a8c3271f7aff76aa4da09'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'd45bf16421d499a076681126d3f0ee75d31902f5af8414a223f09bb17cde7cf4', actual '5e52fa3d49019d4b1af8e546adb91163826b72c2cf8aabfedc2482800baafcd4'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '1b212b0fd549c0d42518e53ac5c9e9c244a8d5e7f43bcc259accb76e50116bea', actual '7322bfdebfe12f6faaed10c683acf932e6bc2b6a5efb2d0d3728ccb965d3122b'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.3-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '2424fc0a951c5b95704c61407136ecd2838106773981eb11aac56fb51274234d', actual '8d6b1180d1c74aaa1af1e2f8bcb4ab8a4a2c19f28c31a049d7044b0d0810ca23'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.3-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '05e25ae2ab5e654bdae0860339bc6cd141e7d48110dd4bb4d05c65a886b7f668', actual '04f04f3cba58439f24f431faac97d43ac9499f23ea464111f784c78303d986b5'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha1-1.2.840.10040.4.3-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'a87775aabccc4068a3f176bd1a740ac7e844bb8533ba2a03beb85bac782cc317', actual '000344734b3f0111e281901e948805d7d422c7b9c8bebb4b95ebbf0aeebe1c6b'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha224-1.2.840.10040.4.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '3721ce0300b74259a99505aa410f38dc4eaa34f841d7cdc12d1e4cbbf1d8cf7c', actual '6f3d6e2dc138ad63d7c7bc9e08a0b38dd0b1a4e3428edf493cbce3a7777c57f2'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha224-1.2.840.10040.4.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '8a3a7b2f489d5c868bfe5e9287d9735097f7750d93be01308b904f7ffcd66794', actual 'b625b0f3580de149400b871861318eb561da78b9ab94ab0af41e83334145b78e'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha224-1.2.840.10040.4.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '1dee4896551ce5bb56377eb9db7fe666f1e4383ee7b11687271ab91b2d2e168d', actual 'fcda12595bbfb1072c37cf102f520c8068339b009527a55df3bc6ad6b97b6ddf'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha224-2.16.840.1.101.3.4.3.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '85dd93e526341a7c39242361dc0348d868c347071c440304cc6c1c5350a2aa85', actual 'a33b6916a55f79909a427de4596e82dfb7b951a777e7a0a08b3fb2798281379a'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha224-2.16.840.1.101.3.4.3.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '6ad257e09ed682830366ee36067df03c39ff380c8ee64f24858f09a585269fad', actual '5823565b76533aea8b9198c369a69a61bea57902f1e27ae60e190394be130b85'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha224-2.16.840.1.101.3.4.3.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '4557d554fcfc14da97d7d67765fd806ed4d450e8d1a6ed236362f98bf4ce9fac', actual 'c94bce53d7a5097c8ea961b4931b05ef6735e9139d1eb92deeec638d67d8add8'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha256-1.2.840.10040.4.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'f5bc4f5f935caddb717da526c511e0ace80f65bca7e9287fc46b1d8d5b38aac8', actual 'aff5a021a23966ef9015282e96fdd4fa059e3c4244fcd7b67ce5ae378e52c43d'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha256-1.2.840.10040.4.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '43a9e92174a1023150fa8f2e1c3b8a50cf928f607e714577a9a4890160247678', actual 'c08e80cafb34a60214bdb058fa5304af44e9b5155568b744239e48478861a9f1'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha256-1.2.840.10040.4.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '62cfc9520e17ffcbb288bd6af45511269111e90a8c9deb53456f1a07a716d602', actual '9ed03ab5f89279f12fa5b384b27eec13f12e190b4967206d4ebd24beea1b9c8d'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha256-2.16.840.1.101.3.4.3.2-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '6ee3661e2a8ff58dcbaccfc8bfd6961829661fe83a01876867024c789fd62779', actual 'c254c3d5f0ffe38bfafb377139a3a5095be09cecbb88e76dc55252bb73afd75f'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha256-2.16.840.1.101.3.4.3.2-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '2f1e79b6165202d016bcdeaa1890bc2ad3d839b16f1643c2f152eab984572ed3', actual 'f142ed610ea7fc5063ba09ed93e31ab65be6a9f2d6c0859a713d36c73b51693c'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha256-2.16.840.1.101.3.4.3.2-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'b5616e2f87d2c7030630bba789fe6b91b6499160136f38484f3b20bc17ec94be', actual '8cc174bd545ec8abd8a49f4c0573158e6be5e15d6c4ccaed83cefadd6fe09a94'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-dsa-sha384-2.16.840.1.101.3.4.3.3-1024.apk
+@@ -461,122 +481,152 @@ apksigner: not verified
+ 
+ apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.2.1-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'b0c5638a51ba76ed905cc611a6bf9e524f3f522ff524beb3d4c864214bd34a23', actual 'ced96d88d7839ba290d9f79d45c644e058f949eacec5e388ba791030af468e95'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.2.1-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'ad13022a8891d890b4e1471139057e89a8c711ddd458899c8f8d268c8c5148ba', actual '76044344b3abbd0408df7be8f5fed5d101d581ecde2d891807b026d78a98dfe0'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.2.1-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '59b215551737ff4a5df191e3aee2dc2e6af555a47dece02f6c4d7af19e6a2a5a', actual 'df11ef49bd707295be48e8431faf39e41dac4a129f6c28229798dc0e684db99c'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.4.1-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'cad63a6c92b4a34c4955195d781e0924ff23533ed21b4a24c94331dbedb47189', actual 'bc6426a8f4007f59d91d1497e9f6b1fb50b09032a65f597a1b214f99261e9f88'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.4.1-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'e006730bd293f878fed0699089c7b15babb3905d03927848b10408844cc5b634', actual '549ffae90824299dd25dc6248a6f8d706397a67c5e9e40944ac91287f05647e8'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha1-1.2.840.10045.4.1-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'dbdf63aeaba5685e92f24a77f58a7a94c313b8fae84ea3b8a12111de2bb04ea3', actual '85ef776a9ea63de9d1fda3381ffc44e83558a3861c5fcd5317c89c9c1cfc3a46'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.2.1-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '1743a00a5d37034da24202ade5e954a602389ca097709aee78dba272f3a4a340', actual 'fca55cb4ca92eb5e1e12894c5124491a0247830fddc24c8f61efb2405477ee1d'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.2.1-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '2992c6e68b9f474147aa30e0ea0db7c7509d1424ae58999002b7b244b68791ba', actual '18e7e622129f52395cb29573d1ced2fada25c30d0e0acdfe50dd14759f1959a7'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.2.1-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'a341373d32f527d3f0ebf248d9757c24d33b3ebf0e75d59c3fcb4f0db7f75362', actual '18d976c7c136259c9904be9ec7da394e3ac9f0f550d287c868571282c176bb62'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.4.3.1-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '9343632d65c0dec3638e569c06fff3ed13bfcbc521c34d40919736b8674395fd', actual '1873519e950ae9805db78566ecf135da60da5a5e3d5b1917cf46a7de2d698d72'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.4.3.1-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '027eab15d64ee60dd9ff0ceb1d264f1a4d75df572d10659f8de40ca10e82ae05', actual '7fa7add40ba58c246e85bb467c885fc288279c1f479c2f7a3a8f344f158c58a4'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha224-1.2.840.10045.4.3.1-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'f5f0dc24a5b967fa013d7121f92f5c1b448f64dc3c2d59ba9e62d7b5d9e041bb', actual '5dc212c1ef87da5568c203be72b643864185f071cd55140f70697c334d0cfac3'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.2.1-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '8af5fe5abe123fb946198f52337744e2295c6b510f551156070ec39d0c32b2aa', actual '13c0f3d16aa12468926b9efb67eb82395f7689822bb9139697d05339f75c177c'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.2.1-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '2432444f0d1f39cac8681f21407207930d37776cc1d8171039cabbc11c351a65', actual '41cba810f89fb6808523f4e74774eee5c08f45e0dd767cf3102446e6f656fe2f'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.2.1-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '927cbb576307d7bb73280dd4a42915ba8029e1a970d1632238b701874005c316', actual 'a38151e738b61b58bccc396a7d1d27509bd1886dda5d9b5a33bb171da9db4afc'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.4.3.2-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '716810d44a0a6ff2b575b677613c0c49a92d3124ffe140d6c1e2ce1e84e6d466', actual '5a74fd732d2008c02d1fd756b1dfd883f5e2cd96db99758c8c015bf319a8e590'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.4.3.2-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '01679c8f819d469b95e063f6db04c52e8a167b4af4fbdf7ab134e73354cab226', actual '6e76d9361e5f63a193475af5c0321137a2be688fb7634b858bf6e5859317189e'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha256-1.2.840.10045.4.3.2-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '2acbb246cd4ca9a30f39fa81ad14d82e29c516538b54fdcda18ae094f4119c93', actual '2382f7b46b46e1e72346932801869f85c58c6183405881ebcf766f6a3fa585b8'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.2.1-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '6e5b827759f2384a0e4d277d34447535e3fc13c17579674c0ff3ecbda2e02a75', actual '28734a854198b31c7287b0b94bb711ec7cba862adc26da8664b6bfc323cca107'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.2.1-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '37b8dc11457770f01954e6217c93021e25ebd63ccf05f263b539ff26ead5d36a', actual '0cbc36e9205868c49aae706a5604d87db9c3079c8f5bff6d009f2040efc1d2d8'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.2.1-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'e27db7fccbf2792cf3220cb2cf934610cd7480481f5070f0bfde9d968788717d', actual '770c52018eb2f89f54e7d65d9bd774fad505a09930867f53f22324d218ef5ba6'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.4.3.3-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '40944b00404a84b50abf571e088a935e9a9dd17304a040a3a973abb63ee40cbf', actual 'b6adba65d55a7f17a46b3855fc7899c1c4bf40a5a50d984bb1458f86d4341620'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.4.3.3-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '331eeefdebb7258b433732bfbcadc716468c9dd3ccb6109c574e7f4c6f4db293', actual '7cef1fa50560dc2502d4f7ee9f17ff5bf61de92ba41fba639d57b12b5cfa4829'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha384-1.2.840.10045.4.3.3-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'a98cfbd0f1f078873cd9f417eb431c33b165ce069ff8740ef18ca9a6d094e077', actual '81e5dcb2b01494eec524166806a624cb8d0e8864c667d72a76eb349a59e828c9'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.2.1-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '3ceb31785ce18d92d4f52119d1396833b7adfbaf8370136ba2d2ff0f6e7c5b1a', actual '72807de31203b9931c512505a403c2580986de97db5c8dad1f74598f11dac6fb'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.2.1-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'b8dfa6d0c74f19e6140469d55c1561904164dce06b028c14938c44ac5ef45a1f', actual 'ae07bfd9e9d6f4a2284d0581e63be843dcce623b76ea5580af1231461d5983c4'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.2.1-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '2635ea798f5e3df3664e2333ddb483336dedec183d963568977172428d0aaf28', actual '33db359ead3927d2a73ceaf3a34222cf2edf4fbe8387b1dfabb4c23edf97b7cc'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.4.3.4-p256.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'e683f6cf4da25cc46ecc51ca4dc1e13b710724f9ade559ff62f98fba36bfc000', actual '184345b1bdc0210df36d353a375119cef923e1e5109acac061ac8fdca235f0dc'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.4.3.4-p384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'c32c2fb02905ef21dae400c199e81b46a478d9b61ba05e0e2ffa72d252bfa3dd', actual '155ed1ff743d998fd5a9245bf1f6751ff609c175a9fcecde9fc016355308cf4c'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-ecdsa-sha512-1.2.840.10045.4.3.4-p521.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '5e3c9f67e2f97a579748d76e490fe25f97c39d01402e405c56e6ac51912c5e53', actual '82b940971d6e00f526f37fe1951a8d98468ef067f4076a7927d1c98bb9f92f7b'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-lf-in-entry-name.apk
+@@ -584,18 +634,24 @@ apksigner: not verified
+ 
+ apks/apks/v1-only-with-nul-in-entry-name.apk
+ apksigner: verified
+-apksigcopier: success
++DOES NOT VERIFY
++ERROR: test.txt  entry referenced by META-INF/MANIFEST.MF not found in the APK
++Error: failed to verify /tmp/.../output.apk.
++apksigcopier: failure
+ 
+ apks/apks/v1-only-with-rsa-1024-cert-not-der.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '440f3d09b43cf7ab05ace244767781692774db7806ff341595e6aa252627bc54', actual '9c716fe2713f2b5a34e42901f9aa2edf27003beaa683c317fdbc0b4a8a13684f'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-1024-cert-not-der2.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '20e806d6fba5653de2d3c81924d049d4d19c3322da28ae4598cbd1f99c42cbbf', actual '27a1c24b658cde684bd9a85faa503705337b91edbbb48ec6518690460c355a62'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '39b1ac3b8d8f3e10ac19393ad15e1cbc632153fc8151106f46b05a6c1df56dbd', actual 'c79222d87cbf15638427147ba155cceef5ff42bbd5ebf46cfbc8428722fa2e61'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-2048.apk
+@@ -604,26 +660,32 @@ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '669b01207c3cc4c6f8fdec6bc74eefb4b0e5fed70db298e75ad0d9489ee93856', actual '41d49cb3d5ebe93045eaeb0d6debae9ab37ba0f616cd179cec9696e075139197'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-16384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'cb50866d11a7de50ad2cec56f1ff19907d5841d78b58800e7eee4fcef79ff7fe', actual '8156b6693f5b075a630e328e6c4011e37b29517621c407caaf948c2673cf0d49'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'd5337afe1751f6cf305b90909d0363ecd04b5f02ba0565f0caa126703623b01b', actual '9c0624c202c91b9484883a923a5b4ab98320a08c3c868f40e27640426580ec42'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '985a104f27d93340e857249b371c7e602072468a041c33717fb3f1aaa791d65f', actual '0fabe8f4d4219dc83cc9384dfd4e1e90cb27e80911ee5bfdb3e0a2a5c1a9e796'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-4096.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '557850ecc504770e9338901bdf6f066b0d5626ff08ee8ad78476265bebace929', actual 'cf43f321a0cfa2b4e7f1edd6e1d3a7829de3ccade16618412a841ba772f6d49d'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.1-8192.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '225937d748faeede454adc8a442d408304af1bfdb9c5a4bb0c600069600f8b8c', actual '9c74de8caf8a9d1d7be4cc0462731ee00721ec483c65e08ac9fef9dc3e34b52e'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-md5-1.2.840.113549.1.1.4-1024.apk
+@@ -652,26 +714,32 @@ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'de6beca30812e828bd056b8a2a946efd0cbb6c30f04594708639f0be62c67a5f', actual 'd31e4f5e83b41b61c0ddbda5a6167efccbe2c70ab865d868054a3d134c1fe30b'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-16384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '568121e867386b299b1a670e5b1547a7c6dd2842ed0ab0357b9a5d559dec0439', actual '9b919958482aef023dc123d26b0f314f1c75e06a6d89703953abe5a1b6dea03f'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '9062a8db82e3795c0c0c7cd65314dd7399df164e90cfda3e1040d5edf21eac8a', actual '29860ddfd8a52792b62be4871ee26d88a26bfacd6945d2477879e150cc7ef0a0'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '9f9bb8fac2ae2d544e3a67118873a735a873dd6d05a22141edc21ec251c50be1', actual 'ea876fe066f8e27dc082532b0e6313ed7dffc6384b34819512211b3cf14461b2'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-4096.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '59615dc4861f492a013d491c763c409466d5d49e0e3c15a0889028305d56b06d', actual '05c3e209db0d0313e520dffd01b72590a9e5c640bcad60ede8feeb33f6df714a'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.1-8192.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '68767fc8e4166e7dfb0ed7fe2d641b1b4e62a9e4763d3d13b10fa79435fd4310', actual 'b91878fac11d161f6dc6d01c587401a19ebf55362dd0bdbd790258286fa6538f'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha1-1.2.840.113549.1.1.5-1024.apk
+@@ -700,26 +768,32 @@ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '27d12d417e7d8a7869453059bbc3f1d4ecb92e30368df157cb382c6ae9b3fc1b', actual 'ab94e39135639555523f9d23d6bc511fcfa3f03aa6899989e1ae176a490c481a'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-16384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'c6bd278ae36ef2300866233ff5212930f0f82bb4812198a7d83c5b551018c93e', actual '2c78ee9668039e6c7e0b089a50b48fbf3a43c9681865f44cf9a4290f0db96bbf'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'eb1e4616fb6f024cba11ee775c2c392c436683817177bf7bc8eae45441dab0ba', actual '5aaa01e983305a6d3bd75fb577bbde11d0ec8b66b274a46ba7882b2dd5090534'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '9d1265e1436e274b96b56d73d1a8b425b1debc3c25961433c9a2bc28dccba481', actual '679de89c568067a0787c529b609dc5617df7da06907a76a70b0dd29483ece375'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-4096.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'f8bf6d71e98fbe171e3509749b4531d51584182837ba152b2b72b84947119205', actual 'd68893f83b33c9d47172cc72619ab6783e60c6485041628d57e76a2a7f81cfb2'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.1-8192.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'fe55b78669ee0c9045e9db856df98f9d7bee57eb62ca5d0a56d95afeb494c937', actual 'a77b36dfa84e1a889c6ef02ca3f10a02ea80da7c1cc4a02ec9439b63ade28b8f'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha224-1.2.840.113549.1.1.14-1024.apk
+@@ -748,26 +822,32 @@ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '901bff9d95e37421cb4baef16761c1e6af861f68eaa0155f23a54f2943c26ccf', actual 'f82fc046a2f637ad31e4079a03d084f19e8ca5e1db8ea4ac5613c3806cdb7df9'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-16384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'ab3263d8a1e56af7ab7ed4dc8564b462075a1a25261e03542162d408e3e66a93', actual '11fc66dd49e7e2d1a5315802c3f60693e1e1e19705b125403430ca096d155242'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '0bbfb0a4a7b0f2d2d7492ac84be7d6486e3ee60ae29e03fdcb80360d14a84c16', actual '82fd84f6a9423cb33d7aad6f54ac6661c13debf733afc88fa095f76d4a1986c5'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '89aba45b84da2332c707fba41a7e8ed51c22981950dbeefe8742f9c904640b1c', actual '5446ec00f22b731e293440c41a12b5f0e3e098aa338a50cd081ee3b49348c7cb'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-4096.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'c1fa7da73d89e0b5d54ad309c3ca35dcf681c45d6d8b408826afc470ea9b4139', actual 'f6b312400ed3b4aa1900b784817ad6a4d87fb4aabbdde89ef2bd69b63247336f'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.1-8192.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '8792dbb9a3a8e12f661d2366d5bc1bff3f1792c0de3ec4a9c85d531487728c82', actual 'c26031fed2b3aad171e6599d16699f908f7d2400153549892fb6c2284a7a69f3'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha256-1.2.840.113549.1.1.11-1024.apk
+@@ -796,26 +876,32 @@ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '2d0b99d8f2f09d43d3b3acd7995e8efeb010102131fee5f7d386c32785daecdf', actual '2ae153c56d7a5d5bb19513406df9be522133d8618f849492b41530ee6d9d98fc'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-16384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'bf666c91a1d38c28b9bf4a40ce8c4f4959e192e0990db889dc461de43bc112c7', actual '623fbe4d80d9e2108acb21f8b0274946aa1f5d9860b4edc29eedbc041cc69c55'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'b15fbbf575a6d5ea41d6a1e61e1035b18cc8c4883ed6b3cc5ace2607a007a7c9', actual '497d1157658b837453b66330dbf08629e9fcf0bd8822813fa8ab6c1b11c5b1a4'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'e889404fd2f1dba2293a6ca50bda53f71516bc8e0681cff4fc9aa02af4c15897', actual 'e4faa5e851055369f942597129e0008c2618f97e3d36a76fac8ce33438b253dc'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-4096.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '94cc6778a7ebaaa3f7b6a32ea7b4692a688374cb1e5ecc52747ae2066c49feee', actual '702414c8327b4abbf4bc0d3a88d4abf53bfd1082078bae7883d0e060c4cd9daf'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.1-8192.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'f70d89fa32231255e8c29e6aa279d676a561dfe1f6dd287eaefa2c5e2597598d', actual '37405646a79f1d3e8492b1b4f0f8e7d79994b2481eba6597c19b4a4f68b56ce3'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha384-1.2.840.113549.1.1.12-1024.apk
+@@ -844,26 +930,32 @@ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-1024.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'eebda4bed1ca39ab13761bd05f6faa25eaad9a19419d10debae11ac16ffa0653', actual '39bf3fa515e968edfaa11c48756eec8767ceb643a28240d891978bb05f49e4a4'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-16384.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '36ccf1f427b2dbc679dcd10ed7a8181f56c641230791cf068bb8c33e15656312', actual 'f594b57e3aa50ee4e01769b076ed8397516c4f5047eeb36fe784393e197ff08d'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-2048.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '3e3b36e9dcb072e380c3a4acb2ce2741c668652bb214b45d2af9979c7b7a2229', actual '897cd59e42a2f968cd6d55858ef8e33b7f7b889a814cf01cf0524e5d48e02970'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-3072.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '1ed36fa2ce9e329866c7e62e08ffb1c55e0a0717b939de989087c5e40a1e2843', actual '888247b8ab213154890eb2e95ff9205a0c1fbbee26e905e4f6e6b9d711445626'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-4096.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected '2f6fb3dad9c25cbb701e7cd63a9b0435607fd3ab6c1dceb497517e075e9fac99', actual 'cde5af5398d32c367982a921832c8fc5d19f1c84627bbf40f9a63086a11aa8d6'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.1-8192.apk
+ apksigner: verified
++Warning: SHA-256 mismatch: expected 'f388de5802470f7c5a475a1f177abd8a0313a4b34bb64edfa99a8211567c063b', actual 'a1f3a91ee276dd5764753e55470f21ecc26383f983882671c7390e81c4dfe712'.
+ apksigcopier: success
+ 
+ apks/apks/v1-only-with-rsa-pkcs1-sha512-1.2.840.113549.1.1.13-1024.apk

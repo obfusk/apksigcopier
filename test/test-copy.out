@@ -19,6 +19,9 @@ checksum OK
 apks/apks/golden-aligned-v1v2v3-lineage-out.apk:
 checksum OK
 
+apks/apks/golden-aligned-v1v2v3-lineage-out_v2.apk:
+checksum OK
+
 apks/apks/golden-aligned-v1v2v3-out.apk:
 checksum OK
 
@@ -28,13 +31,22 @@ checksum OK
 apks/apks/golden-aligned-v2v3-lineage-out.apk:
 checksum OK
 
+apks/apks/golden-aligned-v2v3-lineage-out_v2.apk:
+checksum OK
+
 apks/apks/golden-aligned-v2v3-out.apk:
 checksum OK
 
 apks/apks/golden-aligned-v3-lineage-out.apk:
 checksum OK
 
+apks/apks/golden-aligned-v3-lineage-out_v2.apk:
+checksum OK
+
 apks/apks/golden-aligned-v3-out.apk:
+checksum OK
+
+apks/apks/golden-file-size-aligned.apk:
 checksum OK
 
 apks/apks/golden-legacy-aligned-in.apk:
@@ -52,6 +64,9 @@ checksum OK
 apks/apks/golden-legacy-aligned-v1v2v3-lineage-out.apk:
 checksum OK
 
+apks/apks/golden-legacy-aligned-v1v2v3-lineage-out_v2.apk:
+checksum OK
+
 apks/apks/golden-legacy-aligned-v1v2v3-out.apk:
 checksum OK
 
@@ -61,10 +76,16 @@ checksum OK
 apks/apks/golden-legacy-aligned-v2v3-lineage-out.apk:
 checksum OK
 
+apks/apks/golden-legacy-aligned-v2v3-lineage-out_v2.apk:
+checksum OK
+
 apks/apks/golden-legacy-aligned-v2v3-out.apk:
 checksum OK
 
 apks/apks/golden-legacy-aligned-v3-lineage-out.apk:
+checksum OK
+
+apks/apks/golden-legacy-aligned-v3-lineage-out_v2.apk:
 checksum OK
 
 apks/apks/golden-legacy-aligned-v3-out.apk:
@@ -106,6 +127,9 @@ checksum OK
 apks/apks/golden-unaligned-v1v2v3-lineage-out.apk:
 checksum OK
 
+apks/apks/golden-unaligned-v1v2v3-lineage-out_v2.apk:
+checksum OK
+
 apks/apks/golden-unaligned-v1v2v3-out.apk:
 checksum OK
 
@@ -115,16 +139,34 @@ checksum OK
 apks/apks/golden-unaligned-v2v3-lineage-out.apk:
 checksum OK
 
+apks/apks/golden-unaligned-v2v3-lineage-out_v2.apk:
+checksum OK
+
 apks/apks/golden-unaligned-v2v3-out.apk:
 checksum OK
 
 apks/apks/golden-unaligned-v3-lineage-out.apk:
 checksum OK
 
+apks/apks/golden-unaligned-v3-lineage-out_v2.apk:
+checksum OK
+
 apks/apks/golden-unaligned-v3-out.apk:
 checksum OK
 
+apks/apks/incorrect-manifest-size.apk:
+copy failed: Unexpected EOF
+
+apks/apks/invalid_manifest.apk:
+copy failed: File is not a zip file
+
 apks/apks/mismatched-compression-method.apk:
+checksum OK
+
+apks/apks/original-minSdk32.apk:
+checksum OK
+
+apks/apks/original-minSdk33.apk:
 checksum OK
 
 apks/apks/original-with-stamp-file.apk:
@@ -154,6 +196,15 @@ checksum OK
 apks/apks/stamp-certificate-mismatch.apk:
 checksum OK
 
+apks/apks/stamp-int-timestamp-value.apk:
+checksum OK
+
+apks/apks/stamp-invalid-timestamp-value-less-than-zero.apk:
+checksum OK
+
+apks/apks/stamp-invalid-timestamp-value-zero.apk:
+checksum OK
+
 apks/apks/stamp-lineage-invalid.apk:
 checksum OK
 
@@ -164,6 +215,27 @@ apks/apks/stamp-lineage-with-3-signers.apk:
 checksum OK
 
 apks/apks/stamp-malformed-signature.apk:
+checksum OK
+
+apks/apks/stamp-only-unknown-sigs.apk:
+checksum OK
+
+apks/apks/stamp-timestamp-in-last-8-of-16-byte-buffer.apk:
+checksum OK
+
+apks/apks/stamp-unknown-attr.apk:
+checksum OK
+
+apks/apks/stamp-unknown-sig.apk:
+checksum OK
+
+apks/apks/stamp-valid-timestamp-16-byte-buffer.apk:
+checksum OK
+
+apks/apks/stamp-valid-timestamp-value-modified.apk:
+checksum OK
+
+apks/apks/stamp-valid-timestamp-value.apk:
 checksum OK
 
 apks/apks/stamp-without-apk-signature.apk:
@@ -185,6 +257,12 @@ apks/apks/unsigned-targetSandboxVersion-2.apk:
 checksum OK
 
 apks/apks/v1-ec-p256-targetSdk-30.apk:
+checksum OK
+
+apks/apks/v1-only-10-signers.apk:
+checksum OK
+
+apks/apks/v1-only-11-signers.apk:
 checksum OK
 
 apks/apks/v1-only-max-sized-eocd-comment.apk:
@@ -694,6 +772,12 @@ checksum OK
 apks/apks/v2-ec-p256-targetSdk-30.apk:
 checksum OK
 
+apks/apks/v2-only-10-signers.apk:
+checksum OK
+
+apks/apks/v2-only-11-signers.apk:
+checksum OK
+
 apks/apks/v2-only-apk-sig-block-size-mismatch.apk:
 copy failed: APK Signing Block sizes not equal
 
@@ -991,7 +1075,49 @@ checksum OK
 apks/apks/v3-only-with-stamp.apk:
 checksum OK
 
+apks/apks/v3-rsa-2048_2-tgt-dev-release.apk:
+checksum OK
+
 apks/apks/v3-stripped.apk:
+checksum OK
+
+apks/apks/v31-2elem-incorrect-lineage.apk:
+checksum OK
+
+apks/apks/v31-2elem-lineage-incorrect-digest.apk:
+checksum OK
+
+apks/apks/v31-block-stripped-v3-attr-value-33.apk:
+checksum OK
+
+apks/apks/v31-ec-p256-2-tgt-33-1-tgt-28-targetSdk-30.apk:
+checksum OK
+
+apks/apks/v31-rsa-2048_2-tgt-10000-1-tgt-28.apk:
+checksum OK
+
+apks/apks/v31-rsa-2048_2-tgt-10000-dev-release.apk:
+checksum OK
+
+apks/apks/v31-rsa-2048_2-tgt-33-1-tgt-28.apk:
+checksum OK
+
+apks/apks/v31-rsa-2048_2-tgt-34-1-tgt-28.apk:
+checksum OK
+
+apks/apks/v31-rsa-2048_2-tgt-34-dev-release.apk:
+checksum OK
+
+apks/apks/v31-tgt-33-no-v3-attr.apk:
+checksum OK
+
+apks/apks/v31-tgt-33-no-v3-block.apk:
+checksum OK
+
+apks/apks/v31-tgt-34-v3-attr-value-33.apk:
+checksum OK
+
+apks/apks/v41-digest-mismatched-with-v31.apk:
 checksum OK
 
 apks/apks/valid-stamp.apk:
